@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo, useActionState } from 'react';
@@ -17,8 +16,9 @@ import type { Certification } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && LucideIcons[key as keyof typeof LucideIcons] !== LucideIcons.createLucideIcon) as (keyof typeof LucideIcons)[];
+const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && LucideIcons[key as keyof typeof LucideIcons] !== LucideIcons.createLucideIcon && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function') as (keyof typeof LucideIcons)[];
 
+const NULL_ICON_VALUE = "--no-icon--";
 const initialFormState = { success: false, message: '', errors: {} };
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
@@ -109,12 +109,12 @@ export default function AdminCertificationsPage() {
       </div>
       <div>
         <Label htmlFor="iconName">Icon Name (Lucide Icon)</Label>
-         <Select name="iconName" defaultValue={editingCertification?.iconName || ''}>
+         <Select name="iconName" defaultValue={editingCertification?.iconName || NULL_ICON_VALUE}>
             <SelectTrigger id="iconName">
                 <SelectValue placeholder="Select an icon (optional)" />
             </SelectTrigger>
             <SelectContent className="max-h-60">
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value={NULL_ICON_VALUE}>None</SelectItem>
                 {iconNames.map(name => {
                     const IconComponent = LucideIcons[name] as React.ElementType;
                     if (!IconComponent) return null;
@@ -198,4 +198,3 @@ export default function AdminCertificationsPage() {
     </div>
   );
 }
-

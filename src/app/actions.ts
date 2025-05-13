@@ -1,9 +1,10 @@
-
 'use server';
 
 import { z } from 'zod';
 import type { Skill, EducationItem, Project, Certification, SiteSettings } from '@/lib/data';
 import { siteSettingsData } from '@/lib/data'; // For default site settings
+
+const NULL_ICON_VALUE = "--no-icon--";
 
 // --- Authentication ---
 const loginSchema = z.object({
@@ -168,12 +169,13 @@ interface SkillCrudState {
 }
 
 export async function saveSkillAction(prevState: SkillCrudState | undefined, formData: FormData): Promise<SkillCrudState> {
+  const iconNameValue = formData.get('iconName') as string | null;
   const rawData = {
     id: formData.get('id') || undefined,
     name: formData.get('name'),
     level: formData.get('level') ? Number(formData.get('level')) : undefined,
     category: formData.get('category'),
-    iconName: formData.get('iconName') || undefined,
+    iconName: iconNameValue === NULL_ICON_VALUE ? undefined : (iconNameValue || undefined),
   };
   const validatedFields = skillSchema.safeParse(rawData);
 
@@ -218,13 +220,14 @@ interface EducationCrudState {
 }
 
 export async function saveEducationItemAction(prevState: EducationCrudState | undefined, formData: FormData): Promise<EducationCrudState> {
+  const iconNameValue = formData.get('iconName') as string | null;
   const rawData = {
     id: formData.get('id') || undefined,
     degree: formData.get('degree'),
     institution: formData.get('institution'),
     period: formData.get('period'),
     description: formData.get('description') || undefined,
-    iconName: formData.get('iconName') || undefined,
+    iconName: iconNameValue === NULL_ICON_VALUE ? undefined : (iconNameValue || undefined),
   };
   const validatedFields = educationItemSchema.safeParse(rawData);
 
@@ -320,13 +323,14 @@ interface CertificationCrudState {
 }
 
 export async function saveCertificationAction(prevState: CertificationCrudState | undefined, formData: FormData): Promise<CertificationCrudState> {
+  const iconNameValue = formData.get('iconName') as string | null;
   const rawData = {
     id: formData.get('id') || undefined,
     name: formData.get('name'),
     organization: formData.get('organization'),
     date: formData.get('date'),
     verifyLink: formData.get('verifyLink') || undefined,
-    iconName: formData.get('iconName') || undefined,
+    iconName: iconNameValue === NULL_ICON_VALUE ? undefined : (iconNameValue || undefined),
   };
   const validatedFields = certificationSchema.safeParse(rawData);
 
