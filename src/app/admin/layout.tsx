@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -11,7 +12,11 @@ import {
   Code2,
   UserCircle,
   LogOut,
+  Loader2,
+  Palette, // Added for Site Settings / Theme
 } from "lucide-react"
+import React, { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 
 import {
   SidebarProvider,
@@ -23,10 +28,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarSeparator,
-  SidebarInset,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -39,6 +40,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ThemeToggleButton } from "@/app/components/theme-toggle-button"
+import { SidebarInset } from "@/components/ui/sidebar" // Make sure SidebarInset is exported and used correctly
+
+const ADMIN_AUTH_TOKEN_KEY = 'adminAuthToken';
 
 const adminNavItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -47,25 +51,60 @@ const adminNavItems = [
   { name: "Education", href: "/admin/education", icon: GraduationCap },
   { name: "Projects", href: "/admin/projects", icon: Briefcase },
   { name: "Certifications", href: "/admin/certifications", icon: Award },
-]
+  { name: "Site Settings", href: "/admin/settings", icon: Palette }, // Updated icon
+];
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
-  // Placeholder for auth state
-  const isAuthenticated = true; 
-  const userName = "Admin User";
-  const userEmail = "admin@example.com";
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  if (!isAuthenticated) {
-    // Redirect to login or show an unauthorized message
-    // For now, just returning null or a simple message
+  const userName = "Admin User"; // Placeholder
+  const userEmail = "admin@example.com"; // Placeholder
+
+  useEffect(() => {
+    const token = localStorage.getItem(ADMIN_AUTH_TOKEN_KEY);
+    if (token === 'true') {
+      setIsAuthenticated(true);
+      if (pathname === '/admin/login') {
+        router.replace('/admin'); // Redirect from login if already authenticated
+      }
+    } else {
+      setIsAuthenticated(false);
+      if (pathname !== '/admin/login') {
+        router.replace('/admin/login'); // Redirect to login if not authenticated and not on login page
+      }
+    }
+    setIsAuthenticating(false);
+  }, [router, pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem(ADMIN_AUTH_TOKEN_KEY);
+    setIsAuthenticated(false);
+    router.push('/admin/login');
+  };
+
+  if (isAuthenticating) {
     return (
-        <div className="flex items-center justify-center h-screen">
-            <p>Access Denied. Please log in.</p>
-            <Button asChild className="ml-4"><Link href="/">Go Home</Link></Button>
-        </div>
+      <div className="flex items-center justify-center h-screen bg-background text-foreground">
+        <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" /> Verifying access...
+      </div>
     );
   }
 
+  if (!isAuthenticated && pathname !== '/admin/login') {
+    // This should ideally not be reached if useEffect works correctly,
+    // but acts as a fallback.
+    return null; // Or a redirect component, but router.replace in useEffect is preferred
+  }
+  
+  if (!isAuthenticated && pathname === '/admin/login') {
+     // Render children directly if on login page and not authenticated
+    return <>{children}</>;
+  }
+  
+  // If authenticated, render the admin layout
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon">
@@ -79,7 +118,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           <SidebarMenu>
             {adminNavItems.map((item) => (
               <SidebarMenuItem key={item.name}>
-                <SidebarMenuButton asChild tooltip={item.name}>
+                <SidebarMenuButton asChild tooltip={item.name} data-active={pathname === item.href}>
                   <Link href={item.href}>
                     <item.icon />
                     <span>{item.name}</span>
@@ -91,16 +130,8 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
         </SidebarContent>
         <SidebarFooter className="p-4">
           <SidebarMenu>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Settings">
-                  <Link href="/admin/settings">
-                    <Settings />
-                    <span>Settings</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Log Out" onClick={() => alert("Log out functionality placeholder")}>
+                <SidebarMenuButton tooltip="Log Out" onClick={handleLogout}>
                     <LogOut />
                     <span>Log Out</span>
                 </SidebarMenuButton>
@@ -113,7 +144,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 backdrop-blur-md px-4 md:px-6">
             <SidebarTrigger className="md:hidden" />
             <div className="flex-1">
-              {/* Can add breadcrumbs or page title here */}
+              {/* Breadcrumbs or page title can go here */}
             </div>
             <div className="flex items-center gap-4">
                 <ThemeToggleButton />
@@ -136,16 +167,16 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
                         </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/admin/about')}>
                         <UserCircle className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
+                        <span>Profile (About Me)</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/admin/settings')}>
                         <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
+                        <span>Site Settings</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => alert("Log out functionality placeholder")}>
+                    <DropdownMenuItem onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Log out</span>
                     </DropdownMenuItem>

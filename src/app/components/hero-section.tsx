@@ -1,18 +1,26 @@
+
 import { Button } from '@/components/ui/button';
 import { ArrowDown, Download } from 'lucide-react';
 import Link from 'next/link';
 import ThreeScenePlaceholder from './three-scene-placeholder'; // Placeholder for 3D object
+import { siteSettingsData } from '@/lib/data'; // Import site settings
 
 export default function HeroSection() {
+  // In a real app, this data would come from a dynamic source (e.g., context, API)
+  // For now, we use the static data as a fallback or initial value.
+  // Admin panel changes are simulated and won't reflect here without a backend.
+  const userName = siteSettingsData.defaultUserName;
+  const userSpecialization = siteSettingsData.defaultUserSpecialization;
+
   return (
     <section id="hero" className="relative bg-gradient-to-br from-background via-secondary to-background text-foreground min-h-[calc(100vh-4rem)] flex items-center justify-center py-20 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">
           <span className="block">Hello, I&apos;m </span>
-          <span className="block text-accent">Your Name</span>
+          <span className="block text-accent">{userName}</span>
         </h1>
         <p className="max-w-2xl mx-auto text-lg sm:text-xl md:text-2xl text-muted-foreground mb-10">
-          A passionate Computer Science student specializing in [Your Specialization, e.g., Web Development, AI, Cybersecurity]. I build innovative and efficient digital solutions.
+          A passionate Computer Science student specializing in {userSpecialization}. I build innovative and efficient digital solutions.
         </p>
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
           <Button asChild size="lg" className="shadow-lg hover:shadow-accent/50 transition-shadow">
@@ -22,7 +30,7 @@ export default function HeroSection() {
           </Button>
           <Button asChild variant="outline" size="lg" className="shadow-lg hover:shadow-md transition-shadow">
             {/* Link to your resume PDF in public folder */}
-            <a href="/resume.pdf" download="YourName_Resume.pdf"> 
+            <a href="/resume.pdf" download={`${userName.replace(/\s+/g, '_')}_Resume.pdf`}> 
               <Download className="mr-2 h-5 w-5" />
               Download CV
             </a>

@@ -1,9 +1,11 @@
+
 import { certificationsData } from '@/lib/data';
 import SectionWrapper from './section-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ExternalLink, CalendarDays } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 
 export default function CertificationsSection() {
   return (
@@ -16,32 +18,35 @@ export default function CertificationsSection() {
       data-ai-hint="abstract tech background"
     >
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {certificationsData.map((cert, index) => (
-          <Card key={index} className="bg-card/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
-            <CardHeader>
-              <div className="flex items-center justify-between mb-2">
-                <CardTitle className="text-lg font-semibold text-card-foreground">{cert.name}</CardTitle>
-                {cert.icon && <cert.icon className="h-7 w-7 text-accent" />}
-              </div>
-              <CardDescription className="text-sm text-muted-foreground">{cert.organization}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="flex items-center text-xs text-muted-foreground mb-3">
-                <CalendarDays className="h-3 w-3 mr-1.5" />
-                <span>Issued: {cert.date}</span>
-              </div>
-            </CardContent>
-            {cert.verifyLink && cert.verifyLink !== '#' && (
-                <CardContent className="pt-0">
-                 <Button asChild variant="link" size="sm" className="p-0 h-auto text-accent">
-                    <Link href={cert.verifyLink} target="_blank" rel="noopener noreferrer">
-                      Verify Credential <ExternalLink className="ml-1.5 h-3 w-3" />
-                    </Link>
-                  </Button>
-                </CardContent>
-            )}
-          </Card>
-        ))}
+        {certificationsData.map((cert, index) => {
+          const IconComponent = cert.iconName ? LucideIcons[cert.iconName] as React.ElementType : null;
+          return (
+            <Card key={index} className="bg-card/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
+              <CardHeader>
+                <div className="flex items-center justify-between mb-2">
+                  <CardTitle className="text-lg font-semibold text-card-foreground">{cert.name}</CardTitle>
+                  {IconComponent && <IconComponent className="h-7 w-7 text-accent" />}
+                </div>
+                <CardDescription className="text-sm text-muted-foreground">{cert.organization}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <div className="flex items-center text-xs text-muted-foreground mb-3">
+                  <CalendarDays className="h-3 w-3 mr-1.5" />
+                  <span>Issued: {cert.date}</span>
+                </div>
+              </CardContent>
+              {cert.verifyLink && cert.verifyLink !== '#' && (
+                  <CardContent className="pt-0">
+                  <Button asChild variant="link" size="sm" className="p-0 h-auto text-accent">
+                      <Link href={cert.verifyLink} target="_blank" rel="noopener noreferrer">
+                        Verify Credential <ExternalLink className="ml-1.5 h-3 w-3" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+              )}
+            </Card>
+          );
+        })}
       </div>
     </SectionWrapper>
   );

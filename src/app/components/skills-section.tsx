@@ -1,12 +1,13 @@
+
 import { skillsData } from '@/lib/data';
+import type { Skill } from '@/lib/data';
 import SectionWrapper from './section-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress'; // For optional skill bars
+import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from '@/lib/utils';
+import * as LucideIcons from 'lucide-react';
 
 const categoryOrder: Array<Skill['category']> = ['Language', 'Framework/Library', 'Tool', 'Database', 'Cloud', 'Other'];
-
 
 export default function SkillsSection() {
   const skillsByCategory = skillsData.reduce((acc, skill) => {
@@ -27,7 +28,7 @@ export default function SkillsSection() {
       <Tabs defaultValue={categoryOrder[0]} className="w-full">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mb-8">
           {categoryOrder.map((category) => (
-            skillsByCategory[category] && (
+            skillsByCategory[category] && skillsByCategory[category].length > 0 && (
               <TabsTrigger key={category} value={category} className="text-xs sm:text-sm">
                 {category}
               </TabsTrigger>
@@ -36,27 +37,30 @@ export default function SkillsSection() {
         </TabsList>
 
         {categoryOrder.map((category) => (
-          skillsByCategory[category] && (
+          skillsByCategory[category] && skillsByCategory[category].length > 0 && (
             <TabsContent key={category} value={category}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {skillsByCategory[category].map((skill) => (
-                  <Card key={skill.name} className="shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg font-semibold text-primary">{skill.name}</CardTitle>
-                        {skill.icon && <skill.icon className="h-7 w-7 text-accent" />}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                      {skill.level !== undefined && (
-                        <div className="mt-2">
-                           <Progress value={skill.level} aria-label={`${skill.name} proficiency ${skill.level}%`} className="h-3" />
-                           <p className="text-xs text-muted-foreground mt-1 text-right">{skill.level}%</p>
+                {skillsByCategory[category].map((skill) => {
+                  const IconComponent = skill.iconName ? LucideIcons[skill.iconName] as React.ElementType : null;
+                  return (
+                    <Card key={skill.name} className="shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg font-semibold text-primary">{skill.name}</CardTitle>
+                          {IconComponent && <IconComponent className="h-7 w-7 text-accent" />}
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardHeader>
+                      <CardContent className="flex-grow">
+                        {skill.level !== undefined && (
+                          <div className="mt-2">
+                            <Progress value={skill.level} aria-label={`${skill.name} proficiency ${skill.level}%`} className="h-3" />
+                            <p className="text-xs text-muted-foreground mt-1 text-right">{skill.level}%</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </TabsContent>
           )

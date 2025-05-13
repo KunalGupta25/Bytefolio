@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -5,6 +6,7 @@ import { ThemeToggleButton } from './theme-toggle-button';
 import { Code2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { siteSettingsData } from '@/lib/data'; // Import site settings
 
 const navItems = [
   { name: 'About', href: '#about' },
@@ -17,6 +19,7 @@ const navItems = [
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const siteName = siteSettingsData.siteName; // Simulated: Use static data
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -35,7 +38,7 @@ export default function Navigation() {
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary hover:text-accent transition-colors">
             <Code2 className="h-8 w-8 text-accent" />
-            <span>ByteFolio</span>
+            <span>{siteName}</span>
           </Link>
           <nav className="hidden md:flex items-center space-x-2 lg:space-x-4">
             {navItems.map((item) => (
