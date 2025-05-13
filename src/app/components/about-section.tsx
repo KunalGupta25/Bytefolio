@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { aboutData, siteSettingsData } from '@/lib/data';
 import SectionWrapper from './section-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ThreeScenePlaceholder from './three-scene-placeholder';
+import SplineViewerComponent from './spline-viewer-component';
 
 export default function AboutSection() {
   // In a real app, this data would come from a dynamic source (e.g., context, API)
@@ -25,8 +25,8 @@ export default function AboutSection() {
               className="transform hover:scale-105 transition-transform duration-300"
             />
           </div>
-          <div className="w-full h-64 md:col-span-1">
-           <ThreeScenePlaceholder />
+          <div className="w-full h-64 md:h-96 md:col-span-1">
+           <SplineViewerComponent />
           </div>
         </div>
         <div className="md:col-span-2 space-y-6">
@@ -55,3 +55,4 @@ export default function AboutSection() {
     </SectionWrapper>
   );
 }
+
