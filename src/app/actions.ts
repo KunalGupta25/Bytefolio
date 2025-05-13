@@ -9,8 +9,9 @@ import {
   educationData,
   projectsData,
   certificationsData,
-  type AboutData // Import AboutData type if not already implicitly available
+  type AboutData
 } from '@/lib/data'; 
+import { revalidatePath } from 'next/cache';
 
 const NULL_ICON_VALUE = "--no-icon--";
 
@@ -107,7 +108,7 @@ interface AboutInfoState {
   success: boolean;
   message: string;
   errors?: z.inferFlattenedErrors<typeof aboutInfoSchema>['fieldErrors'];
-  updatedAboutData?: AboutData; // Changed from typeof aboutData to explicit type if available
+  updatedAboutData?: AboutData;
 }
 
 export async function updateAboutInfo(prevState: AboutInfoState | undefined, formData: FormData): Promise<AboutInfoState> {
@@ -130,6 +131,8 @@ export async function updateAboutInfo(prevState: AboutInfoState | undefined, for
   aboutData.profileImageUrl = validatedFields.data.profileImageUrl || siteSettingsData.defaultProfileImageUrl;
   
   console.log('About Me information updated:', aboutData);
+  revalidatePath('/');
+  revalidatePath('/admin/about');
   return { success: true, message: 'About Me information updated successfully!', updatedAboutData: {...aboutData} };
 }
 
@@ -163,6 +166,8 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
   siteSettingsData.defaultUserSpecialization = validatedFields.data.defaultUserSpecialization;
   
   console.log('Site Settings updated:', siteSettingsData);
+  revalidatePath('/');
+  revalidatePath('/admin/settings');
   return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: {...siteSettingsData} };
 }
 
@@ -202,19 +207,23 @@ export async function saveSkillAction(prevState: SkillCrudState | undefined, for
   let skillData = validatedFields.data as Skill; 
   const isNew = !skillData.id;
 
-  if (!isNew && skillData.id) { // Update existing skill
+  if (!isNew && skillData.id) { 
     const index = skillsData.findIndex(s => s.id === skillData.id);
     if (index > -1) {
       skillsData[index] = { ...skillsData[index], ...skillData };
       console.log('Updating Skill:', skillsData[index]);
+      revalidatePath('/');
+      revalidatePath('/admin/skills');
       return { success: true, message: `Skill '${skillData.name}' updated successfully!`, updatedSkill: skillsData[index], skills: [...skillsData] };
     } else {
        return { success: false, message: `Skill with ID '${skillData.id}' not found for update.` };
     }
-  } else { // Add new skill
+  } else { 
     skillData.id = `skill-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     skillsData.push(skillData);
     console.log('Adding Skill:', skillData);
+    revalidatePath('/');
+    revalidatePath('/admin/skills');
     return { success: true, message: `Skill '${skillData.name}' added successfully!`, updatedSkill: skillData, skills: [...skillsData] };
   }
 }
@@ -230,6 +239,8 @@ export async function deleteSkillAction(id: string): Promise<{ success: boolean;
     skillsData.push(...newSkillsData);
 
     console.log('Deleting Skill, ID:', id);
+    revalidatePath('/');
+    revalidatePath('/admin/skills');
     return { success: true, message: `Skill deleted successfully!`, skills: [...skillsData] };
   }
   return { success: false, message: "Skill not found for deletion." };
@@ -278,6 +289,8 @@ export async function saveEducationItemAction(prevState: EducationCrudState | un
     if (index > -1) {
       educationData[index] = { ...educationData[index], ...eduData };
       console.log('Updating Education Item:', educationData[index]);
+      revalidatePath('/');
+      revalidatePath('/admin/education');
       return { success: true, message: `Education item '${eduData.degree}' updated!`, updatedItem: educationData[index], educationItems: [...educationData] };
     }
     return { success: false, message: `Education item with ID '${eduData.id}' not found.` };
@@ -285,6 +298,8 @@ export async function saveEducationItemAction(prevState: EducationCrudState | un
     eduData.id = `edu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     educationData.push(eduData);
     console.log('Adding Education Item:', eduData);
+    revalidatePath('/');
+    revalidatePath('/admin/education');
     return { success: true, message: `Education item '${eduData.degree}' added!`, updatedItem: eduData, educationItems: [...educationData] };
   }
 }
@@ -299,6 +314,8 @@ export async function deleteEducationItemAction(id: string): Promise<{ success: 
     educationData.length = 0;
     educationData.push(...newEducationData);
     console.log('Deleting Education Item, ID:', id);
+    revalidatePath('/');
+    revalidatePath('/admin/education');
     return { success: true, message: `Education item deleted!`, educationItems: [...educationData] };
   }
   return { success: false, message: "Education item not found." };
@@ -350,6 +367,8 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     if (index > -1) {
       projectsData[index] = { ...projectsData[index], ...projectDataValue };
       console.log('Updating Project:', projectsData[index]);
+      revalidatePath('/');
+      revalidatePath('/admin/projects');
       return { success: true, message: `Project '${projectDataValue.title}' updated!`, updatedProject: projectsData[index], projects: [...projectsData] };
     }
     return { success: false, message: `Project with ID '${projectDataValue.id}' not found.` };
@@ -357,6 +376,8 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     projectDataValue.id = `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     projectsData.push(projectDataValue);
     console.log('Adding Project:', projectDataValue);
+    revalidatePath('/');
+    revalidatePath('/admin/projects');
     return { success: true, message: `Project '${projectDataValue.title}' added!`, updatedProject: projectDataValue, projects: [...projectsData] };
   }
 }
@@ -371,6 +392,8 @@ export async function deleteProjectAction(id: string): Promise<{ success: boolea
     projectsData.length = 0;
     projectsData.push(...newProjectsData);
     console.log('Deleting Project, ID:', id);
+    revalidatePath('/');
+    revalidatePath('/admin/projects');
     return { success: true, message: `Project deleted!`, projects: [...projectsData] };
   }
   return { success: false, message: "Project not found." };
@@ -419,6 +442,8 @@ export async function saveCertificationAction(prevState: CertificationCrudState 
     if (index > -1) {
       certificationsData[index] = { ...certificationsData[index], ...certData };
       console.log('Updating Certification:', certificationsData[index]);
+      revalidatePath('/');
+      revalidatePath('/admin/certifications');
       return { success: true, message: `Certification '${certData.name}' updated!`, updatedCertification: certificationsData[index], certifications: [...certificationsData] };
     }
     return { success: false, message: `Certification with ID '${certData.id}' not found.` };
@@ -426,6 +451,8 @@ export async function saveCertificationAction(prevState: CertificationCrudState 
     certData.id = `cert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     certificationsData.push(certData);
     console.log('Adding Certification:', certData);
+    revalidatePath('/');
+    revalidatePath('/admin/certifications');
     return { success: true, message: `Certification '${certData.name}' added!`, updatedCertification: certData, certifications: [...certificationsData] };
   }
 }
@@ -440,7 +467,10 @@ export async function deleteCertificationAction(id: string): Promise<{ success: 
     certificationsData.length = 0;
     certificationsData.push(...newCertsData);
     console.log('Deleting Certification, ID:', id);
+    revalidatePath('/');
+    revalidatePath('/admin/certifications');
     return { success: true, message: `Certification deleted!`, certifications: [...certificationsData] };
   }
   return { success: false, message: "Certification not found." };
 }
+
