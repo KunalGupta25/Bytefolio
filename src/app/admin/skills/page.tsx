@@ -48,17 +48,18 @@ export default function AdminSkillsPage() {
       });
       if (formState.success) {
         setIsFormOpen(false);
-        setEditingSkill(null);
-        const updatedSkill = formState.updatedSkill;
-        if (updatedSkill) {
+        setEditingSkill(null); // Clear editing state
+        const returnedSkill = formState.updatedSkill;
+        if (returnedSkill && returnedSkill.id) { // Skill from action should always have an ID
           setSkills(prevSkills => {
-            const index = prevSkills.findIndex(s => s.id === updatedSkill.id);
-            if (index > -1) {
+            const index = prevSkills.findIndex(s => s.id === returnedSkill.id);
+            if (index > -1) { // Skill found, so it's an UPDATE
               const newSkills = [...prevSkills];
-              newSkills[index] = updatedSkill;
+              newSkills[index] = returnedSkill;
               return newSkills;
+            } else { // Skill not found by ID, so it's an ADD
+              return [...prevSkills, returnedSkill];
             }
-            return [...prevSkills, updatedSkill];
           });
         }
       }
@@ -66,12 +67,15 @@ export default function AdminSkillsPage() {
   }, [formState, toast]);
 
   const handleEdit = (skill: Skill) => {
-    setEditingSkill(skill);
+    setEditingSkill(skill); // skill here has an ID because initialSkillsData items now have IDs
     setIsFormOpen(true);
   };
 
   const handleDelete = async (id: string | undefined) => {
-    if (!id) return;
+    if (!id) {
+        toast({ title: "Error", description: "Skill ID is missing.", variant: "destructive" });
+        return;
+    }
     if (confirm('Are you sure you want to delete this skill? This action is simulated.')) {
       const result = await deleteSkillAction(id);
       toast({
@@ -102,7 +106,7 @@ export default function AdminSkillsPage() {
       </div>
       <div>
         <Label htmlFor="category">Category</Label>
-        <Select name="category" defaultValue={editingSkill?.category}>
+        <Select name="category" defaultValue={editingSkill?.category || categories[0]}>
           <SelectTrigger id="category">
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
@@ -146,11 +150,11 @@ export default function AdminSkillsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Manage Skills</h1>
           <p className="text-muted-foreground">Add, edit, or delete skills showcased in your portfolio.</p>
-           <p className="text-sm text-destructive mt-1">Note: Data changes are simulated and do not persist.</p>
+           <p className="text-sm text-destructive mt-1">Note: Data changes are simulated and do not persist across sessions.</p>
         </div>
-        <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingSkill(null); }}>
+        <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) {setEditingSkill(null); formState.errors = {}; formState.message = "";} }}>
           <DialogTrigger asChild>
-            <Button onClick={() => { setEditingSkill(null); setIsFormOpen(true); }}>
+            <Button onClick={() => { setEditingSkill(null); formState.errors = {}; formState.message = ""; setIsFormOpen(true); }}>
               <PlusCircle className="mr-2 h-4 w-4" /> Add New Skill
             </Button>
           </DialogTrigger>

@@ -1,8 +1,8 @@
-
 import type React from 'react';
 
 // Types for data structures
 export interface Skill {
+  id: string; // Made ID mandatory for consistency after initial setup
   name: string;
   level?: number; // Optional: 0-100 for progress bar
   iconName?: keyof typeof import('lucide-react'); // Store the name of the Lucide icon
@@ -61,20 +61,20 @@ export const aboutData = {
 };
 
 export const skillsData: Skill[] = [
-  { name: 'JavaScript', level: 90, iconName: 'Cpu', category: 'Language' },
-  { name: 'Python', level: 85, iconName: 'Cpu', category: 'Language' },
-  { name: 'Java', level: 75, iconName: 'Cpu', category: 'Language' },
-  { name: 'React.js', level: 90, iconName: 'Code', category: 'Framework/Library' },
-  { name: 'Next.js', level: 88, iconName: 'Code', category: 'Framework/Library' },
-  { name: 'Node.js', level: 80, iconName: 'Server', category: 'Framework/Library' },
-  { name: 'Express.js', level: 78, iconName: 'Server', category: 'Framework/Library' },
-  { name: 'SQL (PostgreSQL, MySQL)', level: 70, iconName: 'Database', category: 'Database' },
-  { name: 'MongoDB', level: 65, iconName: 'Database', category: 'Database' },
-  { name: 'Git & GitHub', level: 90, iconName: 'Github', category: 'Tool' },
-  { name: 'Docker', level: 60, iconName: 'Package', category: 'Tool' }, // Changed from Settings
-  { name: 'AWS (EC2, S3)', level: 50, iconName: 'Cloud', category: 'Cloud' },
-  { name: 'REST APIs', level: 85, iconName: 'Server', category: 'Other' },
-  { name: 'Agile Methodologies', level: 75, iconName: 'Brain', category: 'Other' },
+  { id: 'skill-js', name: 'JavaScript', level: 90, iconName: 'Cpu', category: 'Language' },
+  { id: 'skill-python', name: 'Python', level: 85, iconName: 'Cpu', category: 'Language' },
+  { id: 'skill-java', name: 'Java', level: 75, iconName: 'Cpu', category: 'Language' },
+  { id: 'skill-react', name: 'React.js', level: 90, iconName: 'Code', category: 'Framework/Library' },
+  { id: 'skill-nextjs', name: 'Next.js', level: 88, iconName: 'Code', category: 'Framework/Library' },
+  { id: 'skill-nodejs', name: 'Node.js', level: 80, iconName: 'Server', category: 'Framework/Library' },
+  { id: 'skill-expressjs', name: 'Express.js', level: 78, iconName: 'Server', category: 'Framework/Library' },
+  { id: 'skill-sql', name: 'SQL (PostgreSQL, MySQL)', level: 70, iconName: 'Database', category: 'Database' },
+  { id: 'skill-mongodb', name: 'MongoDB', level: 65, iconName: 'Database', category: 'Database' },
+  { id: 'skill-git', name: 'Git & GitHub', level: 90, iconName: 'Github', category: 'Tool' },
+  { id: 'skill-docker', name: 'Docker', level: 60, iconName: 'Package', category: 'Tool' },
+  { id: 'skill-aws', name: 'AWS (EC2, S3)', level: 50, iconName: 'Cloud', category: 'Cloud' },
+  { id: 'skill-rest', name: 'REST APIs', level: 85, iconName: 'Server', category: 'Other' },
+  { id: 'skill-agile', name: 'Agile Methodologies', level: 75, iconName: 'Brain', category: 'Other' },
 ];
 
 export const educationData: EducationItem[] = [
@@ -170,3 +170,28 @@ export const contactDetails = {
   github: 'https://github.com/yourusername',
   twitter: 'https://twitter.com/yourusername', // Optional
 };
+
+// Adding IDs to initial skill data if they were missing
+skillsData.forEach((skill, index) => {
+  if (!skill.id) {
+    skill.id = `skill-initial-${index}-${skill.name.toLowerCase().replace(/\s+/g, '-')}`;
+  }
+});
+
+educationData.forEach((item, index) => {
+    if(!item.id) {
+        item.id = `edu-initial-${index}`;
+    }
+});
+
+projectsData.forEach((item, index) => {
+    if(!item.id) {
+        item.id = `project-initial-${index}`;
+    }
+});
+
+certificationsData.forEach((item, index) => {
+    if(!item.id) {
+        item.id = `cert-initial-${index}`;
+    }
+});
