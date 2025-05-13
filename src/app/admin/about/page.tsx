@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useEffect, useActionState } from 'react';
+import { useEffect, useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,14 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { updateAboutInfo } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { aboutData as initialAboutData, siteSettingsData } from '@/lib/data'; // To pre-fill form, and for default image if needed
+import { aboutData as initialAboutDataFromModule, siteSettingsData, type AboutData } from '@/lib/data';
 import { Loader2 } from 'lucide-react';
-import { useState } from 'react'; // For managing local state of aboutData
 
 const initialState = {
   success: false,
   message: '',
   errors: {},
+  updatedAboutData: undefined as AboutData | undefined,
 };
 
 function SubmitButton() {
@@ -31,14 +30,15 @@ function SubmitButton() {
 }
 
 export default function AdminAboutPage() {
-  const [currentAboutData, setCurrentAboutData] = useState({...initialAboutData});
+  const [currentAboutData, setCurrentAboutData] = useState<AboutData>({...initialAboutDataFromModule});
   const [state, formAction] = useActionState(updateAboutInfo, initialState);
   const { toast } = useToast();
   
+  // This effect is to initialize from the module, useful for initial load
+  // but subsequent updates should primarily come from the action's response.
   useEffect(() => {
-    // Keep local state in sync if lib/data.ts changes (e.g. after successful action)
-    setCurrentAboutData({...initialAboutData});
-  }, [initialAboutData]);
+    setCurrentAboutData({...initialAboutDataFromModule});
+  }, []);
 
 
   useEffect(() => {
@@ -48,9 +48,13 @@ export default function AdminAboutPage() {
         description: state.message,
         variant: state.success ? 'default' : 'destructive',
       });
-      if (state.success) {
-        // Refresh currentAboutData from the source of truth after successful update
-        setCurrentAboutData({...initialAboutData});
+      if (state.success && state.updatedAboutData) {
+        // Refresh currentAboutData from the action's response
+        setCurrentAboutData(state.updatedAboutData);
+      } else if (state.success) {
+        // Fallback: If updatedAboutData is somehow not in state, re-fetch from module.
+        // This ideally shouldn't be hit if actions.ts is correct.
+        setCurrentAboutData({...initialAboutDataFromModule});
       }
     }
   }, [state, toast]);
@@ -80,8 +84,8 @@ export default function AdminAboutPage() {
                 rows={5}
                 required
                 className="mt-1 min-h-[120px]"
-                defaultValue={currentAboutData.professionalSummary}
-                key={`summary-${currentAboutData.professionalSummary}`} // Key to force re-render on change
+                value={currentAboutData.professionalSummary} // Controlled component
+                onChange={(e) => setCurrentAboutData(prev => ({...prev, professionalSummary: e.target.value}))}
                 aria-describedby={state.errors?.professionalSummary ? "summary-error" : undefined}
               />
               {state.errors?.professionalSummary && (
@@ -97,8 +101,8 @@ export default function AdminAboutPage() {
                 rows={8}
                 required
                 className="mt-1 min-h-[150px]"
-                defaultValue={currentAboutData.bio}
-                key={`bio-${currentAboutData.bio}`} // Key to force re-render
+                value={currentAboutData.bio} // Controlled component
+                onChange={(e) => setCurrentAboutData(prev => ({...prev, bio: e.target.value}))}
                 aria-describedby={state.errors?.bio ? "bio-error" : undefined}
               />
               {state.errors?.bio && (
@@ -113,8 +117,8 @@ export default function AdminAboutPage() {
                 id="profileImageUrl"
                 name="profileImageUrl"
                 className="mt-1"
-                defaultValue={currentAboutData.profileImageUrl}
-                key={`img-${currentAboutData.profileImageUrl}`} // Key to force re-render
+                value={currentAboutData.profileImageUrl} // Controlled component
+                onChange={(e) => setCurrentAboutData(prev => ({...prev, profileImageUrl: e.target.value}))}
                 placeholder="https://example.com/your-image.jpg"
                 aria-describedby={state.errors?.profileImageUrl ? "imageurl-error" : undefined}
               />

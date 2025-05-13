@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo, useActionState } from 'react';
@@ -17,7 +16,13 @@ import type { Project } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
-const initialFormState = { success: false, message: '', errors: {} };
+const initialFormState = { 
+  success: false, 
+  message: '', 
+  errors: {},
+  projects: undefined as Project[] | undefined,
+  updatedProject: undefined as Project | undefined,
+};
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
   const { pending } = useFormStatus();
@@ -39,7 +44,7 @@ export default function AdminProjectsPage() {
 
   useEffect(() => {
     setProjects([...initialProjectsDataFromModule]);
-  }, [initialProjectsDataFromModule]);
+  }, []);
 
   useEffect(() => {
     if (formState.message) {
@@ -51,7 +56,11 @@ export default function AdminProjectsPage() {
       if (formState.success) {
         setIsFormOpen(false);
         setEditingProject(null);
-        setProjects([...initialProjectsDataFromModule]); // Refresh from source
+        if (formState.projects) {
+          setProjects(formState.projects); 
+        } else {
+          setProjects([...initialProjectsDataFromModule]);
+        }
       }
     }
   }, [formState, toast]);
@@ -69,8 +78,10 @@ export default function AdminProjectsPage() {
         description: result.message,
         variant: result.success ? 'default' : 'destructive',
       });
-      if (result.success) {
-        setProjects([...initialProjectsDataFromModule]); // Refresh from source
+      if (result.success && result.projects) {
+        setProjects(result.projects);
+      } else if (result.success) {
+        setProjects([...initialProjectsDataFromModule]);
       }
     }
   };

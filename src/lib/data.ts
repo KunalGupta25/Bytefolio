@@ -1,4 +1,3 @@
-
 import type React from 'react';
 
 // Types for data structures
@@ -46,6 +45,13 @@ export interface SiteSettings {
   defaultUserSpecialization: string;
 }
 
+export interface AboutData {
+  professionalSummary: string;
+  bio: string;
+  profileImageUrl: string;
+  dataAiHint?: string;
+}
+
 // Mock Data - Changed to 'let' to be mutable
 export let siteSettingsData: SiteSettings = {
   siteName: "ByteFolio",
@@ -54,7 +60,7 @@ export let siteSettingsData: SiteSettings = {
   defaultUserSpecialization: "Web Development, AI, Cybersecurity",
 };
 
-export let aboutData = {
+export let aboutData: AboutData = {
   professionalSummary: "I am a dedicated and enthusiastic B.Tech Computer Science student with a strong foundation in software development, problem-solving, and [mention 1-2 key areas like web technologies, data structures, algorithms]. I am passionate about creating impactful technology solutions and continuously expanding my knowledge in the ever-evolving tech landscape. Eager to contribute to innovative projects and collaborate with like-minded professionals.",
   bio: "Beyond coding, I enjoy [mention a hobby or interest, e.g., contributing to open-source projects, exploring new AI advancements, playing chess]. I believe in lifelong learning and am always seeking new challenges to grow both personally and professionally. My goal is to leverage my technical skills to make a positive impact.",
   profileImageUrl: "https://picsum.photos/seed/profile/300/300", 

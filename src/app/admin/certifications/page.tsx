@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo, useActionState } from 'react';
@@ -21,7 +20,13 @@ const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && t
 
 
 const NULL_ICON_VALUE = "--no-icon--";
-const initialFormState = { success: false, message: '', errors: {} };
+const initialFormState = { 
+  success: false, 
+  message: '', 
+  errors: {},
+  certifications: undefined as Certification[] | undefined,
+  updatedCertification: undefined as Certification | undefined,
+};
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
   const { pending } = useFormStatus();
@@ -43,7 +48,7 @@ export default function AdminCertificationsPage() {
 
   useEffect(() => {
     setCertifications([...initialCertificationsDataFromModule]);
-  }, [initialCertificationsDataFromModule]);
+  }, []);
 
 
   useEffect(() => {
@@ -56,7 +61,11 @@ export default function AdminCertificationsPage() {
       if (formState.success) {
         setIsFormOpen(false);
         setEditingCertification(null);
-        setCertifications([...initialCertificationsDataFromModule]); // Refresh from source
+        if (formState.certifications) {
+          setCertifications(formState.certifications); 
+        } else {
+          setCertifications([...initialCertificationsDataFromModule]);
+        }
       }
     }
   }, [formState, toast]);
@@ -74,8 +83,10 @@ export default function AdminCertificationsPage() {
         description: result.message,
         variant: result.success ? 'default' : 'destructive',
       });
-      if (result.success) {
-        setCertifications([...initialCertificationsDataFromModule]); // Refresh from source
+      if (result.success && result.certifications) {
+        setCertifications(result.certifications);
+      } else if (result.success) {
+        setCertifications([...initialCertificationsDataFromModule]);
       }
     }
   };

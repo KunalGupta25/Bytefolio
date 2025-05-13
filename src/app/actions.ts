@@ -1,16 +1,16 @@
-
 'use server';
 
 import { z } from 'zod';
-import type { Skill, EducationItem, Project, Certification } from '@/lib/data';
+import type { Skill, EducationItem, Project, Certification, SiteSettings } from '@/lib/data';
 import { 
   aboutData, 
   siteSettingsData,
   skillsData,
   educationData,
   projectsData,
-  certificationsData
-} from '@/lib/data'; // Import mutable data
+  certificationsData,
+  type AboutData // Import AboutData type if not already implicitly available
+} from '@/lib/data'; 
 
 const NULL_ICON_VALUE = "--no-icon--";
 
@@ -46,7 +46,6 @@ export async function loginAdminAction(prevState: LoginState | undefined, formDa
 
   const { email, password } = validatedFields.data;
 
-  // Hardcoded credentials for demonstration
   if (email === 'admin@gmail.com' && password === 'k4912005') {
     console.log('Admin login successful for:', email);
     return { success: true, message: 'Login successful!' };
@@ -60,7 +59,7 @@ export async function loginAdminAction(prevState: LoginState | undefined, formDa
 }
 
 
-// --- Contact Form (Remains Simulated as it's not part of core admin functionality focus) ---
+// --- Contact Form ---
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
@@ -108,6 +107,7 @@ interface AboutInfoState {
   success: boolean;
   message: string;
   errors?: z.inferFlattenedErrors<typeof aboutInfoSchema>['fieldErrors'];
+  updatedAboutData?: AboutData; // Changed from typeof aboutData to explicit type if available
 }
 
 export async function updateAboutInfo(prevState: AboutInfoState | undefined, formData: FormData): Promise<AboutInfoState> {
@@ -127,10 +127,10 @@ export async function updateAboutInfo(prevState: AboutInfoState | undefined, for
   
   aboutData.professionalSummary = validatedFields.data.professionalSummary;
   aboutData.bio = validatedFields.data.bio;
-  aboutData.profileImageUrl = validatedFields.data.profileImageUrl || siteSettingsData.defaultProfileImageUrl; // Fallback if empty
+  aboutData.profileImageUrl = validatedFields.data.profileImageUrl || siteSettingsData.defaultProfileImageUrl;
   
   console.log('About Me information updated:', aboutData);
-  return { success: true, message: 'About Me information updated successfully!' };
+  return { success: true, message: 'About Me information updated successfully!', updatedAboutData: {...aboutData} };
 }
 
 // --- Site Settings ---
@@ -144,6 +144,7 @@ interface SiteSettingsState {
   success: boolean;
   message: string;
   errors?: z.inferFlattenedErrors<typeof siteSettingsSchema>['fieldErrors'];
+  updatedSiteSettings?: SiteSettings;
 }
 
 export async function updateSiteSettings(prevState: SiteSettingsState | undefined, formData: FormData): Promise<SiteSettingsState> {
@@ -162,7 +163,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
   siteSettingsData.defaultUserSpecialization = validatedFields.data.defaultUserSpecialization;
   
   console.log('Site Settings updated:', siteSettingsData);
-  return { success: true, message: 'Site settings updated successfully!' };
+  return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: {...siteSettingsData} };
 }
 
 
@@ -179,7 +180,8 @@ interface SkillCrudState {
   success: boolean;
   message: string;
   errors?: z.inferFlattenedErrors<typeof skillSchema>['fieldErrors'];
-  updatedSkill?: Skill; 
+  updatedSkill?: Skill;
+  skills?: Skill[]; 
 }
 
 export async function saveSkillAction(prevState: SkillCrudState | undefined, formData: FormData): Promise<SkillCrudState> {
@@ -198,13 +200,14 @@ export async function saveSkillAction(prevState: SkillCrudState | undefined, for
   }
   
   let skillData = validatedFields.data as Skill; 
+  const isNew = !skillData.id;
 
-  if (skillData.id) { // Update existing skill
+  if (!isNew && skillData.id) { // Update existing skill
     const index = skillsData.findIndex(s => s.id === skillData.id);
     if (index > -1) {
       skillsData[index] = { ...skillsData[index], ...skillData };
       console.log('Updating Skill:', skillsData[index]);
-      return { success: true, message: `Skill '${skillData.name}' updated successfully!`, updatedSkill: skillsData[index] };
+      return { success: true, message: `Skill '${skillData.name}' updated successfully!`, updatedSkill: skillsData[index], skills: [...skillsData] };
     } else {
        return { success: false, message: `Skill with ID '${skillData.id}' not found for update.` };
     }
@@ -212,24 +215,22 @@ export async function saveSkillAction(prevState: SkillCrudState | undefined, for
     skillData.id = `skill-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     skillsData.push(skillData);
     console.log('Adding Skill:', skillData);
-    return { success: true, message: `Skill '${skillData.name}' added successfully!`, updatedSkill: skillData };
+    return { success: true, message: `Skill '${skillData.name}' added successfully!`, updatedSkill: skillData, skills: [...skillsData] };
   }
 }
 
-export async function deleteSkillAction(id: string): Promise<{ success: boolean; message: string }> {
+export async function deleteSkillAction(id: string): Promise<{ success: boolean; message: string; skills?: Skill[] }> {
   if (!id) return { success: false, message: "Skill ID is required." };
   
   const initialLength = skillsData.length;
   const newSkillsData = skillsData.filter(s => s.id !== id);
   
   if (newSkillsData.length < initialLength) {
-    // Directly reassign if module allows (it does with `let`)
-    Object.assign(skillsData, newSkillsData); // To keep the original array reference if needed elsewhere, or just:
-    skillsData.length = 0; // Clear the array
-    skillsData.push(...newSkillsData); // Repopulate
+    skillsData.length = 0; 
+    skillsData.push(...newSkillsData);
 
     console.log('Deleting Skill, ID:', id);
-    return { success: true, message: `Skill deleted successfully!` };
+    return { success: true, message: `Skill deleted successfully!`, skills: [...skillsData] };
   }
   return { success: false, message: "Skill not found for deletion." };
 }
@@ -250,6 +251,7 @@ interface EducationCrudState {
   message: string;
   errors?: z.inferFlattenedErrors<typeof educationItemSchema>['fieldErrors'];
   updatedItem?: EducationItem;
+  educationItems?: EducationItem[];
 }
 
 export async function saveEducationItemAction(prevState: EducationCrudState | undefined, formData: FormData): Promise<EducationCrudState> {
@@ -269,23 +271,25 @@ export async function saveEducationItemAction(prevState: EducationCrudState | un
   }
 
   let eduData = validatedFields.data as EducationItem;
-  if (eduData.id) {
+  const isNew = !eduData.id;
+
+  if (!isNew && eduData.id) {
     const index = educationData.findIndex(item => item.id === eduData.id);
     if (index > -1) {
       educationData[index] = { ...educationData[index], ...eduData };
       console.log('Updating Education Item:', educationData[index]);
-      return { success: true, message: `Education item '${eduData.degree}' updated!`, updatedItem: educationData[index] };
+      return { success: true, message: `Education item '${eduData.degree}' updated!`, updatedItem: educationData[index], educationItems: [...educationData] };
     }
     return { success: false, message: `Education item with ID '${eduData.id}' not found.` };
   } else {
     eduData.id = `edu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     educationData.push(eduData);
     console.log('Adding Education Item:', eduData);
-    return { success: true, message: `Education item '${eduData.degree}' added!`, updatedItem: eduData };
+    return { success: true, message: `Education item '${eduData.degree}' added!`, updatedItem: eduData, educationItems: [...educationData] };
   }
 }
 
-export async function deleteEducationItemAction(id: string): Promise<{ success: boolean; message: string }> {
+export async function deleteEducationItemAction(id: string): Promise<{ success: boolean; message: string; educationItems?: EducationItem[] }> {
   if (!id) return { success: false, message: "Education ID is required." };
   
   const initialLength = educationData.length;
@@ -295,7 +299,7 @@ export async function deleteEducationItemAction(id: string): Promise<{ success: 
     educationData.length = 0;
     educationData.push(...newEducationData);
     console.log('Deleting Education Item, ID:', id);
-    return { success: true, message: `Education item deleted!` };
+    return { success: true, message: `Education item deleted!`, educationItems: [...educationData] };
   }
   return { success: false, message: "Education item not found." };
 }
@@ -318,6 +322,7 @@ interface ProjectCrudState {
   message: string;
   errors?: z.inferFlattenedErrors<typeof projectSchema>['fieldErrors'];
   updatedProject?: Project;
+  projects?: Project[];
 }
 
 export async function saveProjectAction(prevState: ProjectCrudState | undefined, formData: FormData): Promise<ProjectCrudState> {
@@ -337,24 +342,26 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
   }
   
-  let projectData = validatedFields.data as Project; 
-  if (projectData.id) {
-    const index = projectsData.findIndex(p => p.id === projectData.id);
+  let projectDataValue = validatedFields.data as Project; 
+  const isNew = !projectDataValue.id;
+
+  if (!isNew && projectDataValue.id) {
+    const index = projectsData.findIndex(p => p.id === projectDataValue.id);
     if (index > -1) {
-      projectsData[index] = { ...projectsData[index], ...projectData };
+      projectsData[index] = { ...projectsData[index], ...projectDataValue };
       console.log('Updating Project:', projectsData[index]);
-      return { success: true, message: `Project '${projectData.title}' updated!`, updatedProject: projectsData[index] };
+      return { success: true, message: `Project '${projectDataValue.title}' updated!`, updatedProject: projectsData[index], projects: [...projectsData] };
     }
-    return { success: false, message: `Project with ID '${projectData.id}' not found.` };
+    return { success: false, message: `Project with ID '${projectDataValue.id}' not found.` };
   } else {
-    projectData.id = `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    projectsData.push(projectData);
-    console.log('Adding Project:', projectData);
-    return { success: true, message: `Project '${projectData.title}' added!`, updatedProject: projectData };
+    projectDataValue.id = `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    projectsData.push(projectDataValue);
+    console.log('Adding Project:', projectDataValue);
+    return { success: true, message: `Project '${projectDataValue.title}' added!`, updatedProject: projectDataValue, projects: [...projectsData] };
   }
 }
 
-export async function deleteProjectAction(id: string): Promise<{ success: boolean; message: string }> {
+export async function deleteProjectAction(id: string): Promise<{ success: boolean; message: string; projects?: Project[] }> {
   if (!id) return { success: false, message: "Project ID is required." };
 
   const initialLength = projectsData.length;
@@ -364,7 +371,7 @@ export async function deleteProjectAction(id: string): Promise<{ success: boolea
     projectsData.length = 0;
     projectsData.push(...newProjectsData);
     console.log('Deleting Project, ID:', id);
-    return { success: true, message: `Project deleted!` };
+    return { success: true, message: `Project deleted!`, projects: [...projectsData] };
   }
   return { success: false, message: "Project not found." };
 }
@@ -385,6 +392,7 @@ interface CertificationCrudState {
   message: string;
   errors?: z.inferFlattenedErrors<typeof certificationSchema>['fieldErrors'];
   updatedCertification?: Certification;
+  certifications?: Certification[];
 }
 
 export async function saveCertificationAction(prevState: CertificationCrudState | undefined, formData: FormData): Promise<CertificationCrudState> {
@@ -404,23 +412,25 @@ export async function saveCertificationAction(prevState: CertificationCrudState 
   }
 
   let certData = validatedFields.data as Certification;
-  if (certData.id) {
+  const isNew = !certData.id;
+
+  if (!isNew && certData.id) {
     const index = certificationsData.findIndex(c => c.id === certData.id);
     if (index > -1) {
       certificationsData[index] = { ...certificationsData[index], ...certData };
       console.log('Updating Certification:', certificationsData[index]);
-      return { success: true, message: `Certification '${certData.name}' updated!`, updatedCertification: certificationsData[index] };
+      return { success: true, message: `Certification '${certData.name}' updated!`, updatedCertification: certificationsData[index], certifications: [...certificationsData] };
     }
     return { success: false, message: `Certification with ID '${certData.id}' not found.` };
   } else {
     certData.id = `cert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     certificationsData.push(certData);
     console.log('Adding Certification:', certData);
-    return { success: true, message: `Certification '${certData.name}' added!`, updatedCertification: certData };
+    return { success: true, message: `Certification '${certData.name}' added!`, updatedCertification: certData, certifications: [...certificationsData] };
   }
 }
 
-export async function deleteCertificationAction(id: string): Promise<{ success: boolean; message: string }> {
+export async function deleteCertificationAction(id: string): Promise<{ success: boolean; message: string; certifications?: Certification[] }> {
   if (!id) return { success: false, message: "Certification ID is required." };
   
   const initialLength = certificationsData.length;
@@ -430,8 +440,7 @@ export async function deleteCertificationAction(id: string): Promise<{ success: 
     certificationsData.length = 0;
     certificationsData.push(...newCertsData);
     console.log('Deleting Certification, ID:', id);
-    return { success: true, message: `Certification deleted!` };
+    return { success: true, message: `Certification deleted!`, certifications: [...certificationsData] };
   }
   return { success: false, message: "Certification not found." };
 }
-

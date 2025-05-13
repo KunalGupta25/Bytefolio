@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo, useActionState } from 'react';
@@ -22,7 +21,13 @@ const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && t
 
 
 const NULL_ICON_VALUE = "--no-icon--";
-const initialFormState = { success: false, message: '', errors: {} };
+const initialFormState = { 
+  success: false, 
+  message: '', 
+  errors: {},
+  educationItems: undefined as EducationItem[] | undefined,
+  updatedItem: undefined as EducationItem | undefined,
+};
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
   const { pending } = useFormStatus();
@@ -44,7 +49,7 @@ export default function AdminEducationPage() {
 
   useEffect(() => {
     setEducationItems([...initialEducationDataFromModule]);
-  }, [initialEducationDataFromModule]);
+  }, []);
 
   useEffect(() => {
     if (formState.message) {
@@ -56,7 +61,11 @@ export default function AdminEducationPage() {
       if (formState.success) {
         setIsFormOpen(false);
         setEditingItem(null);
-        setEducationItems([...initialEducationDataFromModule]); // Refresh from source
+        if (formState.educationItems) {
+          setEducationItems(formState.educationItems); 
+        } else {
+          setEducationItems([...initialEducationDataFromModule]);
+        }
       }
     }
   }, [formState, toast]);
@@ -74,8 +83,10 @@ export default function AdminEducationPage() {
         description: result.message,
         variant: result.success ? 'default' : 'destructive',
       });
-      if (result.success) {
-        setEducationItems([...initialEducationDataFromModule]); // Refresh from source
+      if (result.success && result.educationItems) {
+        setEducationItems(result.educationItems);
+      } else if (result.success) {
+        setEducationItems([...initialEducationDataFromModule]);
       }
     }
   };

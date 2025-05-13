@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useActionState, useState } from 'react';
@@ -9,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateSiteSettings } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { siteSettingsData as initialSiteSettingsData } from '@/lib/data'; 
+import { siteSettingsData as initialSiteSettingsDataFromModule, type SiteSettings } from '@/lib/data'; 
 import { Loader2 } from 'lucide-react';
 
 const initialState = {
   success: false,
   message: '',
   errors: {},
+  updatedSiteSettings: undefined as SiteSettings | undefined,
 };
 
 function SubmitButton() {
@@ -29,14 +29,13 @@ function SubmitButton() {
 }
 
 export default function AdminSettingsPage() {
-  const [currentSettings, setCurrentSettings] = useState({...initialSiteSettingsData});
+  const [currentSettings, setCurrentSettings] = useState<SiteSettings>({...initialSiteSettingsDataFromModule});
   const [state, formAction] = useActionState(updateSiteSettings, initialState);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Keep local state in sync if lib/data.ts changes
-    setCurrentSettings({...initialSiteSettingsData});
-  }, [initialSiteSettingsData]);
+    setCurrentSettings({...initialSiteSettingsDataFromModule});
+  }, []);
 
   useEffect(() => {
     if (state.message) {
@@ -45,9 +44,10 @@ export default function AdminSettingsPage() {
         description: state.message,
         variant: state.success ? 'default' : 'destructive',
       });
-      if(state.success) {
-        // Refresh from source of truth
-        setCurrentSettings({...initialSiteSettingsData});
+      if(state.success && state.updatedSiteSettings) {
+        setCurrentSettings(state.updatedSiteSettings);
+      } else if (state.success) {
+        setCurrentSettings({...initialSiteSettingsDataFromModule});
       }
     }
   }, [state, toast]);
@@ -76,8 +76,8 @@ export default function AdminSettingsPage() {
                 name="siteName"
                 required
                 className="mt-1"
-                defaultValue={currentSettings.siteName}
-                key={`sitename-${currentSettings.siteName}`}
+                value={currentSettings.siteName}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, siteName: e.target.value}))}
                 aria-describedby={state.errors?.siteName ? "sitename-error" : undefined}
               />
               {state.errors?.siteName && (
@@ -92,8 +92,8 @@ export default function AdminSettingsPage() {
                 name="defaultUserName"
                 required
                 className="mt-1"
-                defaultValue={currentSettings.defaultUserName}
-                key={`username-${currentSettings.defaultUserName}`}
+                value={currentSettings.defaultUserName}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, defaultUserName: e.target.value}))}
                 aria-describedby={state.errors?.defaultUserName ? "username-error" : undefined}
               />
               {state.errors?.defaultUserName && (
@@ -108,8 +108,8 @@ export default function AdminSettingsPage() {
                 name="defaultUserSpecialization"
                 required
                 className="mt-1"
-                defaultValue={currentSettings.defaultUserSpecialization}
-                key={`specialization-${currentSettings.defaultUserSpecialization}`}
+                value={currentSettings.defaultUserSpecialization}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, defaultUserSpecialization: e.target.value}))}
                 aria-describedby={state.errors?.defaultUserSpecialization ? "specialization-error" : undefined}
               />
               {state.errors?.defaultUserSpecialization && (
