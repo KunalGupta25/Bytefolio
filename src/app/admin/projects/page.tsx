@@ -1,8 +1,8 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import React, { useState, useEffect, useMemo, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +35,7 @@ export default function AdminProjectsPage() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const { toast } = useToast();
 
-  const [formState, formAction] = useFormState(saveProjectAction, initialFormState);
+  const [formState, formAction] = useActionState(saveProjectAction, initialFormState);
 
   useEffect(() => {
     if (formState.message) {
@@ -189,3 +189,4 @@ export default function AdminProjectsPage() {
     </div>
   );
 }
+

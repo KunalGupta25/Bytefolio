@@ -1,15 +1,15 @@
 
 "use client";
 
-import { useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { loginAdminAction } from '@/app/actions'; // Will be created
+import { loginAdminAction } from '@/app/actions'; 
 import { Loader2 } from 'lucide-react';
 
 const ADMIN_AUTH_TOKEN_KEY = 'adminAuthToken';
@@ -30,7 +30,7 @@ function SubmitButton() {
 }
 
 export default function AdminLoginPage() {
-  const [state, formAction] = useFormState(loginAdminAction, initialState);
+  const [state, formAction] = useActionState(loginAdminAction, initialState);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -98,3 +98,4 @@ export default function AdminLoginPage() {
     </div>
   );
 }
+

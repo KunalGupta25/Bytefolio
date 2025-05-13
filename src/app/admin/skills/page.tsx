@@ -1,13 +1,12 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import React, { useState, useEffect, useMemo, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,7 +17,8 @@ import type { Skill } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const iconNames = Object.keys(LucideIcons) as (keyof typeof LucideIcons)[];
+const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && LucideIcons[key as keyof typeof LucideIcons] !== LucideIcons.createLucideIcon) as (keyof typeof LucideIcons)[];
+
 
 const initialFormState = { success: false, message: '', errors: {} };
 
@@ -38,7 +38,7 @@ export default function AdminSkillsPage() {
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const { toast } = useToast();
 
-  const [formState, formAction] = useFormState(saveSkillAction, initialFormState);
+  const [formState, formAction] = useActionState(saveSkillAction, initialFormState);
 
   useEffect(() => {
     if (formState.message) {
@@ -50,8 +50,6 @@ export default function AdminSkillsPage() {
       if (formState.success) {
         setIsFormOpen(false);
         setEditingSkill(null);
-        // Simulate data refresh: In a real app, re-fetch or use optimistic updates.
-        // For this simulation, we update local state.
         const updatedSkill = formState.updatedSkill;
         if (updatedSkill) {
           setSkills(prevSkills => {
@@ -123,14 +121,18 @@ export default function AdminSkillsPage() {
             </SelectTrigger>
             <SelectContent className="max-h-60">
                 <SelectItem value="">None</SelectItem>
-                {iconNames.map(name => (
-                    <SelectItem key={name} value={name}>
-                        <div className="flex items-center gap-2">
-                            {React.createElement(LucideIcons[name] as React.ElementType, { className: "h-4 w-4" })}
+                {iconNames.map(name => {
+                    const IconComponent = LucideIcons[name] as React.ElementType;
+                    if (!IconComponent) return null;
+                    return (
+                        <SelectItem key={name} value={name}>
+                            <div className="flex items-center gap-2">
+                            <IconComponent className="h-4 w-4" />
                             {name}
-                        </div>
-                    </SelectItem>
-                ))}
+                            </div>
+                        </SelectItem>
+                    );
+                })}
             </SelectContent>
         </Select>
         {formState.errors?.iconName && <p className="text-sm text-destructive mt-1">{formState.errors.iconName.join(', ')}</p>}
@@ -188,7 +190,7 @@ export default function AdminSkillsPage() {
             </TableHeader>
             <TableBody>
               {skills.map((skill) => {
-                const IconComponent = skill.iconName ? LucideIcons[skill.iconName] as React.ElementType : null;
+                const IconComponent = skill.iconName && LucideIcons[skill.iconName] ? LucideIcons[skill.iconName] as React.ElementType : null;
                 return (
                 <TableRow key={skill.id || skill.name}>
                   <TableCell className="font-medium">{skill.name}</TableCell>
@@ -214,3 +216,4 @@ export default function AdminSkillsPage() {
     </div>
   );
 }
+

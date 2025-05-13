@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ function SubmitButton() {
 }
 
 export default function AdminSettingsPage() {
-  const [state, formAction] = useFormState(updateSiteSettings, initialState);
+  const [state, formAction] = useActionState(updateSiteSettings, initialState);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -112,3 +112,4 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
+

@@ -1,8 +1,8 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import React, { useState, useEffect, useMemo, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,8 @@ import type { Certification } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const iconNames = Object.keys(LucideIcons) as (keyof typeof LucideIcons)[];
+const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && LucideIcons[key as keyof typeof LucideIcons] !== LucideIcons.createLucideIcon) as (keyof typeof LucideIcons)[];
+
 const initialFormState = { success: false, message: '', errors: {} };
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
@@ -36,7 +37,7 @@ export default function AdminCertificationsPage() {
   const [editingCertification, setEditingCertification] = useState<Certification | null>(null);
   const { toast } = useToast();
 
-  const [formState, formAction] = useFormState(saveCertificationAction, initialFormState);
+  const [formState, formAction] = useActionState(saveCertificationAction, initialFormState);
 
   useEffect(() => {
     if (formState.message) {
@@ -114,14 +115,18 @@ export default function AdminCertificationsPage() {
             </SelectTrigger>
             <SelectContent className="max-h-60">
                 <SelectItem value="">None</SelectItem>
-                {iconNames.map(name => (
-                    <SelectItem key={name} value={name}>
-                        <div className="flex items-center gap-2">
-                           {React.createElement(LucideIcons[name] as React.ElementType, { className: "h-4 w-4" })}
-                           {name}
-                        </div>
-                    </SelectItem>
-                ))}
+                {iconNames.map(name => {
+                    const IconComponent = LucideIcons[name] as React.ElementType;
+                    if (!IconComponent) return null;
+                    return (
+                        <SelectItem key={name} value={name}>
+                            <div className="flex items-center gap-2">
+                            <IconComponent className="h-4 w-4" />
+                            {name}
+                            </div>
+                        </SelectItem>
+                    );
+                })}
             </SelectContent>
         </Select>
         {formState.errors?.iconName && <p className="text-sm text-destructive mt-1">{formState.errors.iconName.join(', ')}</p>}
@@ -193,3 +198,4 @@ export default function AdminCertificationsPage() {
     </div>
   );
 }
+
