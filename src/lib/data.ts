@@ -1,4 +1,5 @@
-import type { User, Code, BookOpen, Briefcase, Award, Star, Linkedin, Github, Mail, Cpu, Server, Brain, ShieldCheck, Database, Cloud, Settings } from 'lucide-react';
+import { User, Code, BookOpen, Briefcase, Award, Star, Linkedin, Github, Mail, Cpu, Server, Brain, ShieldCheck, Database, Cloud, Settings } from 'lucide-react';
+import type React from 'react';
 
 // Types for data structures
 export interface Skill {
@@ -53,7 +54,7 @@ export const skillsData: Skill[] = [
   { name: 'Express.js', level: 78, icon: Server, category: 'Framework/Library' },
   { name: 'SQL (PostgreSQL, MySQL)', level: 70, icon: Database, category: 'Database' },
   { name: 'MongoDB', level: 65, icon: Database, category: 'Database' },
-  { name: 'Git & GitHub', level: 90, icon: Github, category: 'Tool' },
+  { name: 'Git & GitHub', level: Github, category: 'Tool' },
   { name: 'Docker', level: 60, icon: Settings, category: 'Tool' },
   { name: 'AWS (EC2, S3)', level: 50, icon: Cloud, category: 'Cloud' },
   { name: 'REST APIs', level: 85, icon: Server, category: 'Other' },

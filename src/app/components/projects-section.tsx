@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { projectsData } from '@/lib/data';
@@ -13,7 +14,7 @@ export default function ProjectsSection() {
       <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
         {projectsData.map((project) => (
           <Card key={project.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden">
-            <div className="relative w-full h-56 sm:h-64">
+            <div className="group relative w-full h-56 sm:h-64">
               <Image
                 src={project.imageUrl}
                 alt={project.title}
@@ -25,7 +26,7 @@ export default function ProjectsSection() {
             </div>
             <CardHeader>
               <CardTitle className="text-xl font-semibold text-primary">{project.title}</CardTitle>
-              <CardDescription className="text-sm text-muted-foreground min-h-[3em]">{project.description}</CardHeader>
+              <CardDescription className="text-sm text-muted-foreground min-h-[3em]">{project.description}</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow">
               <div className="flex flex-wrap gap-2 mb-4">
@@ -56,3 +57,4 @@ export default function ProjectsSection() {
     </SectionWrapper>
   );
 }
+
