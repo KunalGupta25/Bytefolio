@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useActionState } from 'react';
+import { useEffect, useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateSiteSettings } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { siteSettingsData } from '@/lib/data'; // To pre-fill form
+import { siteSettingsData as initialSiteSettingsData } from '@/lib/data'; 
 import { Loader2 } from 'lucide-react';
 
 const initialState = {
@@ -29,8 +29,14 @@ function SubmitButton() {
 }
 
 export default function AdminSettingsPage() {
+  const [currentSettings, setCurrentSettings] = useState({...initialSiteSettingsData});
   const [state, formAction] = useActionState(updateSiteSettings, initialState);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Keep local state in sync if lib/data.ts changes
+    setCurrentSettings({...initialSiteSettingsData});
+  }, [initialSiteSettingsData]);
 
   useEffect(() => {
     if (state.message) {
@@ -39,6 +45,10 @@ export default function AdminSettingsPage() {
         description: state.message,
         variant: state.success ? 'default' : 'destructive',
       });
+      if(state.success) {
+        // Refresh from source of truth
+        setCurrentSettings({...initialSiteSettingsData});
+      }
     }
   }, [state, toast]);
 
@@ -54,8 +64,7 @@ export default function AdminSettingsPage() {
           <CardTitle>General Site Configuration</CardTitle>
           <CardDescription>
             Update the site name and other default values. 
-            Changes here are simulated and won't persist on the live site without database integration.
-            The Navigation and Footer components would need to dynamically use this data.
+            Changes are managed in memory and persist for the current server session.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -67,7 +76,8 @@ export default function AdminSettingsPage() {
                 name="siteName"
                 required
                 className="mt-1"
-                defaultValue={siteSettingsData.siteName}
+                defaultValue={currentSettings.siteName}
+                key={`sitename-${currentSettings.siteName}`}
                 aria-describedby={state.errors?.siteName ? "sitename-error" : undefined}
               />
               {state.errors?.siteName && (
@@ -82,7 +92,8 @@ export default function AdminSettingsPage() {
                 name="defaultUserName"
                 required
                 className="mt-1"
-                defaultValue={siteSettingsData.defaultUserName}
+                defaultValue={currentSettings.defaultUserName}
+                key={`username-${currentSettings.defaultUserName}`}
                 aria-describedby={state.errors?.defaultUserName ? "username-error" : undefined}
               />
               {state.errors?.defaultUserName && (
@@ -97,7 +108,8 @@ export default function AdminSettingsPage() {
                 name="defaultUserSpecialization"
                 required
                 className="mt-1"
-                defaultValue={siteSettingsData.defaultUserSpecialization}
+                defaultValue={currentSettings.defaultUserSpecialization}
+                key={`specialization-${currentSettings.defaultUserSpecialization}`}
                 aria-describedby={state.errors?.defaultUserSpecialization ? "specialization-error" : undefined}
               />
               {state.errors?.defaultUserSpecialization && (
@@ -112,4 +124,3 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
-

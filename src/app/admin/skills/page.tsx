@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useActionState } from 'react';
@@ -11,12 +12,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { saveSkillAction, deleteSkillAction } from '@/app/actions';
-import { skillsData as initialSkillsData } from '@/lib/data';
+import { skillsData as initialSkillsDataFromModule } from '@/lib/data'; // Import the mutable data
 import type { Skill } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && LucideIcons[key as keyof typeof LucideIcons] !== LucideIcons.createLucideIcon && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function') as (keyof typeof LucideIcons)[];
+const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && typeof LucideIcons[key as keyof typeof LucideIcons] !== 'object' && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && key !== 'createLucideIcon') as (keyof typeof LucideIcons)[];
+
 
 const NULL_ICON_VALUE = "--no-icon--";
 const initialFormState = { success: false, message: '', errors: {} };
@@ -32,12 +34,20 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminSkillsPage() {
-  const [skills, setSkills] = useState<Skill[]>(initialSkillsData);
+  // Initialize state with a copy of the potentially mutable data from the module
+  const [skills, setSkills] = useState<Skill[]>([...initialSkillsDataFromModule]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const { toast } = useToast();
 
   const [formState, formAction] = useActionState(saveSkillAction, initialFormState);
+
+  // Effect to refresh local skills state from the module data if it changes
+  // This helps if another action modified the data in src/lib/data.ts
+  useEffect(() => {
+    setSkills([...initialSkillsDataFromModule]);
+  }, [initialSkillsDataFromModule]);
+
 
   useEffect(() => {
     if (formState.message) {
@@ -48,26 +58,17 @@ export default function AdminSkillsPage() {
       });
       if (formState.success) {
         setIsFormOpen(false);
-        setEditingSkill(null); // Clear editing state
-        const returnedSkill = formState.updatedSkill;
-        if (returnedSkill && returnedSkill.id) { // Skill from action should always have an ID
-          setSkills(prevSkills => {
-            const index = prevSkills.findIndex(s => s.id === returnedSkill.id);
-            if (index > -1) { // Skill found, so it's an UPDATE
-              const newSkills = [...prevSkills];
-              newSkills[index] = returnedSkill;
-              return newSkills;
-            } else { // Skill not found by ID, so it's an ADD
-              return [...prevSkills, returnedSkill];
-            }
-          });
-        }
+        setEditingSkill(null); 
+        // The formState.updatedSkill contains the new/modified skill
+        // Refresh the skills list from the source of truth (data.ts)
+        // The individual item update logic below can be simplified if initialSkillsDataFromModule is always up-to-date
+        setSkills([...initialSkillsDataFromModule]); 
       }
     }
   }, [formState, toast]);
 
   const handleEdit = (skill: Skill) => {
-    setEditingSkill(skill); // skill here has an ID because initialSkillsData items now have IDs
+    setEditingSkill(skill); 
     setIsFormOpen(true);
   };
 
@@ -76,7 +77,7 @@ export default function AdminSkillsPage() {
         toast({ title: "Error", description: "Skill ID is missing.", variant: "destructive" });
         return;
     }
-    if (confirm('Are you sure you want to delete this skill? This action is simulated.')) {
+    if (confirm('Are you sure you want to delete this skill?')) {
       const result = await deleteSkillAction(id);
       toast({
         title: result.success ? 'Success!' : 'Error',
@@ -84,7 +85,8 @@ export default function AdminSkillsPage() {
         variant: result.success ? 'default' : 'destructive',
       });
       if (result.success) {
-        setSkills(prevSkills => prevSkills.filter(s => s.id !== id));
+        // Refresh from the source of truth
+        setSkills([...initialSkillsDataFromModule]);
       }
     }
   };
@@ -101,7 +103,7 @@ export default function AdminSkillsPage() {
       </div>
       <div>
         <Label htmlFor="level">Proficiency Level (0-100)</Label>
-        <Input id="level" name="level" type="number" min="0" max="100" defaultValue={editingSkill?.level || ''} />
+        <Input id="level" name="level" type="number" min="0" max="100" defaultValue={editingSkill?.level ?? ''} />
         {formState.errors?.level && <p className="text-sm text-destructive mt-1">{formState.errors.level.join(', ')}</p>}
       </div>
       <div>
@@ -123,10 +125,10 @@ export default function AdminSkillsPage() {
                 <SelectValue placeholder="Select an icon (optional)" />
             </SelectTrigger>
             <SelectContent className="max-h-60">
-                <SelectItem value={NULL_ICON_VALUE}>None</SelectItem>
+                <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
                 {iconNames.map(name => {
                     const IconComponent = LucideIcons[name] as React.ElementType;
-                    if (!IconComponent) return null;
+                    if (!IconComponent) return null; // Should not happen with filtered list
                     return (
                         <SelectItem key={name} value={name}>
                             <div className="flex items-center gap-2">
@@ -150,7 +152,7 @@ export default function AdminSkillsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Manage Skills</h1>
           <p className="text-muted-foreground">Add, edit, or delete skills showcased in your portfolio.</p>
-           <p className="text-sm text-destructive mt-1">Note: Data changes are simulated and do not persist across sessions.</p>
+           <p className="text-sm text-destructive mt-1">Note: Data is managed in memory and persists for the current server session.</p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) {setEditingSkill(null); formState.errors = {}; formState.message = "";} }}>
           <DialogTrigger asChild>
@@ -200,7 +202,7 @@ export default function AdminSkillsPage() {
                   <TableCell>{skill.category}</TableCell>
                   <TableCell>{skill.level !== undefined ? `${skill.level}%` : 'N/A'}</TableCell>
                   <TableCell>
-                    {IconComponent ? <IconComponent className="h-5 w-5" /> : skill.iconName || 'N/A'}
+                    {IconComponent ? <IconComponent className="h-5 w-5" /> : (skill.iconName || 'N/A')}
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(skill)}>

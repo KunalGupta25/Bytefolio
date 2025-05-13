@@ -1,8 +1,16 @@
+
 'use server';
 
 import { z } from 'zod';
-import type { Skill, EducationItem, Project, Certification, SiteSettings } from '@/lib/data';
-import { siteSettingsData } from '@/lib/data'; // For default site settings
+import type { Skill, EducationItem, Project, Certification } from '@/lib/data';
+import { 
+  aboutData, 
+  siteSettingsData,
+  skillsData,
+  educationData,
+  projectsData,
+  certificationsData
+} from '@/lib/data'; // Import mutable data
 
 const NULL_ICON_VALUE = "--no-icon--";
 
@@ -39,8 +47,7 @@ export async function loginAdminAction(prevState: LoginState | undefined, formDa
   const { email, password } = validatedFields.data;
 
   // Hardcoded credentials for demonstration
-  if (email === 'admin@example.com' && password === 'k4912005') {
-    // In a real app, set up a session (e.g., httpOnly cookie)
+  if (email === 'admin@gmail.com' && password === 'k4912005') {
     console.log('Admin login successful for:', email);
     return { success: true, message: 'Login successful!' };
   } else {
@@ -53,7 +60,7 @@ export async function loginAdminAction(prevState: LoginState | undefined, formDa
 }
 
 
-// --- Contact Form (Existing) ---
+// --- Contact Form (Remains Simulated as it's not part of core admin functionality focus) ---
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
@@ -90,7 +97,7 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
   return { success: true, message: 'Your message has been sent successfully! (Simulated)' };
 }
 
-// --- About Me (Existing, modified for clarity) ---
+// --- About Me ---
 const aboutInfoSchema = z.object({
   professionalSummary: z.string().min(50, { message: "Professional summary must be at least 50 characters." }),
   bio: z.string().min(50, { message: "Bio must be at least 50 characters." }),
@@ -117,9 +124,13 @@ export async function updateAboutInfo(prevState: AboutInfoState | undefined, for
       errors: validatedFields.error.flatten().fieldErrors,
     };
   }
-  console.log('About Me information update (Simulated):', validatedFields.data);
-  // SIMULATION: In a real app, update a database here. Static data in src/lib/data.ts is NOT modified.
-  return { success: true, message: 'About Me information updated successfully! (Simulated)' };
+  
+  aboutData.professionalSummary = validatedFields.data.professionalSummary;
+  aboutData.bio = validatedFields.data.bio;
+  aboutData.profileImageUrl = validatedFields.data.profileImageUrl || siteSettingsData.defaultProfileImageUrl; // Fallback if empty
+  
+  console.log('About Me information updated:', aboutData);
+  return { success: true, message: 'About Me information updated successfully!' };
 }
 
 // --- Site Settings ---
@@ -127,7 +138,6 @@ const siteSettingsSchema = z.object({
   siteName: z.string().min(3, "Site name must be at least 3 characters."),
   defaultUserName: z.string().min(2, "Default user name must be at least 2 characters."),
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
-  // defaultProfileImageUrl can be part of about me or here if it's a fallback
 });
 
 interface SiteSettingsState {
@@ -146,26 +156,30 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
   if (!validatedFields.success) {
     return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
   }
-  console.log('Site Settings update (Simulated):', validatedFields.data);
-  // SIMULATION: Update database. Static data in src/lib/data.ts is NOT modified.
-  return { success: true, message: 'Site settings updated successfully! (Simulated)' };
+  
+  siteSettingsData.siteName = validatedFields.data.siteName;
+  siteSettingsData.defaultUserName = validatedFields.data.defaultUserName;
+  siteSettingsData.defaultUserSpecialization = validatedFields.data.defaultUserSpecialization;
+  
+  console.log('Site Settings updated:', siteSettingsData);
+  return { success: true, message: 'Site settings updated successfully!' };
 }
 
 
 // --- Skills CRUD ---
 const skillSchema = z.object({
-  id: z.string().optional(), // For editing existing skills
+  id: z.string().optional(), 
   name: z.string().min(1, "Skill name is required."),
   level: z.coerce.number().min(0).max(100).optional(),
   category: z.enum(['Language', 'Framework/Library', 'Tool', 'Database', 'Cloud', 'Other']),
-  iconName: z.string().optional(), // Optional: name of a Lucide icon
+  iconName: z.string().optional().nullable(), 
 });
 
 interface SkillCrudState {
   success: boolean;
   message: string;
   errors?: z.inferFlattenedErrors<typeof skillSchema>['fieldErrors'];
-  updatedSkill?: Skill; // For optimistic updates or re-fetching
+  updatedSkill?: Skill; 
 }
 
 export async function saveSkillAction(prevState: SkillCrudState | undefined, formData: FormData): Promise<SkillCrudState> {
@@ -175,7 +189,7 @@ export async function saveSkillAction(prevState: SkillCrudState | undefined, for
     name: formData.get('name'),
     level: formData.get('level') ? Number(formData.get('level')) : undefined,
     category: formData.get('category'),
-    iconName: iconNameValue === NULL_ICON_VALUE ? undefined : (iconNameValue || undefined),
+    iconName: iconNameValue === NULL_ICON_VALUE ? null : (iconNameValue || undefined),
   };
   const validatedFields = skillSchema.safeParse(rawData);
 
@@ -183,22 +197,41 @@ export async function saveSkillAction(prevState: SkillCrudState | undefined, for
     return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
   }
   
-  const skillData = validatedFields.data as Skill; // Cast after validation
-  if (skillData.id) {
-    console.log('Updating Skill (Simulated):', skillData);
-  } else {
-    skillData.id = `skill-${Date.now()}`; // Simulate ID generation
-    console.log('Adding Skill (Simulated):', skillData);
+  let skillData = validatedFields.data as Skill; 
+
+  if (skillData.id) { // Update existing skill
+    const index = skillsData.findIndex(s => s.id === skillData.id);
+    if (index > -1) {
+      skillsData[index] = { ...skillsData[index], ...skillData };
+      console.log('Updating Skill:', skillsData[index]);
+      return { success: true, message: `Skill '${skillData.name}' updated successfully!`, updatedSkill: skillsData[index] };
+    } else {
+       return { success: false, message: `Skill with ID '${skillData.id}' not found for update.` };
+    }
+  } else { // Add new skill
+    skillData.id = `skill-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    skillsData.push(skillData);
+    console.log('Adding Skill:', skillData);
+    return { success: true, message: `Skill '${skillData.name}' added successfully!`, updatedSkill: skillData };
   }
-  // SIMULATION: Update database.
-  return { success: true, message: `Skill '${skillData.name}' saved successfully! (Simulated)`, updatedSkill: skillData };
 }
 
 export async function deleteSkillAction(id: string): Promise<{ success: boolean; message: string }> {
   if (!id) return { success: false, message: "Skill ID is required." };
-  console.log('Deleting Skill (Simulated):', id);
-  // SIMULATION: Delete from database.
-  return { success: true, message: `Skill deleted successfully! (Simulated)` };
+  
+  const initialLength = skillsData.length;
+  const newSkillsData = skillsData.filter(s => s.id !== id);
+  
+  if (newSkillsData.length < initialLength) {
+    // Directly reassign if module allows (it does with `let`)
+    Object.assign(skillsData, newSkillsData); // To keep the original array reference if needed elsewhere, or just:
+    skillsData.length = 0; // Clear the array
+    skillsData.push(...newSkillsData); // Repopulate
+
+    console.log('Deleting Skill, ID:', id);
+    return { success: true, message: `Skill deleted successfully!` };
+  }
+  return { success: false, message: "Skill not found for deletion." };
 }
 
 
@@ -209,7 +242,7 @@ const educationItemSchema = z.object({
   institution: z.string().min(1, "Institution is required."),
   period: z.string().min(1, "Period is required."),
   description: z.string().optional(),
-  iconName: z.string().optional(),
+  iconName: z.string().optional().nullable(),
 });
 
 interface EducationCrudState {
@@ -227,7 +260,7 @@ export async function saveEducationItemAction(prevState: EducationCrudState | un
     institution: formData.get('institution'),
     period: formData.get('period'),
     description: formData.get('description') || undefined,
-    iconName: iconNameValue === NULL_ICON_VALUE ? undefined : (iconNameValue || undefined),
+    iconName: iconNameValue === NULL_ICON_VALUE ? null : (iconNameValue || undefined),
   };
   const validatedFields = educationItemSchema.safeParse(rawData);
 
@@ -235,20 +268,36 @@ export async function saveEducationItemAction(prevState: EducationCrudState | un
     return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
   }
 
-  const eduData = validatedFields.data as EducationItem;
+  let eduData = validatedFields.data as EducationItem;
   if (eduData.id) {
-    console.log('Updating Education Item (Simulated):', eduData);
+    const index = educationData.findIndex(item => item.id === eduData.id);
+    if (index > -1) {
+      educationData[index] = { ...educationData[index], ...eduData };
+      console.log('Updating Education Item:', educationData[index]);
+      return { success: true, message: `Education item '${eduData.degree}' updated!`, updatedItem: educationData[index] };
+    }
+    return { success: false, message: `Education item with ID '${eduData.id}' not found.` };
   } else {
-    eduData.id = `edu-${Date.now()}`;
-    console.log('Adding Education Item (Simulated):', eduData);
+    eduData.id = `edu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    educationData.push(eduData);
+    console.log('Adding Education Item:', eduData);
+    return { success: true, message: `Education item '${eduData.degree}' added!`, updatedItem: eduData };
   }
-  return { success: true, message: `Education item '${eduData.degree}' saved! (Simulated)`, updatedItem: eduData };
 }
 
 export async function deleteEducationItemAction(id: string): Promise<{ success: boolean; message: string }> {
   if (!id) return { success: false, message: "Education ID is required." };
-  console.log('Deleting Education Item (Simulated):', id);
-  return { success: true, message: `Education item deleted! (Simulated)` };
+  
+  const initialLength = educationData.length;
+  const newEducationData = educationData.filter(item => item.id !== id);
+
+  if (newEducationData.length < initialLength) {
+    educationData.length = 0;
+    educationData.push(...newEducationData);
+    console.log('Deleting Education Item, ID:', id);
+    return { success: true, message: `Education item deleted!` };
+  }
+  return { success: false, message: "Education item not found." };
 }
 
 
@@ -258,7 +307,7 @@ const projectSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
   imageUrl: z.string().url("Valid image URL is required."),
-  tags: z.string().transform(val => val.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)), // Comma-separated string to array
+  tags: z.string().transform(val => val.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)), 
   liveLink: z.string().url().optional().or(z.literal('')),
   repoLink: z.string().url().optional().or(z.literal('')),
   dataAiHint: z.string().optional(),
@@ -277,7 +326,7 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     title: formData.get('title'),
     description: formData.get('description'),
     imageUrl: formData.get('imageUrl'),
-    tags: formData.get('tags'), // Will be processed by Zod transform
+    tags: formData.get('tags'), 
     liveLink: formData.get('liveLink') || undefined,
     repoLink: formData.get('repoLink') || undefined,
     dataAiHint: formData.get('dataAiHint') || undefined,
@@ -288,20 +337,36 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
   }
   
-  const projectData = validatedFields.data as Omit<Project, 'tags'> & { tags: string[] }; // Zod transform handles tags
+  let projectData = validatedFields.data as Project; 
   if (projectData.id) {
-    console.log('Updating Project (Simulated):', projectData);
+    const index = projectsData.findIndex(p => p.id === projectData.id);
+    if (index > -1) {
+      projectsData[index] = { ...projectsData[index], ...projectData };
+      console.log('Updating Project:', projectsData[index]);
+      return { success: true, message: `Project '${projectData.title}' updated!`, updatedProject: projectsData[index] };
+    }
+    return { success: false, message: `Project with ID '${projectData.id}' not found.` };
   } else {
-    projectData.id = `project-${Date.now()}`;
-    console.log('Adding Project (Simulated):', projectData);
+    projectData.id = `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    projectsData.push(projectData);
+    console.log('Adding Project:', projectData);
+    return { success: true, message: `Project '${projectData.title}' added!`, updatedProject: projectData };
   }
-  return { success: true, message: `Project '${projectData.title}' saved! (Simulated)`, updatedProject: projectData as Project };
 }
 
 export async function deleteProjectAction(id: string): Promise<{ success: boolean; message: string }> {
   if (!id) return { success: false, message: "Project ID is required." };
-  console.log('Deleting Project (Simulated):', id);
-  return { success: true, message: `Project deleted! (Simulated)` };
+
+  const initialLength = projectsData.length;
+  const newProjectsData = projectsData.filter(p => p.id !== id);
+
+  if (newProjectsData.length < initialLength) {
+    projectsData.length = 0;
+    projectsData.push(...newProjectsData);
+    console.log('Deleting Project, ID:', id);
+    return { success: true, message: `Project deleted!` };
+  }
+  return { success: false, message: "Project not found." };
 }
 
 
@@ -310,9 +375,9 @@ const certificationSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Certification name is required."),
   organization: z.string().min(1, "Organization is required."),
-  date: z.string().min(1, "Date is required."), // Consider date validation/parsing if needed
+  date: z.string().min(1, "Date is required."), 
   verifyLink: z.string().url().optional().or(z.literal('')),
-  iconName: z.string().optional(),
+  iconName: z.string().optional().nullable(),
 });
 
 interface CertificationCrudState {
@@ -330,7 +395,7 @@ export async function saveCertificationAction(prevState: CertificationCrudState 
     organization: formData.get('organization'),
     date: formData.get('date'),
     verifyLink: formData.get('verifyLink') || undefined,
-    iconName: iconNameValue === NULL_ICON_VALUE ? undefined : (iconNameValue || undefined),
+    iconName: iconNameValue === NULL_ICON_VALUE ? null : (iconNameValue || undefined),
   };
   const validatedFields = certificationSchema.safeParse(rawData);
 
@@ -338,18 +403,35 @@ export async function saveCertificationAction(prevState: CertificationCrudState 
     return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
   }
 
-  const certData = validatedFields.data as Certification;
+  let certData = validatedFields.data as Certification;
   if (certData.id) {
-    console.log('Updating Certification (Simulated):', certData);
+    const index = certificationsData.findIndex(c => c.id === certData.id);
+    if (index > -1) {
+      certificationsData[index] = { ...certificationsData[index], ...certData };
+      console.log('Updating Certification:', certificationsData[index]);
+      return { success: true, message: `Certification '${certData.name}' updated!`, updatedCertification: certificationsData[index] };
+    }
+    return { success: false, message: `Certification with ID '${certData.id}' not found.` };
   } else {
-    certData.id = `cert-${Date.now()}`;
-    console.log('Adding Certification (Simulated):', certData);
+    certData.id = `cert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    certificationsData.push(certData);
+    console.log('Adding Certification:', certData);
+    return { success: true, message: `Certification '${certData.name}' added!`, updatedCertification: certData };
   }
-  return { success: true, message: `Certification '${certData.name}' saved! (Simulated)`, updatedCertification: certData };
 }
 
 export async function deleteCertificationAction(id: string): Promise<{ success: boolean; message: string }> {
   if (!id) return { success: false, message: "Certification ID is required." };
-  console.log('Deleting Certification (Simulated):', id);
-  return { success: true, message: `Certification deleted! (Simulated)` };
+  
+  const initialLength = certificationsData.length;
+  const newCertsData = certificationsData.filter(c => c.id !== id);
+
+  if (newCertsData.length < initialLength) {
+    certificationsData.length = 0;
+    certificationsData.push(...newCertsData);
+    console.log('Deleting Certification, ID:', id);
+    return { success: true, message: `Certification deleted!` };
+  }
+  return { success: false, message: "Certification not found." };
 }
+

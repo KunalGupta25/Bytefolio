@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
 import { saveProjectAction, deleteProjectAction } from '@/app/actions';
-import { projectsData as initialProjectsData } from '@/lib/data';
+import { projectsData as initialProjectsDataFromModule } from '@/lib/data';
 import type { Project } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import Image from 'next/image';
@@ -30,12 +30,16 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>(initialProjectsData);
+  const [projects, setProjects] = useState<Project[]>([...initialProjectsDataFromModule]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const { toast } = useToast();
 
   const [formState, formAction] = useActionState(saveProjectAction, initialFormState);
+
+  useEffect(() => {
+    setProjects([...initialProjectsDataFromModule]);
+  }, [initialProjectsDataFromModule]);
 
   useEffect(() => {
     if (formState.message) {
@@ -47,18 +51,7 @@ export default function AdminProjectsPage() {
       if (formState.success) {
         setIsFormOpen(false);
         setEditingProject(null);
-        const updatedProject = formState.updatedProject;
-        if (updatedProject) {
-          setProjects(prevProjects => {
-            const index = prevProjects.findIndex(p => p.id === updatedProject.id);
-            if (index > -1) {
-              const newProjects = [...prevProjects];
-              newProjects[index] = updatedProject;
-              return newProjects;
-            }
-            return [...prevProjects, updatedProject];
-          });
-        }
+        setProjects([...initialProjectsDataFromModule]); // Refresh from source
       }
     }
   }, [formState, toast]);
@@ -69,7 +62,7 @@ export default function AdminProjectsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this project? This action is simulated.')) {
+    if (confirm('Are you sure you want to delete this project?')) {
       const result = await deleteProjectAction(id);
       toast({
         title: result.success ? 'Success!' : 'Error',
@@ -77,7 +70,7 @@ export default function AdminProjectsPage() {
         variant: result.success ? 'default' : 'destructive',
       });
       if (result.success) {
-        setProjects(prevProjects => prevProjects.filter(p => p.id !== id));
+        setProjects([...initialProjectsDataFromModule]); // Refresh from source
       }
     }
   };
@@ -129,7 +122,7 @@ export default function AdminProjectsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Manage Projects</h1>
           <p className="text-muted-foreground">Add, edit, or delete projects.</p>
-           <p className="text-sm text-destructive mt-1">Note: Data changes are simulated and do not persist.</p>
+           <p className="text-sm text-destructive mt-1">Note: Data is managed in memory and persists for the current server session.</p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingProject(null); }}>
           <DialogTrigger asChild>
@@ -189,4 +182,3 @@ export default function AdminProjectsPage() {
     </div>
   );
 }
-

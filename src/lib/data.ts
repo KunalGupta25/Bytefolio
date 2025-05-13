@@ -1,16 +1,17 @@
+
 import type React from 'react';
 
 // Types for data structures
 export interface Skill {
-  id: string; // Made ID mandatory for consistency after initial setup
+  id: string; 
   name: string;
-  level?: number; // Optional: 0-100 for progress bar
-  iconName?: keyof typeof import('lucide-react'); // Store the name of the Lucide icon
+  level?: number; 
+  iconName?: keyof typeof import('lucide-react'); 
   category: 'Language' | 'Framework/Library' | 'Tool' | 'Database' | 'Cloud' | 'Other';
 }
 
 export interface EducationItem {
-  id: string; // Added for easier management in admin
+  id: string; 
   degree: string;
   institution: string;
   period: string;
@@ -30,7 +31,7 @@ export interface Project {
 }
 
 export interface Certification {
-  id: string; // Added for easier management in admin
+  id: string; 
   name:string;
   organization: string;
   date: string;
@@ -40,44 +41,44 @@ export interface Certification {
 
 export interface SiteSettings {
   siteName: string;
-  defaultProfileImageUrl: string; // if profile image not set in aboutData
-  defaultUserName: string; // Default user name for hero section etc.
+  defaultProfileImageUrl: string; 
+  defaultUserName: string; 
   defaultUserSpecialization: string;
 }
 
-// Mock Data
-export const siteSettingsData: SiteSettings = {
+// Mock Data - Changed to 'let' to be mutable
+export let siteSettingsData: SiteSettings = {
   siteName: "ByteFolio",
   defaultProfileImageUrl: "https://picsum.photos/seed/profile/300/300",
   defaultUserName: "Your Name",
   defaultUserSpecialization: "Web Development, AI, Cybersecurity",
 };
 
-export const aboutData = {
+export let aboutData = {
   professionalSummary: "I am a dedicated and enthusiastic B.Tech Computer Science student with a strong foundation in software development, problem-solving, and [mention 1-2 key areas like web technologies, data structures, algorithms]. I am passionate about creating impactful technology solutions and continuously expanding my knowledge in the ever-evolving tech landscape. Eager to contribute to innovative projects and collaborate with like-minded professionals.",
   bio: "Beyond coding, I enjoy [mention a hobby or interest, e.g., contributing to open-source projects, exploring new AI advancements, playing chess]. I believe in lifelong learning and am always seeking new challenges to grow both personally and professionally. My goal is to leverage my technical skills to make a positive impact.",
-  profileImageUrl: "https://picsum.photos/seed/profile/300/300", // This can be overridden by admin
+  profileImageUrl: "https://picsum.photos/seed/profile/300/300", 
   dataAiHint: "professional portrait",
 };
 
-export const skillsData: Skill[] = [
-  { id: 'skill-js', name: 'JavaScript', level: 90, iconName: 'Cpu', category: 'Language' },
-  { id: 'skill-python', name: 'Python', level: 85, iconName: 'Cpu', category: 'Language' },
-  { id: 'skill-java', name: 'Java', level: 75, iconName: 'Cpu', category: 'Language' },
-  { id: 'skill-react', name: 'React.js', level: 90, iconName: 'Code', category: 'Framework/Library' },
-  { id: 'skill-nextjs', name: 'Next.js', level: 88, iconName: 'Code', category: 'Framework/Library' },
-  { id: 'skill-nodejs', name: 'Node.js', level: 80, iconName: 'Server', category: 'Framework/Library' },
-  { id: 'skill-expressjs', name: 'Express.js', level: 78, iconName: 'Server', category: 'Framework/Library' },
-  { id: 'skill-sql', name: 'SQL (PostgreSQL, MySQL)', level: 70, iconName: 'Database', category: 'Database' },
-  { id: 'skill-mongodb', name: 'MongoDB', level: 65, iconName: 'Database', category: 'Database' },
-  { id: 'skill-git', name: 'Git & GitHub', level: 90, iconName: 'Github', category: 'Tool' },
-  { id: 'skill-docker', name: 'Docker', level: 60, iconName: 'Package', category: 'Tool' },
-  { id: 'skill-aws', name: 'AWS (EC2, S3)', level: 50, iconName: 'Cloud', category: 'Cloud' },
-  { id: 'skill-rest', name: 'REST APIs', level: 85, iconName: 'Server', category: 'Other' },
-  { id: 'skill-agile', name: 'Agile Methodologies', level: 75, iconName: 'Brain', category: 'Other' },
+export let skillsData: Skill[] = [
+  { id: 'skill-js', name: 'JavaScript', level: 90, iconName: 'Cog' as keyof typeof import('lucide-react'), category: 'Language' },
+  { id: 'skill-python', name: 'Python', level: 85, iconName: 'Codesandbox' as keyof typeof import('lucide-react'), category: 'Language' },
+  { id: 'skill-java', name: 'Java', level: 75, iconName: 'Coffee' as keyof typeof import('lucide-react'), category: 'Language' },
+  { id: 'skill-react', name: 'React.js', level: 90, iconName: 'Atom' as keyof typeof import('lucide-react'), category: 'Framework/Library' },
+  { id: 'skill-nextjs', name: 'Next.js', level: 88, iconName: 'Component' as keyof typeof import('lucide-react'), category: 'Framework/Library' },
+  { id: 'skill-nodejs', name: 'Node.js', level: 80, iconName: 'Server' as keyof typeof import('lucide-react'), category: 'Framework/Library' },
+  { id: 'skill-expressjs', name: 'Express.js', level: 78, iconName: 'Network' as keyof typeof import('lucide-react'), category: 'Framework/Library' },
+  { id: 'skill-sql', name: 'SQL (PostgreSQL, MySQL)', level: 70, iconName: 'Database' as keyof typeof import('lucide-react'), category: 'Database' },
+  { id: 'skill-mongodb', name: 'MongoDB', level: 65, iconName: 'DatabaseZap' as keyof typeof import('lucide-react'), category: 'Database' },
+  { id: 'skill-git', name: 'Git & GitHub', level: 90, iconName: 'Github' as keyof typeof import('lucide-react'), category: 'Tool' },
+  { id: 'skill-docker', name: 'Docker', level: 60, iconName: 'Container' as keyof typeof import('lucide-react'), category: 'Tool' },
+  { id: 'skill-aws', name: 'AWS (EC2, S3)', level: 50, iconName: 'Cloud' as keyof typeof import('lucide-react'), category: 'Cloud' },
+  { id: 'skill-rest', name: 'REST APIs', level: 85, iconName: 'Webhook' as keyof typeof import('lucide-react'), category: 'Other' },
+  { id: 'skill-agile', name: 'Agile Methodologies', level: 75, iconName: 'Users' as keyof typeof import('lucide-react'), category: 'Other' },
 ];
 
-export const educationData: EducationItem[] = [
+export let educationData: EducationItem[] = [
   {
     id: 'edu-1',
     degree: 'Bachelor of Technology in Computer Science',
@@ -96,7 +97,7 @@ export const educationData: EducationItem[] = [
   },
 ];
 
-export const projectsData: Project[] = [
+export let projectsData: Project[] = [
   {
     id: 'project-1',
     title: 'E-commerce Platform',
@@ -133,12 +134,12 @@ export const projectsData: Project[] = [
     imageUrl: 'https://picsum.photos/seed/portfolio/600/400',
     dataAiHint: 'web design',
     tags: ['Next.js', 'Tailwind CSS', 'TypeScript'],
-    liveLink: '#', // Current site
-    repoLink: '#', // Link to its repo
+    liveLink: '#', 
+    repoLink: '#', 
   },
 ];
 
-export const certificationsData: Certification[] = [
+export let certificationsData: Certification[] = [
   {
     id: 'cert-1',
     name: 'AWS Certified Cloud Practitioner',
@@ -171,10 +172,11 @@ export const contactDetails = {
   twitter: 'https://twitter.com/yourusername', // Optional
 };
 
-// Adding IDs to initial skill data if they were missing
+// Ensure all initial data items have IDs.
+// This is important for reliable updates and deletions.
 skillsData.forEach((skill, index) => {
   if (!skill.id) {
-    skill.id = `skill-initial-${index}-${skill.name.toLowerCase().replace(/\s+/g, '-')}`;
+    skill.id = `skill-initial-${index}-${skill.name.toLowerCase().replace(/\s+/g, '-') || 'untitled'}`;
   }
 });
 

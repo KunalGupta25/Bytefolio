@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useActionState } from 'react';
@@ -11,12 +12,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { saveCertificationAction, deleteCertificationAction } from '@/app/actions';
-import { certificationsData as initialCertificationsData } from '@/lib/data';
+import { certificationsData as initialCertificationsDataFromModule } from '@/lib/data';
 import type { Certification } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && LucideIcons[key as keyof typeof LucideIcons] !== LucideIcons.createLucideIcon && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function') as (keyof typeof LucideIcons)[];
+const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && typeof LucideIcons[key as keyof typeof LucideIcons] !== 'object' && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && key !== 'createLucideIcon') as (keyof typeof LucideIcons)[];
+
 
 const NULL_ICON_VALUE = "--no-icon--";
 const initialFormState = { success: false, message: '', errors: {} };
@@ -32,12 +34,17 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminCertificationsPage() {
-  const [certifications, setCertifications] = useState<Certification[]>(initialCertificationsData);
+  const [certifications, setCertifications] = useState<Certification[]>([...initialCertificationsDataFromModule]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCertification, setEditingCertification] = useState<Certification | null>(null);
   const { toast } = useToast();
 
   const [formState, formAction] = useActionState(saveCertificationAction, initialFormState);
+
+  useEffect(() => {
+    setCertifications([...initialCertificationsDataFromModule]);
+  }, [initialCertificationsDataFromModule]);
+
 
   useEffect(() => {
     if (formState.message) {
@@ -49,18 +56,7 @@ export default function AdminCertificationsPage() {
       if (formState.success) {
         setIsFormOpen(false);
         setEditingCertification(null);
-        const updatedCertification = formState.updatedCertification;
-        if (updatedCertification) {
-          setCertifications(prevCerts => {
-            const index = prevCerts.findIndex(c => c.id === updatedCertification.id);
-            if (index > -1) {
-              const newCerts = [...prevCerts];
-              newCerts[index] = updatedCertification;
-              return newCerts;
-            }
-            return [...prevCerts, updatedCertification];
-          });
-        }
+        setCertifications([...initialCertificationsDataFromModule]); // Refresh from source
       }
     }
   }, [formState, toast]);
@@ -71,7 +67,7 @@ export default function AdminCertificationsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this certification? This action is simulated.')) {
+    if (confirm('Are you sure you want to delete this certification?')) {
       const result = await deleteCertificationAction(id);
       toast({
         title: result.success ? 'Success!' : 'Error',
@@ -79,7 +75,7 @@ export default function AdminCertificationsPage() {
         variant: result.success ? 'default' : 'destructive',
       });
       if (result.success) {
-        setCertifications(prevCerts => prevCerts.filter(c => c.id !== id));
+        setCertifications([...initialCertificationsDataFromModule]); // Refresh from source
       }
     }
   };
@@ -114,7 +110,7 @@ export default function AdminCertificationsPage() {
                 <SelectValue placeholder="Select an icon (optional)" />
             </SelectTrigger>
             <SelectContent className="max-h-60">
-                <SelectItem value={NULL_ICON_VALUE}>None</SelectItem>
+                <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
                 {iconNames.map(name => {
                     const IconComponent = LucideIcons[name] as React.ElementType;
                     if (!IconComponent) return null;
@@ -140,7 +136,7 @@ export default function AdminCertificationsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Manage Certifications</h1>
           <p className="text-muted-foreground">Add, edit, or delete certifications.</p>
-           <p className="text-sm text-destructive mt-1">Note: Data changes are simulated and do not persist.</p>
+           <p className="text-sm text-destructive mt-1">Note: Data is managed in memory and persists for the current server session.</p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingCertification(null); }}>
           <DialogTrigger asChild>

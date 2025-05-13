@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { updateAboutInfo } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { aboutData } from '@/lib/data'; // To pre-fill form
+import { aboutData as initialAboutData, siteSettingsData } from '@/lib/data'; // To pre-fill form, and for default image if needed
 import { Loader2 } from 'lucide-react';
+import { useState } from 'react'; // For managing local state of aboutData
 
 const initialState = {
   success: false,
@@ -30,8 +31,15 @@ function SubmitButton() {
 }
 
 export default function AdminAboutPage() {
+  const [currentAboutData, setCurrentAboutData] = useState({...initialAboutData});
   const [state, formAction] = useActionState(updateAboutInfo, initialState);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    // Keep local state in sync if lib/data.ts changes (e.g. after successful action)
+    setCurrentAboutData({...initialAboutData});
+  }, [initialAboutData]);
+
 
   useEffect(() => {
     if (state.message) {
@@ -40,6 +48,10 @@ export default function AdminAboutPage() {
         description: state.message,
         variant: state.success ? 'default' : 'destructive',
       });
+      if (state.success) {
+        // Refresh currentAboutData from the source of truth after successful update
+        setCurrentAboutData({...initialAboutData});
+      }
     }
   }, [state, toast]);
 
@@ -55,7 +67,7 @@ export default function AdminAboutPage() {
           <CardTitle>About Me Details</CardTitle>
           <CardDescription>
             Edit the professional summary, biography, and profile image URL.
-            Changes here are simulated and won't persist on the live site without database integration.
+            Changes are managed in memory and persist for the current server session.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -68,7 +80,8 @@ export default function AdminAboutPage() {
                 rows={5}
                 required
                 className="mt-1 min-h-[120px]"
-                defaultValue={aboutData.professionalSummary}
+                defaultValue={currentAboutData.professionalSummary}
+                key={`summary-${currentAboutData.professionalSummary}`} // Key to force re-render on change
                 aria-describedby={state.errors?.professionalSummary ? "summary-error" : undefined}
               />
               {state.errors?.professionalSummary && (
@@ -84,7 +97,8 @@ export default function AdminAboutPage() {
                 rows={8}
                 required
                 className="mt-1 min-h-[150px]"
-                defaultValue={aboutData.bio}
+                defaultValue={currentAboutData.bio}
+                key={`bio-${currentAboutData.bio}`} // Key to force re-render
                 aria-describedby={state.errors?.bio ? "bio-error" : undefined}
               />
               {state.errors?.bio && (
@@ -99,7 +113,8 @@ export default function AdminAboutPage() {
                 id="profileImageUrl"
                 name="profileImageUrl"
                 className="mt-1"
-                defaultValue={aboutData.profileImageUrl}
+                defaultValue={currentAboutData.profileImageUrl}
+                key={`img-${currentAboutData.profileImageUrl}`} // Key to force re-render
                 placeholder="https://example.com/your-image.jpg"
                 aria-describedby={state.errors?.profileImageUrl ? "imageurl-error" : undefined}
               />
@@ -115,4 +130,3 @@ export default function AdminAboutPage() {
     </div>
   );
 }
-
