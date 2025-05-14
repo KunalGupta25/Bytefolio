@@ -1,0 +1,13 @@
+[build]
+  command = "next build"
+  publish = ".next"
+
+[functions]
+  # This ensures Netlify correctly handles Next.js functions (API routes, server components)
+  # The Next.js Runtime on Netlify usually handles this automatically, but specifying it can be good practice.
+  # directory = ".netlify/functions-internal" # This is often auto-managed
+
+[[plugins]]
+  # The Netlify Next.js plugin is essential for features like SSR, ISR, Image Optimization, etc.
+  # It's usually auto-installed by Netlify, but you can specify it.
+  package = "@netlify/plugin-nextjs"
