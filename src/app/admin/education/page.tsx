@@ -10,14 +10,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { saveEducationItemAction, deleteEducationItemAction, fetchEducationItemsForAdmin } from '@/app/actions';
 import type { EducationItem } from '@/lib/data';
-import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2, HelpCircle } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && typeof LucideIcons[key as keyof typeof LucideIcons] !== 'object' && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && key !== 'createLucideIcon') as (keyof typeof LucideIcons | string)[];
+// Manually curated list of common Lucide icons for education
+const commonLucideIconNames: string[] = [
+  'GraduationCap', 'BookOpen', 'School', 'Award', 'Notebook', 'Pencil', 
+  'Library', 'Book', 'ClipboardList', 'Presentation', 'Medal', 'Trophy'
+].sort();
 
 
 const NULL_ICON_VALUE = "--no-icon--";
@@ -84,7 +88,11 @@ export default function AdminEducationPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string | undefined) => {
+    if (!id) {
+      toast({ title: "Error", description: "Education ID is missing.", variant: "destructive" });
+      return;
+    }
     if (confirm('Are you sure you want to delete this education item?')) {
       const result = await deleteEducationItemAction(id);
       toast({
@@ -128,19 +136,27 @@ export default function AdminEducationPage() {
                 <SelectValue placeholder="Select an icon (optional)" />
             </SelectTrigger>
             <SelectContent className="max-h-60">
-                <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
-                {iconNames.map(name => {
-                    const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
-                     if (!IconComponent) return null;
-                    return (
-                        <SelectItem key={name} value={name as string}>
-                            <div className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4" />
-                            {name}
-                            </div>
-                        </SelectItem>
-                    );
-                })}
+                <SelectItem value={NULL_ICON_VALUE}>
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    None (Clear Icon)
+                  </div>
+                </SelectItem>
+                <SelectSeparator />
+                <SelectGroup>
+                  <SelectLabel>Common Icons</SelectLabel>
+                  {commonLucideIconNames.map(name => {
+                      const IconComponent = (LucideIcons as Record<string, React.ElementType | undefined>)[name];
+                      return (
+                          <SelectItem key={`common-${name}`} value={name}>
+                              <div className="flex items-center gap-2">
+                              {IconComponent ? <IconComponent className="h-4 w-4" /> : <span className="h-4 w-4 inline-block border border-dashed border-muted-foreground" title="Icon not found" />}
+                              {name}
+                              </div>
+                          </SelectItem>
+                      );
+                  })}
+                </SelectGroup>
             </SelectContent>
         </Select>
         {formState.errors?.iconName && <p className="text-sm text-destructive mt-1">{formState.errors.iconName.join(', ')}</p>}
@@ -192,6 +208,7 @@ export default function AdminEducationPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Icon</TableHead>
                 <TableHead>Degree</TableHead>
                 <TableHead>Institution</TableHead>
                 <TableHead>Period</TableHead>
@@ -199,21 +216,29 @@ export default function AdminEducationPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {educationItems.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.degree}</TableCell>
-                  <TableCell>{item.institution}</TableCell>
-                  <TableCell>{item.period}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
-                      <Edit className="h-4 w-4 mr-1" /> Edit
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)}>
-                      <Trash2 className="h-4 w-4 mr-1" /> Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {educationItems.map((item) => {
+                const IconComponent = item.iconName && item.iconName !== NULL_ICON_VALUE && (LucideIcons as Record<string, React.ElementType | undefined>)[item.iconName]
+                  ? (LucideIcons as Record<string, React.ElementType>)[item.iconName]
+                  : null;
+                return (
+                  <TableRow key={item.id}>
+                     <TableCell>
+                      {IconComponent ? <IconComponent className="h-5 w-5" /> : 'None'}
+                    </TableCell>
+                    <TableCell className="font-medium">{item.degree}</TableCell>
+                    <TableCell>{item.institution}</TableCell>
+                    <TableCell>{item.period}</TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
+                        <Edit className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)}>
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
