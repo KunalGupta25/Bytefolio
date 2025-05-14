@@ -73,7 +73,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
     github: 'https://github.com/yourusername',
     twitter: 'https://twitter.com/yourusername',
   },
-  faviconUrl: "/favicon.png", // Default to your preferred favicon
+  faviconUrl: "/favicon.png", // Default to your preferred favicon in public folder
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -91,27 +91,54 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     const snapshot = await db.ref('/siteSettings').once('value');
     const data = snapshot.val();
 
-    const settingsData = (data && typeof data === 'object') ? data : {};
-    const contactDetailsData = (settingsData.contactDetails && typeof settingsData.contactDetails === 'object')
-      ? settingsData.contactDetails
-      : {};
+    // Initialize with a deep copy of defaults to ensure all nested objects exist
+    // and to avoid modifying the original DEFAULT_SITE_SETTINGS object.
+    const settings: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
 
-    return {
-      ...DEFAULT_SITE_SETTINGS,
-      ...settingsData,
-      contactDetails: {
-        ...DEFAULT_SITE_SETTINGS.contactDetails,
-        ...contactDetailsData,
-      },
-      // Use fetched faviconUrl if it's a non-empty string, otherwise use the default.
-      faviconUrl: (typeof settingsData.faviconUrl === 'string' && settingsData.faviconUrl.trim() !== '') 
-                    ? settingsData.faviconUrl 
-                    : DEFAULT_SITE_SETTINGS.faviconUrl,
-      defaultProfileImageUrl: settingsData.defaultProfileImageUrl || DEFAULT_SITE_SETTINGS.defaultProfileImageUrl,
-    };
+    if (data && typeof data === 'object') {
+      // Merge top-level properties if they exist and are of the correct type
+      if (typeof data.siteName === 'string') settings.siteName = data.siteName;
+      if (typeof data.defaultUserName === 'string') settings.defaultUserName = data.defaultUserName;
+      if (typeof data.defaultUserSpecialization === 'string') settings.defaultUserSpecialization = data.defaultUserSpecialization;
+      if (typeof data.defaultProfileImageUrl === 'string') settings.defaultProfileImageUrl = data.defaultProfileImageUrl;
+      
+      // Handle faviconUrl specifically: use DB value if it's a non-empty string, otherwise use the default.
+      if (typeof data.faviconUrl === 'string' && data.faviconUrl.trim() !== '') {
+        settings.faviconUrl = data.faviconUrl.trim();
+      } else {
+        // If fetched faviconUrl is empty, not a string, or not present, it will retain the value from DEFAULT_SITE_SETTINGS
+        // which is already set in 'settings' due to the initial JSON.parse(JSON.stringify(...)).
+        // No explicit assignment to settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl is needed here
+        // because 'settings' already holds that default value unless overwritten.
+      }
+      console.log('[getSiteSettings] Fetched data. Resolved faviconUrl:', settings.faviconUrl);
+
+      // Merge contactDetails carefully
+      if (data.contactDetails && typeof data.contactDetails === 'object') {
+        const contactData = data.contactDetails as Partial<ContactDetails>; // Type assertion for easier access
+        if (typeof contactData.email === 'string') settings.contactDetails.email = contactData.email;
+        if (typeof contactData.linkedin === 'string') settings.contactDetails.linkedin = contactData.linkedin;
+        if (typeof contactData.github === 'string') settings.contactDetails.github = contactData.github;
+        
+        if (typeof contactData.twitter === 'string' && contactData.twitter.trim() !== '') {
+          settings.contactDetails.twitter = contactData.twitter.trim();
+        } else if (contactData.twitter === undefined || (typeof contactData.twitter === 'string' && contactData.twitter.trim() === '')) {
+           // If Twitter is explicitly empty or undefined in DB, use the default (which might also be undefined or empty)
+           settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
+        }
+      }
+    } else {
+      // No data from Firebase, 'settings' will remain as a deep copy of DEFAULT_SITE_SETTINGS.
+      console.log('[getSiteSettings] No data from Firebase. Using all defaults. Default faviconUrl:', settings.faviconUrl);
+    }
+    
+    return settings;
   } catch (error) {
-    console.error("Error fetching site settings:", error);
-    return { ...DEFAULT_SITE_SETTINGS, contactDetails: { ...DEFAULT_SITE_SETTINGS.contactDetails } };
+    console.error("[getSiteSettings] Error fetching site settings:", error);
+    // On error, return a fresh deep copy of defaults to be safe.
+    const errorDefaults: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
+    console.log('[getSiteSettings] Error condition. Using all defaults. Default faviconUrl:', errorDefaults.faviconUrl);
+    return errorDefaults;
   }
 }
 
@@ -119,13 +146,18 @@ export async function getAboutData(): Promise<AboutData> {
   try {
     const snapshot = await db.ref('/aboutInfo').once('value');
     const data = snapshot.val();
-    const aboutData = (data && typeof data === 'object') ? data : {};
-    return {
-      ...DEFAULT_ABOUT_DATA,
-      ...aboutData,
-      profileImageUrl: aboutData.profileImageUrl || DEFAULT_ABOUT_DATA.profileImageUrl,
-      dataAiHint: aboutData.dataAiHint || DEFAULT_ABOUT_DATA.dataAiHint,
-    };
+    
+    const about: AboutData = { ...DEFAULT_ABOUT_DATA };
+
+    if (data && typeof data === 'object') {
+        if (typeof data.professionalSummary === 'string') about.professionalSummary = data.professionalSummary;
+        if (typeof data.bio === 'string') about.bio = data.bio;
+        if (typeof data.profileImageUrl === 'string' && data.profileImageUrl.trim() !== '') {
+            about.profileImageUrl = data.profileImageUrl.trim();
+        }
+        if (typeof data.dataAiHint === 'string') about.dataAiHint = data.dataAiHint;
+    }
+    return about;
   } catch (error) {
     console.error("Error fetching about data:", error);
     return { ...DEFAULT_ABOUT_DATA };
@@ -138,12 +170,12 @@ export async function getSkills(): Promise<Skill[]> {
     const skillsData = snapshot.val();
     if (skillsData && typeof skillsData === 'object') {
       return Object.values(skillsData).map((skill: any) => ({
-        id: skill.id || '', 
-        name: skill.name || 'Unnamed Skill',
-        category: skill.category || 'Other',
-        level: skill.level !== undefined ? Number(skill.level) : undefined,
-        iconName: skill.iconName !== undefined ? skill.iconName : null,
-      })) as Skill[];
+        id: typeof skill.id === 'string' ? skill.id : '', 
+        name: typeof skill.name === 'string' ? skill.name : 'Unnamed Skill',
+        category: typeof skill.category === 'string' ? skill.category as Skill['category'] : 'Other',
+        level: skill.level !== undefined && !isNaN(Number(skill.level)) ? Number(skill.level) : undefined,
+        iconName: typeof skill.iconName === 'string' ? skill.iconName : null,
+      }));
     }
     return [];
   } catch (error) {
@@ -158,13 +190,13 @@ export async function getEducationItems(): Promise<EducationItem[]> {
     const educationData = snapshot.val();
      if (educationData && typeof educationData === 'object') {
       return Object.values(educationData).map((item: any) => ({
-        id: item.id || '',
-        degree: item.degree || 'N/A',
-        institution: item.institution || 'N/A',
-        period: item.period || 'N/A',
-        description: item.description || undefined,
-        iconName: item.iconName !== undefined ? item.iconName : null,
-      })) as EducationItem[];
+        id: typeof item.id === 'string' ? item.id : '',
+        degree: typeof item.degree === 'string' ? item.degree : 'N/A',
+        institution: typeof item.institution === 'string' ? item.institution : 'N/A',
+        period: typeof item.period === 'string' ? item.period : 'N/A',
+        description: typeof item.description === 'string' ? item.description : undefined,
+        iconName: typeof item.iconName === 'string' ? item.iconName : null,
+      }));
     }
     return [];
   } catch (error) {
@@ -179,15 +211,15 @@ export async function getProjects(): Promise<Project[]> {
     const projectsData = snapshot.val();
     if (projectsData && typeof projectsData === 'object') {
       return Object.values(projectsData).map((project: any) => ({
-        id: project.id || '',
-        title: project.title || 'Untitled Project',
-        description: project.description || '',
-        imageUrl: project.imageUrl || 'https://placehold.co/600x400.png',
-        tags: Array.isArray(project.tags) ? project.tags : [],
-        liveLink: project.liveLink || undefined,
-        repoLink: project.repoLink || undefined,
-        dataAiHint: project.dataAiHint || undefined,
-      })) as Project[];
+        id: typeof project.id === 'string' ? project.id : '',
+        title: typeof project.title === 'string' ? project.title : 'Untitled Project',
+        description: typeof project.description === 'string' ? project.description : '',
+        imageUrl: typeof project.imageUrl === 'string' && project.imageUrl.trim() !== '' ? project.imageUrl.trim() : 'https://placehold.co/600x400.png',
+        tags: Array.isArray(project.tags) ? project.tags.filter(tag => typeof tag === 'string') : [],
+        liveLink: typeof project.liveLink === 'string' ? project.liveLink : undefined,
+        repoLink: typeof project.repoLink === 'string' ? project.repoLink : undefined,
+        dataAiHint: typeof project.dataAiHint === 'string' ? project.dataAiHint : undefined,
+      }));
     }
     return [];
   } catch (error) {
@@ -202,13 +234,13 @@ export async function getCertifications(): Promise<Certification[]> {
     const certificationsData = snapshot.val();
     if (certificationsData && typeof certificationsData === 'object') {
       return Object.values(certificationsData).map((cert: any) => ({
-        id: cert.id || '',
-        name: cert.name || 'Unnamed Certification',
-        organization: cert.organization || 'N/A',
-        date: cert.date || 'N/A',
-        verifyLink: cert.verifyLink || undefined,
-        iconName: cert.iconName !== undefined ? cert.iconName : null,
-      })) as Certification[];
+        id: typeof cert.id === 'string' ? cert.id : '',
+        name: typeof cert.name === 'string' ? cert.name : 'Unnamed Certification',
+        organization: typeof cert.organization === 'string' ? cert.organization : 'N/A',
+        date: typeof cert.date === 'string' ? cert.date : 'N/A',
+        verifyLink: typeof cert.verifyLink === 'string' ? cert.verifyLink : undefined,
+        iconName: typeof cert.iconName === 'string' ? cert.iconName : null,
+      }));
     }
     return [];
   } catch (error) {
@@ -221,10 +253,11 @@ export async function getPageViews(): Promise<number> {
   try {
     const snapshot = await db.ref('/analytics/pageViews').once('value');
     const views = snapshot.val();
-    // The actual mechanism to increment this value would be implemented elsewhere (e.g., a server action called on page load).
     return Number(views) || 0;
   } catch (error) {
     console.error("Error fetching page views:", error);
     return 0;
   }
 }
+
+    
