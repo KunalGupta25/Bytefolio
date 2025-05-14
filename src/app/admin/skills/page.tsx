@@ -16,20 +16,20 @@ import type { Skill } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-// Get all exported keys from LucideIcons and filter them to get only icon components
-const allLucideIconNames = (Object.keys(LucideIcons) as Array<keyof typeof LucideIcons>).filter(
-  (key) => {
-    // Standard React components start with an uppercase letter
-    if (!/^[A-Z]/.test(key)) return false;
-    // Lucide icon components are functions
-    if (typeof LucideIcons[key] !== 'function') return false;
-    // Exclude known non-icon exports from lucide-react
-    if (['createLucideIcon', 'icons', 'default', 'LucideProvider'].includes(key)) return false;
-    return true;
-  }
-);
+// Get all exported keys from LucideIcons
+const iconKeys = Object.keys(LucideIcons) as Array<string>;
 
-const suggestedIconNamesList: Array<keyof typeof LucideIcons> = [
+// Filter them to get only icon components
+const allLucideIconNames: string[] = iconKeys.filter(key => {
+  const component = LucideIcons[key as keyof typeof LucideIcons];
+  // Standard React components start with an uppercase letter and are functions
+  return typeof component === 'function' && 
+         /^[A-Z]/.test(key) &&
+         // Exclude known non-icon exports from lucide-react
+         !['createLucideIcon', 'LucideProvider', 'IconNode', 'icons', 'default'].includes(key);
+});
+
+const suggestedIconNamesList: string[] = [
   'Code', 'Database', 'Cloud', 'Server', 'Terminal',
   'GitMerge', 'Brain', 'Palette', 'Smartphone', 'Laptop', 'Cog', 'FileCode', 'Network',
   'BrainCog', 'ShieldCheck', 'Gauge', 'Users', 'Blocks', 'Wrench', 'Route'
@@ -39,11 +39,13 @@ const suggestedIconNamesList: Array<keyof typeof LucideIcons> = [
 const validSuggestedIcons = suggestedIconNamesList.filter(name =>
   allLucideIconNames.includes(name)
 );
+validSuggestedIcons.sort(); // Sort for consistent order
 
 // Get the remaining icons by excluding the valid suggestions from the full list
 const remainingIconNames = allLucideIconNames.filter(
   name => !validSuggestedIcons.includes(name)
 );
+remainingIconNames.sort(); // Sort for consistent order
 
 
 const NULL_ICON_VALUE = "--no-icon--";
@@ -164,15 +166,16 @@ export default function AdminSkillsPage() {
             </SelectTrigger>
             <SelectContent className="max-h-60">
                 <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
+                
                 {validSuggestedIcons.length > 0 && (
                   <>
                     <SelectSeparator />
                     <SelectLabel>Suggested Icons</SelectLabel>
                     {validSuggestedIcons.map(name => {
                         const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
-                        if (!IconComponent) return null;
+                        if (!IconComponent || typeof IconComponent !== 'function') return null;
                         return (
-                            <SelectItem key={`suggested-${name as string}`} value={name as string}>
+                            <SelectItem key={`suggested-${name}`} value={name}>
                                 <div className="flex items-center gap-2">
                                 <IconComponent className="h-4 w-4" />
                                 {name}
@@ -182,15 +185,16 @@ export default function AdminSkillsPage() {
                     })}
                   </>
                 )}
+
                 {remainingIconNames.length > 0 && (
                     <>
                         <SelectSeparator />
                         <SelectLabel>All Icons</SelectLabel>
                         {remainingIconNames.map(name => {
                             const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
-                            if (!IconComponent) return null;
+                            if (!IconComponent || typeof IconComponent !== 'function') return null;
                             return (
-                                <SelectItem key={`all-${name as string}`} value={name as string}>
+                                <SelectItem key={`all-${name}`} value={name}>
                                     <div className="flex items-center gap-2">
                                     <IconComponent className="h-4 w-4" />
                                     {name}
@@ -291,3 +295,4 @@ export default function AdminSkillsPage() {
     </div>
   );
 }
+
