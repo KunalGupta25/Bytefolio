@@ -73,7 +73,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
     github: 'https://github.com/yourusername',
     twitter: 'https://twitter.com/yourusername',
   },
-  faviconUrl: "https://img.icons8.com/?size=512&id=114904&format=png", // Updated default
+  faviconUrl: "/favicon.png", // Default to your preferred favicon
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -103,7 +103,10 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         ...DEFAULT_SITE_SETTINGS.contactDetails,
         ...contactDetailsData,
       },
-      faviconUrl: settingsData.faviconUrl !== undefined ? settingsData.faviconUrl : DEFAULT_SITE_SETTINGS.faviconUrl,
+      // Use fetched faviconUrl if it's a non-empty string, otherwise use the default.
+      faviconUrl: (typeof settingsData.faviconUrl === 'string' && settingsData.faviconUrl.trim() !== '') 
+                    ? settingsData.faviconUrl 
+                    : DEFAULT_SITE_SETTINGS.faviconUrl,
       defaultProfileImageUrl: settingsData.defaultProfileImageUrl || DEFAULT_SITE_SETTINGS.defaultProfileImageUrl,
     };
   } catch (error) {

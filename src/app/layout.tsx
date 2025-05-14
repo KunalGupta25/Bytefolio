@@ -14,7 +14,10 @@ const inter = Inter({
 // Generate dynamic metadata
 export async function generateMetadata(): Promise<Metadata> {
   const siteSettings = await getSiteSettings();
-  const faviconUrl = siteSettings.faviconUrl || '/favicon.ico'; // Fallback to default
+  // Use fetched faviconUrl if it's a non-empty string, otherwise default to /favicon.png
+  const faviconUrl = (typeof siteSettings.faviconUrl === 'string' && siteSettings.faviconUrl.trim() !== '')
+                     ? siteSettings.faviconUrl
+                     : '/favicon.png';
 
   return {
     title: `${siteSettings.siteName || 'ByteFolio'} | CS Student Portfolio`,
