@@ -9,18 +9,19 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator, SelectLabel } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator, SelectLabel, SelectGroup } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { saveSkillAction, deleteSkillAction, fetchSkillsForAdmin } from '@/app/actions';
 import type { Skill } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-// Simplified hardcoded list of common Lucide icons
+// Manually curated list of common Lucide icons
 const commonLucideIconNames: string[] = [
   'Code', 'Database', 'Cloud', 'Server', 'Terminal', 'GitMerge', 
   'Brain', 'Palette', 'Smartphone', 'Laptop', 'Cog', 'FileCode', 'Network',
-  'ShieldCheck', 'Gauge', 'Users', 'Blocks', 'Wrench', 'Route', 'Component', 'Activity', 'Settings2'
+  'ShieldCheck', 'Gauge', 'Users', 'Blocks', 'Wrench', 'Route', 'Component', 
+  'Activity', 'Settings2', 'BrainCog', 'Cpu', 'Zap', 'Layers', 'Package', 'Filter', 'Rocket'
 ].sort();
 
 
@@ -143,23 +144,23 @@ export default function AdminSkillsPage() {
             <SelectContent className="max-h-60">
                 <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
                 <SelectSeparator />
-                <SelectLabel>Common Icons</SelectLabel>
-                {commonLucideIconNames.map(name => {
-                    const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
-                    if (!IconComponent || typeof IconComponent !== 'function') {
-                        // This console log can help in development to see if an icon name is mistyped or not found
-                        // console.warn(`Lucide icon "${name}" not found or is not a function.`);
-                        return null; 
-                    }
-                    return (
-                        <SelectItem key={name} value={name}>
-                            <div className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4" />
-                            {name}
-                            </div>
-                        </SelectItem>
-                    );
-                })}
+                <SelectGroup>
+                  <SelectLabel>Common Icons</SelectLabel>
+                  {commonLucideIconNames.map(name => {
+                      const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
+                      if (!IconComponent || typeof IconComponent !== 'function') {
+                          return null; 
+                      }
+                      return (
+                          <SelectItem key={`common-${name}`} value={name}>
+                              <div className="flex items-center gap-2">
+                              <IconComponent className="h-4 w-4" />
+                              {name}
+                              </div>
+                          </SelectItem>
+                      );
+                  })}
+                </SelectGroup>
             </SelectContent>
         </Select>
         {formState.errors?.iconName && <p className="text-sm text-destructive mt-1">{formState.errors.iconName.join(', ')}</p>}
@@ -225,14 +226,14 @@ export default function AdminSkillsPage() {
             </TableHeader>
             <TableBody>
               {skills.map((skill) => {
-                const IconComponent = skill.iconName && typeof skill.iconName === 'string' && LucideIcons[skill.iconName as keyof typeof LucideIcons] ? LucideIcons[skill.iconName as keyof typeof LucideIcons] as React.ElementType : null;
+                const IconComponent = skill.iconName && typeof skill.iconName === 'string' && skill.iconName !== NULL_ICON_VALUE && LucideIcons[skill.iconName as keyof typeof LucideIcons] ? LucideIcons[skill.iconName as keyof typeof LucideIcons] as React.ElementType : null;
                 return (
                 <TableRow key={skill.id || skill.name}>
                   <TableCell className="font-medium">{skill.name}</TableCell>
                   <TableCell>{skill.category}</TableCell>
                   <TableCell>{skill.level !== undefined ? `${skill.level}%` : 'N/A'}</TableCell>
                   <TableCell>
-                    {IconComponent ? <IconComponent className="h-5 w-5" /> : (skill.iconName === NULL_ICON_VALUE || !skill.iconName ? 'None' : skill.iconName)}
+                    {IconComponent ? <IconComponent className="h-5 w-5" /> : 'None'}
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(skill)}>
