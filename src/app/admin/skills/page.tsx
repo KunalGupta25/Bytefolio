@@ -16,19 +16,12 @@ import type { Skill } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-// Manually define a list of common Lucide icons to ensure they are available
-const manualIconList: Array<keyof typeof LucideIcons | string> = [
+// Simplified hardcoded list of common Lucide icons
+const commonLucideIconNames: string[] = [
   'Code', 'Database', 'Cloud', 'Server', 'Terminal', 'GitMerge', 
-  'Brain', 'Palette', 'Smartphone', 'Laptop', 'Cog', 'FileCode', 
-  'Network', 'ShieldCheck', 'Gauge', 'Users', 'Blocks', 'Wrench', 'Route', 'Component'
-];
-
-// Filter this manual list to ensure they are valid components in LucideIcons
-const validManualIcons = manualIconList.filter(name => {
-  const iconComponent = LucideIcons[name as keyof typeof LucideIcons];
-  return typeof iconComponent === 'function' && /^[A-Z]/.test(name as string);
-});
-validManualIcons.sort();
+  'Brain', 'Palette', 'Smartphone', 'Laptop', 'Cog', 'FileCode', 'Network',
+  'ShieldCheck', 'Gauge', 'Users', 'Blocks', 'Wrench', 'Route', 'Component', 'Activity', 'Settings2'
+].sort();
 
 
 const NULL_ICON_VALUE = "--no-icon--";
@@ -149,25 +142,24 @@ export default function AdminSkillsPage() {
             </SelectTrigger>
             <SelectContent className="max-h-60">
                 <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
-                
-                {validManualIcons.length > 0 && (
-                  <>
-                    <SelectSeparator />
-                    <SelectLabel>Suggested Icons</SelectLabel>
-                    {validManualIcons.map(name => {
-                        const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
-                        if (!IconComponent || typeof IconComponent !== 'function') return null;
-                        return (
-                            <SelectItem key={`manual-${name as string}`} value={name as string}>
-                                <div className="flex items-center gap-2">
-                                <IconComponent className="h-4 w-4" />
-                                {name}
-                                </div>
-                            </SelectItem>
-                        );
-                    })}
-                  </>
-                )}
+                <SelectSeparator />
+                <SelectLabel>Common Icons</SelectLabel>
+                {commonLucideIconNames.map(name => {
+                    const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
+                    if (!IconComponent || typeof IconComponent !== 'function') {
+                        // This console log can help in development to see if an icon name is mistyped or not found
+                        // console.warn(`Lucide icon "${name}" not found or is not a function.`);
+                        return null; 
+                    }
+                    return (
+                        <SelectItem key={name} value={name}>
+                            <div className="flex items-center gap-2">
+                            <IconComponent className="h-4 w-4" />
+                            {name}
+                            </div>
+                        </SelectItem>
+                    );
+                })}
             </SelectContent>
         </Select>
         {formState.errors?.iconName && <p className="text-sm text-destructive mt-1">{formState.errors.iconName.join(', ')}</p>}
@@ -259,3 +251,4 @@ export default function AdminSkillsPage() {
     </div>
   );
 }
+
