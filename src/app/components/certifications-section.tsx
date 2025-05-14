@@ -25,8 +25,8 @@ export default function CertificationsSection({ certifications }: Certifications
       title="Certifications" 
       subtitle="My credentials and professional achievements."
       hasParallax 
-      parallaxImageUrl="https://picsum.photos/seed/abstracttech/1920/1080" // New image URL
-      data-ai-hint="abstract technology" // New AI hint
+      parallaxImageUrl="https://picsum.photos/seed/codinganime/1920/1080" 
+      data-ai-hint="coding anime" 
     >
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {certifications.map((cert) => (
@@ -60,3 +60,4 @@ export default function CertificationsSection({ certifications }: Certifications
     </SectionWrapper>
   );
 }
+
