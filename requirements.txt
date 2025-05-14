@@ -1,0 +1,2 @@
+# For Next.js (Node.js) projects, dependencies are managed in the package.json file.
+# This file is typically used for Python projects.
