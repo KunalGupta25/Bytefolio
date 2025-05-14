@@ -34,6 +34,12 @@ const nextConfig: NextConfig = {
         hostname: 'media.licdn.com', // Added LinkedIn media domain
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'mp-cdn.elgato.com', // Added for project images
+        port: '',
+        pathname: '/**',
       }
     ],
   },
