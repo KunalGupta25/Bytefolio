@@ -9,14 +9,33 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator, SelectLabel } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { saveSkillAction, deleteSkillAction, fetchSkillsForAdmin } from '@/app/actions';
 import type { Skill } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && typeof LucideIcons[key as keyof typeof LucideIcons] !== 'object' && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && key !== 'createLucideIcon') as (keyof typeof LucideIcons | string)[];
+// Filter out non-component exports and complex objects/createLucideIcon
+const allLucideIconNames = Object.keys(LucideIcons).filter(
+  key => /^[A-Z]/.test(key) && 
+         typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && // Functions are components
+         key !== 'createLucideIcon' && 
+         key !== 'icons' // Exclude 'icons' if it's an object map
+) as (keyof typeof LucideIcons | string)[];
+
+
+const suggestedIconNamesList: (keyof typeof LucideIcons | string)[] = [
+  'Code', 'Database', 'Cloud', 'Server', 'Terminal', 
+  'GitMerge', 'Brain', 'Palette', 'Smartphone', 'Laptop', 'Cog', 'FileCode', 'Network'
+];
+
+// Ensure suggested icons are valid and exist in LucideIcons
+const validSuggestedIcons = suggestedIconNamesList.filter(name => allLucideIconNames.includes(name));
+
+// Filter out suggested icons from the main list to avoid duplicates, then combine
+const remainingIconNames = allLucideIconNames.filter(name => !validSuggestedIcons.includes(name));
+const displayIconNames = [...validSuggestedIcons, ...remainingIconNames];
 
 
 const NULL_ICON_VALUE = "--no-icon--";
@@ -137,18 +156,42 @@ export default function AdminSkillsPage() {
             </SelectTrigger>
             <SelectContent className="max-h-60">
                 <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
-                {iconNames.map(name => {
-                    const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
-                    if (!IconComponent) return null; // Should not happen with filtered list
-                    return (
-                        <SelectItem key={name} value={name as string}>
-                            <div className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4" />
-                            {name}
-                            </div>
-                        </SelectItem>
-                    );
-                })}
+                {validSuggestedIcons.length > 0 && (
+                  <>
+                    <SelectSeparator />
+                    <SelectLabel>Suggested Icons</SelectLabel>
+                    {validSuggestedIcons.map(name => {
+                        const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
+                        if (!IconComponent) return null;
+                        return (
+                            <SelectItem key={name} value={name as string}>
+                                <div className="flex items-center gap-2">
+                                <IconComponent className="h-4 w-4" />
+                                {name}
+                                </div>
+                            </SelectItem>
+                        );
+                    })}
+                  </>
+                )}
+                {remainingIconNames.length > 0 && (
+                    <>
+                        <SelectSeparator />
+                        <SelectLabel>All Icons</SelectLabel>
+                        {remainingIconNames.map(name => {
+                            const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
+                            if (!IconComponent) return null;
+                            return (
+                                <SelectItem key={name} value={name as string}>
+                                    <div className="flex items-center gap-2">
+                                    <IconComponent className="h-4 w-4" />
+                                    {name}
+                                    </div>
+                                </SelectItem>
+                            );
+                        })}
+                    </>
+                )}
             </SelectContent>
         </Select>
         {formState.errors?.iconName && <p className="text-sm text-destructive mt-1">{formState.errors.iconName.join(', ')}</p>}
@@ -240,3 +283,4 @@ export default function AdminSkillsPage() {
     </div>
   );
 }
+
