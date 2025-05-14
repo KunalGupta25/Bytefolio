@@ -9,14 +9,20 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel, SelectSeparator } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { saveCertificationAction, deleteCertificationAction, fetchCertificationsForAdmin } from '@/app/actions';
 import type { Certification } from '@/lib/data';
-import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2, HelpCircle } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && typeof LucideIcons[key as keyof typeof LucideIcons] !== 'object' && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && key !== 'createLucideIcon') as (keyof typeof LucideIcons | string)[];
+// Manually curated list of common Lucide icons
+const commonLucideIconNames: string[] = [
+  'Award', 'BadgeCheck', 'BookMarked', 'Briefcase', 'CalendarCheck', 'Certificate',
+  'CheckCircle', 'ClipboardCheck', 'FileText', 'GraduationCap', 'Key', 'LifeBuoy',
+  'Lightbulb', 'Link', 'Medal', 'Paperclip', 'ShieldCheck', 'Sparkles', 'Star', 'Trophy',
+  'UserCheck', 'Verified', 'Wrench'
+].sort();
 
 
 const NULL_ICON_VALUE = "--no-icon--";
@@ -84,7 +90,11 @@ export default function AdminCertificationsPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string | undefined) => {
+    if (!id) {
+      toast({ title: "Error", description: "Certification ID is missing.", variant: "destructive" });
+      return;
+    }
     if (confirm('Are you sure you want to delete this certification?')) {
       const result = await deleteCertificationAction(id);
       toast({
@@ -128,19 +138,27 @@ export default function AdminCertificationsPage() {
                 <SelectValue placeholder="Select an icon (optional)" />
             </SelectTrigger>
             <SelectContent className="max-h-60">
-                <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
-                {iconNames.map(name => {
-                    const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
-                    if (!IconComponent) return null;
-                    return (
-                        <SelectItem key={name} value={name as string}>
-                            <div className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4" />
-                            {name}
-                            </div>
-                        </SelectItem>
-                    );
-                })}
+                <SelectItem value={NULL_ICON_VALUE}>
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    None (Clear Icon)
+                  </div>
+                </SelectItem>
+                <SelectSeparator />
+                <SelectGroup>
+                  <SelectLabel>Common Icons</SelectLabel>
+                  {commonLucideIconNames.map(name => {
+                      const IconComponent = (LucideIcons as Record<string, React.ElementType | undefined>)[name];
+                      return (
+                          <SelectItem key={`common-${name}`} value={name}>
+                              <div className="flex items-center gap-2">
+                              {IconComponent ? <IconComponent className="h-4 w-4" /> : <span className="h-4 w-4 inline-block border border-dashed border-muted-foreground" title="Icon not found" />}
+                              {name}
+                              </div>
+                          </SelectItem>
+                      );
+                  })}
+                </SelectGroup>
             </SelectContent>
         </Select>
         {formState.errors?.iconName && <p className="text-sm text-destructive mt-1">{formState.errors.iconName.join(', ')}</p>}
@@ -192,6 +210,7 @@ export default function AdminCertificationsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Icon</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Organization</TableHead>
                 <TableHead>Date</TableHead>
@@ -199,21 +218,29 @@ export default function AdminCertificationsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {certifications.map((cert) => (
-                <TableRow key={cert.id}>
-                  <TableCell className="font-medium">{cert.name}</TableCell>
-                  <TableCell>{cert.organization}</TableCell>
-                  <TableCell>{cert.date}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(cert)}>
-                      <Edit className="h-4 w-4 mr-1" /> Edit
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(cert.id)}>
-                      <Trash2 className="h-4 w-4 mr-1" /> Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {certifications.map((cert) => {
+                const IconComponent = cert.iconName && cert.iconName !== NULL_ICON_VALUE && (LucideIcons as Record<string, React.ElementType | undefined>)[cert.iconName]
+                  ? (LucideIcons as Record<string, React.ElementType>)[cert.iconName]
+                  : null;
+                return (
+                  <TableRow key={cert.id}>
+                    <TableCell>
+                      {IconComponent ? <IconComponent className="h-5 w-5" /> : 'None'}
+                    </TableCell>
+                    <TableCell className="font-medium">{cert.name}</TableCell>
+                    <TableCell>{cert.organization}</TableCell>
+                    <TableCell>{cert.date}</TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(cert)}>
+                        <Edit className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(cert.id)}>
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
