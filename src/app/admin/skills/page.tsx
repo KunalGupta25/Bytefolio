@@ -16,35 +16,43 @@ import type { Skill } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-// Filter out non-component exports and complex objects/createLucideIcon
-const allLucideIconNames = Object.keys(LucideIcons).filter(
-  key => /^[A-Z]/.test(key) && 
-         typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && // Functions are components
-         key !== 'createLucideIcon' && 
-         key !== 'icons' // Exclude 'icons' if it's an object map
-) as (keyof typeof LucideIcons | string)[];
+// Get all exported keys from LucideIcons and filter them to get only icon components
+const allLucideIconNames = (Object.keys(LucideIcons) as Array<keyof typeof LucideIcons>).filter(
+  (key) => {
+    // Standard React components start with an uppercase letter
+    if (!/^[A-Z]/.test(key)) return false;
+    // Lucide icon components are functions
+    if (typeof LucideIcons[key] !== 'function') return false;
+    // Exclude known non-icon exports from lucide-react
+    if (['createLucideIcon', 'icons', 'default', 'LucideProvider'].includes(key)) return false;
+    return true;
+  }
+);
 
-
-const suggestedIconNamesList: (keyof typeof LucideIcons | string)[] = [
-  'Code', 'Database', 'Cloud', 'Server', 'Terminal', 
-  'GitMerge', 'Brain', 'Palette', 'Smartphone', 'Laptop', 'Cog', 'FileCode', 'Network'
+const suggestedIconNamesList: Array<keyof typeof LucideIcons> = [
+  'Code', 'Database', 'Cloud', 'Server', 'Terminal',
+  'GitMerge', 'Brain', 'Palette', 'Smartphone', 'Laptop', 'Cog', 'FileCode', 'Network',
+  'BrainCog', 'ShieldCheck', 'Gauge', 'Users', 'Blocks', 'Wrench', 'Route'
 ];
 
-// Ensure suggested icons are valid and exist in LucideIcons
-const validSuggestedIcons = suggestedIconNamesList.filter(name => allLucideIconNames.includes(name));
+// Filter the suggested list to ensure all suggestions are valid and available icons
+const validSuggestedIcons = suggestedIconNamesList.filter(name =>
+  allLucideIconNames.includes(name)
+);
 
-// Filter out suggested icons from the main list to avoid duplicates, then combine
-const remainingIconNames = allLucideIconNames.filter(name => !validSuggestedIcons.includes(name));
-const displayIconNames = [...validSuggestedIcons, ...remainingIconNames];
+// Get the remaining icons by excluding the valid suggestions from the full list
+const remainingIconNames = allLucideIconNames.filter(
+  name => !validSuggestedIcons.includes(name)
+);
 
 
 const NULL_ICON_VALUE = "--no-icon--";
-const initialFormActionState = { 
-  success: false, 
-  message: '', 
-  errors: {}, 
-  skills: undefined as Skill[] | undefined, 
-  updatedSkill: undefined as Skill | undefined 
+const initialFormActionState = {
+  success: false,
+  message: '',
+  errors: {},
+  skills: undefined as Skill[] | undefined,
+  updatedSkill: undefined as Skill | undefined
 };
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
@@ -90,7 +98,7 @@ export default function AdminSkillsPage() {
       });
       if (formState.success) {
         setIsFormOpen(false);
-        setEditingSkill(null); 
+        setEditingSkill(null);
         if (formState.skills) {
           setSkills(formState.skills);
         }
@@ -99,7 +107,7 @@ export default function AdminSkillsPage() {
   }, [formState, toast]);
 
   const handleEdit = (skill: Skill) => {
-    setEditingSkill(skill); 
+    setEditingSkill(skill);
     setIsFormOpen(true);
   };
 
@@ -120,7 +128,7 @@ export default function AdminSkillsPage() {
       }
     }
   };
-  
+
   const categories: Skill['category'][] = ['Language', 'Framework/Library', 'Tool', 'Database', 'Cloud', 'Other'];
 
   const SkillFormFields = useMemo(() => (
@@ -164,7 +172,7 @@ export default function AdminSkillsPage() {
                         const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
                         if (!IconComponent) return null;
                         return (
-                            <SelectItem key={name} value={name as string}>
+                            <SelectItem key={`suggested-${name as string}`} value={name as string}>
                                 <div className="flex items-center gap-2">
                                 <IconComponent className="h-4 w-4" />
                                 {name}
@@ -182,7 +190,7 @@ export default function AdminSkillsPage() {
                             const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
                             if (!IconComponent) return null;
                             return (
-                                <SelectItem key={name} value={name as string}>
+                                <SelectItem key={`all-${name as string}`} value={name as string}>
                                     <div className="flex items-center gap-2">
                                     <IconComponent className="h-4 w-4" />
                                     {name}
@@ -264,7 +272,7 @@ export default function AdminSkillsPage() {
                   <TableCell>{skill.category}</TableCell>
                   <TableCell>{skill.level !== undefined ? `${skill.level}%` : 'N/A'}</TableCell>
                   <TableCell>
-                    {IconComponent ? <IconComponent className="h-5 w-5" /> : (skill.iconName || 'N/A')}
+                    {IconComponent ? <IconComponent className="h-5 w-5" /> : (skill.iconName === NULL_ICON_VALUE || !skill.iconName ? 'None' : skill.iconName)}
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(skill)}>
@@ -283,4 +291,3 @@ export default function AdminSkillsPage() {
     </div>
   );
 }
-
