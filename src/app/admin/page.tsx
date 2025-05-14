@@ -1,14 +1,22 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { LayoutDashboard, BarChart3, Users, FileText, Briefcase, Star, Award } from "lucide-react" // Added Briefcase, Star, Award here directly
+import { LayoutDashboard, BarChart3, Users, FileText, Briefcase, Star, Award } from "lucide-react" 
+import { getProjects, getSkills, getCertifications } from "@/lib/data";
 
-export default function AdminDashboardPage() {
+export const dynamic = 'force-dynamic'; // Ensure data is fetched on each request
+
+export default async function AdminDashboardPage() {
+  // Fetch real data
+  const projects = await getProjects();
+  const skills = await getSkills();
+  const certifications = await getCertifications();
+
   const stats = [
-    { title: "Total Projects", value: "12", icon: Briefcase, color: "text-blue-500" },
-    { title: "Skills Listed", value: "30+", icon: Star, color: "text-yellow-500" },
-    { title: "Certifications", value: "5", icon: Award, color: "text-green-500" },
-    { title: "Page Views (Demo)", value: "1.2K", icon: BarChart3, color: "text-purple-500" },
-  ]
+    { title: "Total Projects", value: projects.length.toString(), icon: Briefcase, color: "text-blue-500" },
+    { title: "Skills Listed", value: skills.length.toString(), icon: Star, color: "text-yellow-500" },
+    { title: "Certifications", value: certifications.length.toString(), icon: Award, color: "text-green-500" },
+    { title: "Page Views (Demo)", value: "1.2K", icon: BarChart3, color: "text-purple-500" }, // Page views remain a demo
+  ];
 
   return (
     <div className="space-y-8">
