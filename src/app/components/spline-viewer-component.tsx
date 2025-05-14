@@ -16,6 +16,7 @@ declare global {
 const SplineViewerComponent: React.FC = () => {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [isComponentMounted, setIsComponentMounted] = useState(false);
+  const [readyToRenderSpline, setReadyToRenderSpline] = useState(false);
 
   useEffect(() => {
     // This effect runs once after the component mounts on the client-side
@@ -27,6 +28,18 @@ const SplineViewerComponent: React.FC = () => {
     setIsScriptLoaded(true);
   };
 
+  useEffect(() => {
+    if (isComponentMounted && isScriptLoaded) {
+      // Introduce a small delay to give the Spline library a moment
+      // to fully initialize after the script is loaded.
+      const timer = setTimeout(() => {
+        setReadyToRenderSpline(true);
+      }, 100); // 100ms delay, can be adjusted
+
+      return () => clearTimeout(timer); // Cleanup timer on unmount
+    }
+  }, [isComponentMounted, isScriptLoaded]);
+
   return (
     <>
       <Script
@@ -36,11 +49,12 @@ const SplineViewerComponent: React.FC = () => {
         onLoad={handleScriptLoad} // Set state once the script is loaded
         onError={(e) => {
           console.error('Error loading Spline viewer script:', e);
+          // Optionally, set a state here to show a specific error message to the user
         }}
       />
       <div className="w-full h-full flex items-center justify-center rounded-lg overflow-hidden">
-        {/* Render Spline viewer only if component is mounted AND script is loaded */}
-        {isComponentMounted && isScriptLoaded ? (
+        {/* Render Spline viewer only if component is mounted, script is loaded, AND delay has passed */}
+        {readyToRenderSpline ? (
           <spline-viewer
             url="https://prod.spline.design/NeMM5nMR9kXUPPhx/scene.splinecode"
             style={{ width: '100%', height: '100%', minHeight: '300px' }}
