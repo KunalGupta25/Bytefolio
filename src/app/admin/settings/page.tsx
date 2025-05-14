@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateSiteSettings, fetchSiteSettingsForAdmin } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import type { SiteSettings } from '@/lib/data'; 
+import type { SiteSettings } from '@/lib/data';
 import { Loader2 } from 'lucide-react';
 
 const initialFormActionState = {
@@ -100,7 +100,7 @@ export default function AdminSettingsPage() {
         <CardHeader>
           <CardTitle>General Site Configuration</CardTitle>
           <CardDescription>
-            Update the site name, default user info, profile image URL, favicon URL, and contact details. 
+            Update the site name, default user info, profile image URL, favicon URL, and contact details.
             Changes are stored in Firebase Realtime Database.
           </CardDescription>
         </CardHeader>
@@ -137,7 +137,7 @@ export default function AdminSettingsPage() {
                 <p id="username-error" className="text-sm text-destructive mt-1">{state.errors.defaultUserName.join(', ')}</p>
               )}
             </div>
-            
+
             <div>
               <Label htmlFor="defaultUserSpecialization" className="text-sm font-medium">Default User Specialization (for Hero Section)</Label>
               <Input
@@ -174,7 +174,7 @@ export default function AdminSettingsPage() {
             <div>
               <Label htmlFor="faviconUrl" className="text-sm font-medium">Favicon URL</Label>
               <Input
-                type="url"
+                type="text"
                 id="faviconUrl"
                 name="faviconUrl"
                 className="mt-1"
@@ -252,7 +252,7 @@ export default function AdminSettingsPage() {
                 <p id="contacttwitter-error" className="text-sm text-destructive mt-1">{state.errors.contactTwitter.join(', ')}</p>
               )}
             </div>
-            
+
             <SubmitButton />
           </form>
         </CardContent>
