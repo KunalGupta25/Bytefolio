@@ -4,13 +4,14 @@
 import { useEffect, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Import Link
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { loginAdminAction } from '@/app/actions'; 
-import { Loader2 } from 'lucide-react';
+import { Loader2, Home } from 'lucide-react'; // Added Home icon
 
 const ADMIN_AUTH_TOKEN_KEY = 'adminAuthToken';
 
@@ -93,6 +94,12 @@ export default function AdminLoginPage() {
             </div>
             <SubmitButton />
           </form>
+          <div className="mt-6 text-center">
+            <Link href="/" className="inline-flex items-center text-sm text-primary hover:text-accent hover:underline">
+              <Home className="mr-1.5 h-4 w-4" />
+              Back to Homepage
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
