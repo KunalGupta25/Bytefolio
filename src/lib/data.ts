@@ -64,7 +64,7 @@ export interface AboutData {
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
-  defaultProfileImageUrl: "https://placehold.co/300x300.png", // Updated default
+  defaultProfileImageUrl: "https://placehold.co/300x300.png",
   defaultUserName: "Your Name",
   defaultUserSpecialization: "Web Development, AI, Cybersecurity",
   contactDetails: {
@@ -80,7 +80,7 @@ const DEFAULT_ABOUT_DATA: AboutData = {
   professionalSummary: "I am a dedicated and enthusiastic B.Tech Computer Science student with a strong foundation in software development, problem-solving, and web technologies. I am passionate about creating impactful technology solutions and continuously expanding my knowledge. Eager to contribute to innovative projects.",
   bio: "Beyond coding, I enjoy contributing to open-source projects and exploring new AI advancements. I believe in lifelong learning and am always seeking new challenges. My goal is to leverage my technical skills to make a positive impact.",
   profileImageUrl: "https://placehold.co/300x300.png",
-  dataAiHint: "coding laptop", // Updated data-ai-hint
+  dataAiHint: "coding laptop",
 };
 
 
@@ -91,26 +91,21 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     const snapshot = await db.ref('/siteSettings').once('value');
     const data = snapshot.val();
 
-    if (data && typeof data === 'object') {
-      const contactDetailsData = (typeof data.contactDetails === 'object' && data.contactDetails !== null)
-        ? data.contactDetails
-        : {};
-      
-      const settingsData = (typeof data === 'object' && data !== null) ? data : {};
+    const settingsData = (data && typeof data === 'object') ? data : {};
+    const contactDetailsData = (settingsData.contactDetails && typeof settingsData.contactDetails === 'object')
+      ? settingsData.contactDetails
+      : {};
 
-      const mergedSettings: SiteSettings = {
-        ...DEFAULT_SITE_SETTINGS,
-        ...settingsData,
-        contactDetails: {
-          ...DEFAULT_SITE_SETTINGS.contactDetails,
-          ...contactDetailsData,
-        },
-        faviconUrl: settingsData.faviconUrl !== undefined ? settingsData.faviconUrl : DEFAULT_SITE_SETTINGS.faviconUrl,
-        defaultProfileImageUrl: settingsData.defaultProfileImageUrl || DEFAULT_SITE_SETTINGS.defaultProfileImageUrl,
-      };
-      return mergedSettings;
-    }
-    return { ...DEFAULT_SITE_SETTINGS, contactDetails: { ...DEFAULT_SITE_SETTINGS.contactDetails } };
+    return {
+      ...DEFAULT_SITE_SETTINGS,
+      ...settingsData,
+      contactDetails: {
+        ...DEFAULT_SITE_SETTINGS.contactDetails,
+        ...contactDetailsData,
+      },
+      faviconUrl: settingsData.faviconUrl !== undefined ? settingsData.faviconUrl : DEFAULT_SITE_SETTINGS.faviconUrl,
+      defaultProfileImageUrl: settingsData.defaultProfileImageUrl || DEFAULT_SITE_SETTINGS.defaultProfileImageUrl,
+    };
   } catch (error) {
     console.error("Error fetching site settings:", error);
     return { ...DEFAULT_SITE_SETTINGS, contactDetails: { ...DEFAULT_SITE_SETTINGS.contactDetails } };
@@ -121,17 +116,13 @@ export async function getAboutData(): Promise<AboutData> {
   try {
     const snapshot = await db.ref('/aboutInfo').once('value');
     const data = snapshot.val();
-
-    if (data && typeof data === 'object') {
-      const aboutData = (typeof data === 'object' && data !== null) ? data : {};
-      return {
-        ...DEFAULT_ABOUT_DATA,
-        ...aboutData,
-        profileImageUrl: aboutData.profileImageUrl || DEFAULT_ABOUT_DATA.profileImageUrl,
-        dataAiHint: aboutData.dataAiHint || DEFAULT_ABOUT_DATA.dataAiHint,
-      };
-    }
-    return { ...DEFAULT_ABOUT_DATA };
+    const aboutData = (data && typeof data === 'object') ? data : {};
+    return {
+      ...DEFAULT_ABOUT_DATA,
+      ...aboutData,
+      profileImageUrl: aboutData.profileImageUrl || DEFAULT_ABOUT_DATA.profileImageUrl,
+      dataAiHint: aboutData.dataAiHint || DEFAULT_ABOUT_DATA.dataAiHint,
+    };
   } catch (error) {
     console.error("Error fetching about data:", error);
     return { ...DEFAULT_ABOUT_DATA };
@@ -220,5 +211,17 @@ export async function getCertifications(): Promise<Certification[]> {
   } catch (error) {
     console.error("Error fetching certifications:", error);
     return [];
+  }
+}
+
+export async function getPageViews(): Promise<number> {
+  try {
+    const snapshot = await db.ref('/analytics/pageViews').once('value');
+    const views = snapshot.val();
+    // The actual mechanism to increment this value would be implemented elsewhere (e.g., a server action called on page load).
+    return Number(views) || 0;
+  } catch (error) {
+    console.error("Error fetching page views:", error);
+    return 0;
   }
 }
