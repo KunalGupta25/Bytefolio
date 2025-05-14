@@ -434,9 +434,9 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     description: formData.get('description'),
     imageUrl: formData.get('imageUrl'),
     tags: formData.get('tags'), 
-    liveLink: formData.get('liveLink') || undefined,
-    repoLink: formData.get('repoLink') || undefined,
-    dataAiHint: formData.get('dataAiHint') || undefined,
+    liveLink: formData.get('liveLink') || undefined, // If empty string, becomes undefined
+    repoLink: formData.get('repoLink') || undefined, // If empty string, becomes undefined
+    dataAiHint: formData.get('dataAiHint') || undefined, // If empty string, becomes undefined
   };
   console.log("Raw data for validation:", rawData);
 
@@ -453,7 +453,7 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
   }
   
   console.log("Project validation successful. Validated data:", validatedFields.data);
-  let projectData = { ...validatedFields.data } as Omit<Project, 'id' | 'tags'> & { id?: string, tags: string[] }; 
+  const projectData = validatedFields.data;
   const isNew = !projectData.id;
   const projectId = projectData.id || db.ref('/projects').push().key;
 
@@ -462,33 +462,49 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     return { success: false, message: "Failed to generate project ID." };
   }
 
-  const finalProjectData: Project = {
-    ...projectData,
+  // Construct the object to be saved to Firebase, omitting undefined fields.
+  const dataForFirebase: any = {
     id: projectId,
-    liveLink: projectData.liveLink || undefined, // Ensure empty string becomes undefined
-    repoLink: projectData.repoLink || undefined, // Ensure empty string becomes undefined
-    dataAiHint: projectData.dataAiHint || undefined,
+    title: projectData.title,
+    description: projectData.description,
+    imageUrl: projectData.imageUrl,
+    tags: projectData.tags, // Assuming tags is always an array from Zod transform
   };
-  console.log("Final project data to save to Firebase:", finalProjectData);
+
+  if (projectData.liveLink !== undefined) {
+    dataForFirebase.liveLink = projectData.liveLink; // This can be "" or a URL string
+  }
+  if (projectData.repoLink !== undefined) {
+    dataForFirebase.repoLink = projectData.repoLink; // This can be "" or a URL string
+  }
+  if (projectData.dataAiHint !== undefined && projectData.dataAiHint.trim() !== '') {
+    dataForFirebase.dataAiHint = projectData.dataAiHint;
+  } else if (projectData.dataAiHint === undefined || projectData.dataAiHint.trim() === '') {
+     // If dataAiHint is undefined or an empty string after trim, do not add it or set to null if you prefer to remove it
+     // For omitting, simply don't add it. For setting to null: dataForFirebase.dataAiHint = null;
+  }
+
+
+  console.log("Final project data to save to Firebase:", dataForFirebase);
 
   try {
-    await db.ref(`/projects/${projectId}`).set(finalProjectData);
-    console.log(isNew ? 'Adding Project to Firebase successful:' : 'Updating Project in Firebase successful:', finalProjectData);
+    await db.ref(`/projects/${projectId}`).set(dataForFirebase as Project); // Cast to Project for type consistency
+    console.log(isNew ? 'Adding Project to Firebase successful:' : 'Updating Project in Firebase successful:', dataForFirebase);
     revalidatePath('/');
     revalidatePath('/admin/projects');
     const allProjects = await getProjects();
     return { 
       success: true, 
-      message: `Project '${finalProjectData.title}' ${isNew ? 'added' : 'updated'} successfully!`, 
-      updatedProject: finalProjectData, 
+      message: `Project '${dataForFirebase.title}' ${isNew ? 'added' : 'updated'} successfully!`, 
+      updatedProject: dataForFirebase as Project, 
       projects: allProjects
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`Error saving project '${finalProjectData.title}' to Firebase:`, errorMessage);
+    console.error(`Error saving project '${dataForFirebase.title}' to Firebase:`, errorMessage);
     return { 
       success: false, 
-      message: `Failed to save project '${finalProjectData.title}'. Error: ${errorMessage}` 
+      message: `Failed to save project '${dataForFirebase.title}'. Error: ${errorMessage}` 
     };
   }
 }
