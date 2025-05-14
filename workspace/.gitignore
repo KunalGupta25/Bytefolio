@@ -1,0 +1,64 @@
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Next.js build output
+/.next/
+/out/
+
+# Netlify build output
+/.netlify/
+
+# Production/Debug 로그
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Local Environment Variables
+# Exclude all .env files except .env.example (if you have one)
+.env
+.env*.local
+.env.development
+.env.production
+.env.test
+
+# Do NOT commit .env.example if it contains sensitive information.
+# Typically .env.example is safe to commit if it only shows the structure.
+# !.env.example
+
+# Editor directories and files
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Coverage directory
+/coverage
+
+# Misc
+.npm
+.eslintcache
+*.tgz
+*.yarn
+dump.rdb
+    
