@@ -6,7 +6,6 @@ import { ThemeToggleButton } from './theme-toggle-button';
 import { Code2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React from 'react';
-import { siteSettingsData } from '@/lib/data'; // Import site settings
 
 const navItems = [
   { name: 'About', href: '#about' },
@@ -17,9 +16,12 @@ const navItems = [
   { name: 'Contact', href: '#contact' },
 ];
 
-export default function Navigation() {
+interface NavigationProps {
+  siteName: string;
+}
+
+export default function Navigation({ siteName }: NavigationProps) {
   const [isScrolled, setIsScrolled] = React.useState(false);
-  const siteName = siteSettingsData.siteName; // Simulated: Use static data
 
   React.useEffect(() => {
     const handleScroll = () => {

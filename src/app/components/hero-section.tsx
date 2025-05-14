@@ -2,16 +2,15 @@
 import { Button } from '@/components/ui/button';
 import { ArrowDown, Download } from 'lucide-react';
 import Link from 'next/link';
-import ThreeScenePlaceholder from './three-scene-placeholder'; // Placeholder for 3D object
-import { siteSettingsData } from '@/lib/data'; // Import site settings
+// import ThreeScenePlaceholder from './three-scene-placeholder'; // Placeholder for 3D object
+// No longer importing siteSettingsData, will receive props
 
-export default function HeroSection() {
-  // In a real app, this data would come from a dynamic source (e.g., context, API)
-  // For now, we use the static data as a fallback or initial value.
-  // Admin panel changes are simulated and won't reflect here without a backend.
-  const userName = siteSettingsData.defaultUserName;
-  const userSpecialization = siteSettingsData.defaultUserSpecialization;
+interface HeroSectionProps {
+  userName: string;
+  userSpecialization: string;
+}
 
+export default function HeroSection({ userName, userSpecialization }: HeroSectionProps) {
   return (
     <section id="hero" className="relative bg-gradient-to-br from-background via-secondary to-background text-foreground min-h-[calc(100vh-4rem)] flex items-center justify-center py-20 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">

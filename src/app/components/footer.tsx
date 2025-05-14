@@ -1,12 +1,16 @@
 
 import { Github, Linkedin, Mail } from 'lucide-react';
 import Link from 'next/link';
-import { siteSettingsData, contactDetails } from '@/lib/data'; // Import site settings and contact details
+import type { ContactDetails } from '@/lib/data'; // Import type
 
-export default function Footer() {
+interface FooterProps {
+  siteName: string;
+  userName: string;
+  contactDetails: ContactDetails;
+}
+
+export default function Footer({ siteName, userName, contactDetails }: FooterProps) {
   const currentYear = new Date().getFullYear();
-  const siteName = siteSettingsData.siteName;
-  const userName = siteSettingsData.defaultUserName;
 
   return (
     <footer className="bg-secondary text-secondary-foreground py-8">

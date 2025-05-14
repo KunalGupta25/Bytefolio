@@ -1,11 +1,13 @@
+
 import type React from 'react';
+import { db } from './firebase-admin'; // Firebase Admin SDK
 
 // Types for data structures
 export interface Skill {
   id: string; 
   name: string;
   level?: number; 
-  iconName?: keyof typeof import('lucide-react'); 
+  iconName?: keyof typeof import('lucide-react') | string | null; 
   category: 'Language' | 'Framework/Library' | 'Tool' | 'Database' | 'Cloud' | 'Other';
 }
 
@@ -15,7 +17,7 @@ export interface EducationItem {
   institution: string;
   period: string;
   description?: string;
-  iconName?: keyof typeof import('lucide-react');
+  iconName?: keyof typeof import('lucide-react') | string | null;
 }
 
 export interface Project {
@@ -35,14 +37,21 @@ export interface Certification {
   organization: string;
   date: string;
   verifyLink?: string;
-  iconName?: keyof typeof import('lucide-react');
+  iconName?: keyof typeof import('lucide-react') | string | null;
 }
 
+export interface ContactDetails {
+  email: string;
+  linkedin: string;
+  github: string;
+  twitter?: string;
+}
 export interface SiteSettings {
   siteName: string;
   defaultProfileImageUrl: string; 
   defaultUserName: string; 
   defaultUserSpecialization: string;
+  contactDetails: ContactDetails;
 }
 
 export interface AboutData {
@@ -52,154 +61,89 @@ export interface AboutData {
   dataAiHint?: string;
 }
 
-// Mock Data - Changed to 'let' to be mutable
-export let siteSettingsData: SiteSettings = {
+const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
   defaultProfileImageUrl: "https://picsum.photos/seed/profile/300/300",
   defaultUserName: "Your Name",
   defaultUserSpecialization: "Web Development, AI, Cybersecurity",
+  contactDetails: {
+    email: 'youremail@example.com',
+    linkedin: 'https://linkedin.com/in/yourusername',
+    github: 'https://github.com/yourusername',
+    twitter: 'https://twitter.com/yourusername',
+  }
 };
 
-export let aboutData: AboutData = {
-  professionalSummary: "I am a dedicated and enthusiastic B.Tech Computer Science student with a strong foundation in software development, problem-solving, and [mention 1-2 key areas like web technologies, data structures, algorithms]. I am passionate about creating impactful technology solutions and continuously expanding my knowledge in the ever-evolving tech landscape. Eager to contribute to innovative projects and collaborate with like-minded professionals.",
-  bio: "Beyond coding, I enjoy [mention a hobby or interest, e.g., contributing to open-source projects, exploring new AI advancements, playing chess]. I believe in lifelong learning and am always seeking new challenges to grow both personally and professionally. My goal is to leverage my technical skills to make a positive impact.",
+const DEFAULT_ABOUT_DATA: AboutData = {
+  professionalSummary: "I am a dedicated and enthusiastic B.Tech Computer Science student with a strong foundation in software development, problem-solving, and web technologies. I am passionate about creating impactful technology solutions and continuously expanding my knowledge. Eager to contribute to innovative projects.",
+  bio: "Beyond coding, I enjoy contributing to open-source projects and exploring new AI advancements. I believe in lifelong learning and am always seeking new challenges. My goal is to leverage my technical skills to make a positive impact.",
   profileImageUrl: "https://picsum.photos/seed/profile/300/300", 
   dataAiHint: "professional portrait",
 };
 
-export let skillsData: Skill[] = [
-  { id: 'skill-js', name: 'JavaScript', level: 90, iconName: 'Cog' as keyof typeof import('lucide-react'), category: 'Language' },
-  { id: 'skill-python', name: 'Python', level: 85, iconName: 'Codesandbox' as keyof typeof import('lucide-react'), category: 'Language' },
-  { id: 'skill-java', name: 'Java', level: 75, iconName: 'Coffee' as keyof typeof import('lucide-react'), category: 'Language' },
-  { id: 'skill-react', name: 'React.js', level: 90, iconName: 'Atom' as keyof typeof import('lucide-react'), category: 'Framework/Library' },
-  { id: 'skill-nextjs', name: 'Next.js', level: 88, iconName: 'Component' as keyof typeof import('lucide-react'), category: 'Framework/Library' },
-  { id: 'skill-nodejs', name: 'Node.js', level: 80, iconName: 'Server' as keyof typeof import('lucide-react'), category: 'Framework/Library' },
-  { id: 'skill-expressjs', name: 'Express.js', level: 78, iconName: 'Network' as keyof typeof import('lucide-react'), category: 'Framework/Library' },
-  { id: 'skill-sql', name: 'SQL (PostgreSQL, MySQL)', level: 70, iconName: 'Database' as keyof typeof import('lucide-react'), category: 'Database' },
-  { id: 'skill-mongodb', name: 'MongoDB', level: 65, iconName: 'DatabaseZap' as keyof typeof import('lucide-react'), category: 'Database' },
-  { id: 'skill-git', name: 'Git & GitHub', level: 90, iconName: 'Github' as keyof typeof import('lucide-react'), category: 'Tool' },
-  { id: 'skill-docker', name: 'Docker', level: 60, iconName: 'Container' as keyof typeof import('lucide-react'), category: 'Tool' },
-  { id: 'skill-aws', name: 'AWS (EC2, S3)', level: 50, iconName: 'Cloud' as keyof typeof import('lucide-react'), category: 'Cloud' },
-  { id: 'skill-rest', name: 'REST APIs', level: 85, iconName: 'Webhook' as keyof typeof import('lucide-react'), category: 'Other' },
-  { id: 'skill-agile', name: 'Agile Methodologies', level: 75, iconName: 'Users' as keyof typeof import('lucide-react'), category: 'Other' },
-];
 
-export let educationData: EducationItem[] = [
-  {
-    id: 'edu-1',
-    degree: 'Bachelor of Technology in Computer Science',
-    institution: 'University of Technology',
-    period: '2021 - 2025 (Expected)',
-    description: 'Relevant coursework: Data Structures & Algorithms, Web Development, Database Management, AI Fundamentals. Actively involved in coding clubs and hackathons.',
-    iconName: 'BookOpen',
-  },
-  {
-    id: 'edu-2',
-    degree: 'High School Diploma (Science Stream)',
-    institution: 'Central High School',
-    period: '2019 - 2021',
-    description: 'Achieved 92% in final examinations. Participated in science olympiads.',
-    iconName: 'Briefcase',
-  },
-];
+// --- Data Fetching Functions from Firebase ---
 
-export let projectsData: Project[] = [
-  {
-    id: 'project-1',
-    title: 'E-commerce Platform',
-    description: 'A full-stack e-commerce website with features like product listing, cart, user authentication, and payment integration.',
-    imageUrl: 'https://picsum.photos/seed/ecommerce/600/400',
-    dataAiHint: 'online store',
-    tags: ['Next.js', 'React', 'Node.js', 'MongoDB', 'Stripe'],
-    liveLink: '#',
-    repoLink: '#',
-  },
-  {
-    id: 'project-2',
-    title: 'Task Management App',
-    description: 'A collaborative task management tool to help teams organize and track their work effectively.',
-    imageUrl: 'https://picsum.photos/seed/taskapp/600/400',
-    dataAiHint: 'productivity app',
-    tags: ['React', 'Firebase', 'Material UI'],
-    liveLink: '#',
-    repoLink: '#',
-  },
-  {
-    id: 'project-3',
-    title: 'AI Powered Chatbot',
-    description: 'An intelligent chatbot for customer service, built using natural language processing techniques.',
-    imageUrl: 'https://picsum.photos/seed/chatbot/600/400',
-    dataAiHint: 'artificial intelligence',
-    tags: ['Python', 'Dialogflow', 'Flask'],
-    repoLink: '#',
-  },
-    {
-    id: 'project-4',
-    title: 'Personal Portfolio Website',
-    description: 'This very portfolio, showcasing my skills and projects. Built with Next.js and Tailwind CSS.',
-    imageUrl: 'https://picsum.photos/seed/portfolio/600/400',
-    dataAiHint: 'web design',
-    tags: ['Next.js', 'Tailwind CSS', 'TypeScript'],
-    liveLink: '#', 
-    repoLink: '#', 
-  },
-];
-
-export let certificationsData: Certification[] = [
-  {
-    id: 'cert-1',
-    name: 'AWS Certified Cloud Practitioner',
-    organization: 'Amazon Web Services',
-    date: 'June 2023',
-    verifyLink: '#',
-    iconName: 'Award',
-  },
-  {
-    id: 'cert-2',
-    name: 'Responsive Web Design',
-    organization: 'freeCodeCamp',
-    date: 'January 2022',
-    verifyLink: '#',
-    iconName: 'Award',
-  },
-  {
-    id: 'cert-3',
-    name: 'Google IT Support Professional Certificate',
-    organization: 'Coursera (Google)',
-    date: 'August 2022',
-    iconName: 'ShieldCheck',
+export async function getSiteSettings(): Promise<SiteSettings> {
+  try {
+    const snapshot = await db.ref('/siteSettings').once('value');
+    return snapshot.val() || DEFAULT_SITE_SETTINGS;
+  } catch (error) {
+    console.error("Error fetching site settings:", error);
+    return DEFAULT_SITE_SETTINGS;
   }
-];
+}
 
-export const contactDetails = {
-  email: 'youremail@example.com',
-  linkedin: 'https://linkedin.com/in/yourusername',
-  github: 'https://github.com/yourusername',
-  twitter: 'https://twitter.com/yourusername', // Optional
-};
-
-// Ensure all initial data items have IDs.
-// This is important for reliable updates and deletions.
-skillsData.forEach((skill, index) => {
-  if (!skill.id) {
-    skill.id = `skill-initial-${index}-${skill.name.toLowerCase().replace(/\s+/g, '-') || 'untitled'}`;
+export async function getAboutData(): Promise<AboutData> {
+  try {
+    const snapshot = await db.ref('/aboutInfo').once('value');
+    return snapshot.val() || DEFAULT_ABOUT_DATA;
+  } catch (error) {
+    console.error("Error fetching about data:", error);
+    return DEFAULT_ABOUT_DATA;
   }
-});
+}
 
-educationData.forEach((item, index) => {
-    if(!item.id) {
-        item.id = `edu-initial-${index}`;
-    }
-});
+export async function getSkills(): Promise<Skill[]> {
+  try {
+    const snapshot = await db.ref('/skills').once('value');
+    const skillsData = snapshot.val();
+    return skillsData ? Object.values(skillsData) : [];
+  } catch (error) {
+    console.error("Error fetching skills:", error);
+    return [];
+  }
+}
 
-projectsData.forEach((item, index) => {
-    if(!item.id) {
-        item.id = `project-initial-${index}`;
-    }
-});
+export async function getEducationItems(): Promise<EducationItem[]> {
+  try {
+    const snapshot = await db.ref('/education').once('value');
+    const educationData = snapshot.val();
+    return educationData ? Object.values(educationData) : [];
+  } catch (error) {
+    console.error("Error fetching education items:", error);
+    return [];
+  }
+}
 
-certificationsData.forEach((item, index) => {
-    if(!item.id) {
-        item.id = `cert-initial-${index}`;
-    }
-});
+export async function getProjects(): Promise<Project[]> {
+  try {
+    const snapshot = await db.ref('/projects').once('value');
+    const projectsData = snapshot.val();
+    return projectsData ? Object.values(projectsData) : [];
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return [];
+  }
+}
+
+export async function getCertifications(): Promise<Certification[]> {
+  try {
+    const snapshot = await db.ref('/certifications').once('value');
+    const certificationsData = snapshot.val();
+    return certificationsData ? Object.values(certificationsData) : [];
+  } catch (error) {
+    console.error("Error fetching certifications:", error);
+    return [];
+  }
+}

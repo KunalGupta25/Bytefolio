@@ -1,22 +1,26 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { projectsData } from '@/lib/data';
+import type { Project } from '@/lib/data';
 import SectionWrapper from './section-wrapper';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Github, ExternalLink } from 'lucide-react';
 
-export default function ProjectsSection() {
+interface ProjectsSectionProps {
+  projects: Project[];
+}
+
+export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   return (
     <SectionWrapper id="projects" title="Projects" subtitle="Some of the things I've built." className="bg-secondary">
       <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
-        {projectsData.map((project) => (
+        {projects.map((project) => (
           <Card key={project.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden">
             <div className="group relative w-full h-56 sm:h-64">
               <Image
-                src={project.imageUrl}
+                src={project.imageUrl || "https://placehold.co/600x400.png"}
                 alt={project.title}
                 layout="fill"
                 objectFit="cover"
@@ -57,4 +61,3 @@ export default function ProjectsSection() {
     </SectionWrapper>
   );
 }
-

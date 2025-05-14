@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useActionState, useState } from 'react';
@@ -7,16 +8,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { updateAboutInfo } from '@/app/actions';
+import { updateAboutInfo, fetchAboutDataForAdmin } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { aboutData as initialAboutDataFromModule, siteSettingsData, type AboutData } from '@/lib/data';
+import type { AboutData } from '@/lib/data';
 import { Loader2 } from 'lucide-react';
 
-const initialState = {
+const initialFormActionState = {
   success: false,
   message: '',
   errors: {},
   updatedAboutData: undefined as AboutData | undefined,
+};
+
+const defaultAboutData: AboutData = {
+  professionalSummary: "",
+  bio: "",
+  profileImageUrl: "",
+  dataAiHint: "",
 };
 
 function SubmitButton() {
@@ -30,15 +38,29 @@ function SubmitButton() {
 }
 
 export default function AdminAboutPage() {
-  const [currentAboutData, setCurrentAboutData] = useState<AboutData>({...initialAboutDataFromModule});
-  const [state, formAction] = useActionState(updateAboutInfo, initialState);
+  const [currentAboutData, setCurrentAboutData] = useState<AboutData>(defaultAboutData);
+  const [isLoading, setIsLoading] = useState(true);
+  const [state, formAction] = useActionState(updateAboutInfo, initialFormActionState);
   const { toast } = useToast();
   
-  // This effect is to initialize from the module, useful for initial load
-  // but subsequent updates should primarily come from the action's response.
   useEffect(() => {
-    setCurrentAboutData({...initialAboutDataFromModule});
-  }, []);
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const data = await fetchAboutDataForAdmin();
+        setCurrentAboutData(data || defaultAboutData);
+      } catch (error) {
+        toast({
+          title: 'Error fetching data',
+          description: 'Could not load About Me information. Please try again.',
+          variant: 'destructive',
+        });
+        setCurrentAboutData(defaultAboutData); // Fallback
+      }
+      setIsLoading(false);
+    }
+    loadData();
+  }, [toast]);
 
 
   useEffect(() => {
@@ -49,15 +71,18 @@ export default function AdminAboutPage() {
         variant: state.success ? 'default' : 'destructive',
       });
       if (state.success && state.updatedAboutData) {
-        // Refresh currentAboutData from the action's response
         setCurrentAboutData(state.updatedAboutData);
-      } else if (state.success) {
-        // Fallback: If updatedAboutData is somehow not in state, re-fetch from module.
-        // This ideally shouldn't be hit if actions.ts is correct.
-        setCurrentAboutData({...initialAboutDataFromModule});
       }
     }
   }, [state, toast]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" /> Loading About Me data...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -71,7 +96,7 @@ export default function AdminAboutPage() {
           <CardTitle>About Me Details</CardTitle>
           <CardDescription>
             Edit the professional summary, biography, and profile image URL.
-            Changes are managed in memory and persist for the current server session.
+            Changes are stored in Firebase Realtime Database.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -84,7 +109,7 @@ export default function AdminAboutPage() {
                 rows={5}
                 required
                 className="mt-1 min-h-[120px]"
-                value={currentAboutData.professionalSummary} // Controlled component
+                value={currentAboutData.professionalSummary}
                 onChange={(e) => setCurrentAboutData(prev => ({...prev, professionalSummary: e.target.value}))}
                 aria-describedby={state.errors?.professionalSummary ? "summary-error" : undefined}
               />
@@ -101,7 +126,7 @@ export default function AdminAboutPage() {
                 rows={8}
                 required
                 className="mt-1 min-h-[150px]"
-                value={currentAboutData.bio} // Controlled component
+                value={currentAboutData.bio}
                 onChange={(e) => setCurrentAboutData(prev => ({...prev, bio: e.target.value}))}
                 aria-describedby={state.errors?.bio ? "bio-error" : undefined}
               />
@@ -117,13 +142,28 @@ export default function AdminAboutPage() {
                 id="profileImageUrl"
                 name="profileImageUrl"
                 className="mt-1"
-                value={currentAboutData.profileImageUrl} // Controlled component
+                value={currentAboutData.profileImageUrl}
                 onChange={(e) => setCurrentAboutData(prev => ({...prev, profileImageUrl: e.target.value}))}
                 placeholder="https://example.com/your-image.jpg"
                 aria-describedby={state.errors?.profileImageUrl ? "imageurl-error" : undefined}
               />
               {state.errors?.profileImageUrl && (
                 <p id="imageurl-error" className="text-sm text-destructive mt-1">{state.errors.profileImageUrl.join(', ')}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="dataAiHint" className="text-sm font-medium">AI Hint for Profile Image (Optional, 1-2 words)</Label>
+              <Input
+                id="dataAiHint"
+                name="dataAiHint"
+                className="mt-1"
+                value={currentAboutData.dataAiHint || ''}
+                onChange={(e) => setCurrentAboutData(prev => ({...prev, dataAiHint: e.target.value}))}
+                placeholder="e.g., professional portrait"
+                aria-describedby={state.errors?.dataAiHint ? "dataaihint-error" : undefined}
+              />
+              {state.errors?.dataAiHint && (
+                <p id="dataaihint-error" className="text-sm text-destructive mt-1">{state.errors.dataAiHint.join(', ')}</p>
               )}
             </div>
             

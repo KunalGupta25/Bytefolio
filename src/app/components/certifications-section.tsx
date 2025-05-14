@@ -1,5 +1,5 @@
 
-import { certificationsData } from '@/lib/data';
+import type { Certification } from '@/lib/data';
 import SectionWrapper from './section-wrapper';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,18 @@ import Link from 'next/link';
 import { ExternalLink, CalendarDays } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-export default function CertificationsSection() {
+interface CertificationsSectionProps {
+  certifications: Certification[];
+}
+
+export default function CertificationsSection({ certifications }: CertificationsSectionProps) {
+
+  const IconComponent = ({ iconName }: { iconName?: Certification['iconName'] }) => {
+    if (!iconName || typeof iconName !== 'string' || !(iconName in LucideIcons)) return null;
+    const ResolvedIcon = LucideIcons[iconName as keyof typeof LucideIcons] as React.ElementType;
+    return ResolvedIcon ? <ResolvedIcon className="h-7 w-7 text-accent" /> : null;
+  };
+
   return (
     <SectionWrapper 
       id="certifications" 
@@ -18,14 +29,12 @@ export default function CertificationsSection() {
       data-ai-hint="abstract tech background"
     >
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {certificationsData.map((cert, index) => {
-          const IconComponent = cert.iconName ? LucideIcons[cert.iconName] as React.ElementType : null;
-          return (
-            <Card key={index} className="bg-card/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
+        {certifications.map((cert) => (
+            <Card key={cert.id} className="bg-card/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
                   <CardTitle className="text-lg font-semibold text-card-foreground">{cert.name}</CardTitle>
-                  {IconComponent && <IconComponent className="h-7 w-7 text-accent" />}
+                  <IconComponent iconName={cert.iconName} />
                 </div>
                 <CardDescription className="text-sm text-muted-foreground">{cert.organization}</CardDescription>
               </CardHeader>
@@ -45,8 +54,8 @@ export default function CertificationsSection() {
                   </CardContent>
               )}
             </Card>
-          );
-        })}
+          )
+        )}
       </div>
     </SectionWrapper>
   );

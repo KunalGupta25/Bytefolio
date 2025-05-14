@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useActionState } from 'react';
@@ -10,17 +11,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { saveCertificationAction, deleteCertificationAction } from '@/app/actions';
-import { certificationsData as initialCertificationsDataFromModule } from '@/lib/data';
+import { saveCertificationAction, deleteCertificationAction, fetchCertificationsForAdmin } from '@/app/actions';
 import type { Certification } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && typeof LucideIcons[key as keyof typeof LucideIcons] !== 'object' && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && key !== 'createLucideIcon') as (keyof typeof LucideIcons)[];
+const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && typeof LucideIcons[key as keyof typeof LucideIcons] !== 'object' && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && key !== 'createLucideIcon') as (keyof typeof LucideIcons | string)[];
 
 
 const NULL_ICON_VALUE = "--no-icon--";
-const initialFormState = { 
+const initialFormActionState = { 
   success: false, 
   message: '', 
   errors: {},
@@ -39,16 +39,27 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminCertificationsPage() {
-  const [certifications, setCertifications] = useState<Certification[]>([...initialCertificationsDataFromModule]);
+  const [certifications, setCertifications] = useState<Certification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCertification, setEditingCertification] = useState<Certification | null>(null);
   const { toast } = useToast();
 
-  const [formState, formAction] = useActionState(saveCertificationAction, initialFormState);
+  const [formState, formAction] = useActionState(saveCertificationAction, initialFormActionState);
 
   useEffect(() => {
-    setCertifications([...initialCertificationsDataFromModule]);
-  }, []);
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const fetchedCerts = await fetchCertificationsForAdmin();
+        setCertifications(fetchedCerts || []);
+      } catch (error) {
+        toast({ title: "Error", description: "Could not load certifications data.", variant: "destructive" });
+      }
+      setIsLoading(false);
+    }
+    loadData();
+  }, [toast]);
 
 
   useEffect(() => {
@@ -63,8 +74,6 @@ export default function AdminCertificationsPage() {
         setEditingCertification(null);
         if (formState.certifications) {
           setCertifications(formState.certifications); 
-        } else {
-          setCertifications([...initialCertificationsDataFromModule]);
         }
       }
     }
@@ -85,8 +94,6 @@ export default function AdminCertificationsPage() {
       });
       if (result.success && result.certifications) {
         setCertifications(result.certifications);
-      } else if (result.success) {
-        setCertifications([...initialCertificationsDataFromModule]);
       }
     }
   };
@@ -123,10 +130,10 @@ export default function AdminCertificationsPage() {
             <SelectContent className="max-h-60">
                 <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
                 {iconNames.map(name => {
-                    const IconComponent = LucideIcons[name] as React.ElementType;
+                    const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
                     if (!IconComponent) return null;
                     return (
-                        <SelectItem key={name} value={name}>
+                        <SelectItem key={name} value={name as string}>
                             <div className="flex items-center gap-2">
                             <IconComponent className="h-4 w-4" />
                             {name}
@@ -139,7 +146,16 @@ export default function AdminCertificationsPage() {
         {formState.errors?.iconName && <p className="text-sm text-destructive mt-1">{formState.errors.iconName.join(', ')}</p>}
       </div>
     </>
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [editingCertification, formState.errors]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" /> Loading certifications...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -147,7 +163,7 @@ export default function AdminCertificationsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Manage Certifications</h1>
           <p className="text-muted-foreground">Add, edit, or delete certifications.</p>
-           <p className="text-sm text-destructive mt-1">Note: Data is managed in memory and persists for the current server session.</p>
+           <p className="text-sm text-muted-foreground mt-1">Note: Data is stored in Firebase Realtime Database.</p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingCertification(null); }}>
           <DialogTrigger asChild>

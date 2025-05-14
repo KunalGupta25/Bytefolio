@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useActionState } from 'react';
@@ -11,17 +12,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { saveEducationItemAction, deleteEducationItemAction } from '@/app/actions';
-import { educationData as initialEducationDataFromModule } from '@/lib/data';
+import { saveEducationItemAction, deleteEducationItemAction, fetchEducationItemsForAdmin } from '@/app/actions';
 import type { EducationItem } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && typeof LucideIcons[key as keyof typeof LucideIcons] !== 'object' && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && key !== 'createLucideIcon') as (keyof typeof LucideIcons)[];
+const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && typeof LucideIcons[key as keyof typeof LucideIcons] !== 'object' && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && key !== 'createLucideIcon') as (keyof typeof LucideIcons | string)[];
 
 
 const NULL_ICON_VALUE = "--no-icon--";
-const initialFormState = { 
+const initialFormActionState = { 
   success: false, 
   message: '', 
   errors: {},
@@ -40,16 +40,27 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminEducationPage() {
-  const [educationItems, setEducationItems] = useState<EducationItem[]>([...initialEducationDataFromModule]);
+  const [educationItems, setEducationItems] = useState<EducationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<EducationItem | null>(null);
   const { toast } = useToast();
 
-  const [formState, formAction] = useActionState(saveEducationItemAction, initialFormState);
+  const [formState, formAction] = useActionState(saveEducationItemAction, initialFormActionState);
 
   useEffect(() => {
-    setEducationItems([...initialEducationDataFromModule]);
-  }, []);
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const fetchedItems = await fetchEducationItemsForAdmin();
+        setEducationItems(fetchedItems || []);
+      } catch (error) {
+        toast({ title: "Error", description: "Could not load education data.", variant: "destructive" });
+      }
+      setIsLoading(false);
+    }
+    loadData();
+  }, [toast]);
 
   useEffect(() => {
     if (formState.message) {
@@ -63,8 +74,6 @@ export default function AdminEducationPage() {
         setEditingItem(null);
         if (formState.educationItems) {
           setEducationItems(formState.educationItems); 
-        } else {
-          setEducationItems([...initialEducationDataFromModule]);
         }
       }
     }
@@ -85,8 +94,6 @@ export default function AdminEducationPage() {
       });
       if (result.success && result.educationItems) {
         setEducationItems(result.educationItems);
-      } else if (result.success) {
-        setEducationItems([...initialEducationDataFromModule]);
       }
     }
   };
@@ -123,10 +130,10 @@ export default function AdminEducationPage() {
             <SelectContent className="max-h-60">
                 <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
                 {iconNames.map(name => {
-                    const IconComponent = LucideIcons[name] as React.ElementType;
-                    if (!IconComponent) return null;
+                    const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
+                     if (!IconComponent) return null;
                     return (
-                        <SelectItem key={name} value={name}>
+                        <SelectItem key={name} value={name as string}>
                             <div className="flex items-center gap-2">
                             <IconComponent className="h-4 w-4" />
                             {name}
@@ -139,7 +146,16 @@ export default function AdminEducationPage() {
         {formState.errors?.iconName && <p className="text-sm text-destructive mt-1">{formState.errors.iconName.join(', ')}</p>}
       </div>
     </>
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [editingItem, formState.errors]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" /> Loading education data...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -147,7 +163,7 @@ export default function AdminEducationPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Manage Education</h1>
           <p className="text-muted-foreground">Add, edit, or delete education entries.</p>
-           <p className="text-sm text-destructive mt-1">Note: Data is managed in memory and persists for the current server session.</p>
+           <p className="text-sm text-muted-foreground mt-1">Note: Data is stored in Firebase Realtime Database.</p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingItem(null); }}>
           <DialogTrigger asChild>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useActionState, useState } from 'react';
@@ -6,16 +7,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updateSiteSettings } from '@/app/actions';
+import { updateSiteSettings, fetchSiteSettingsForAdmin } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { siteSettingsData as initialSiteSettingsDataFromModule, type SiteSettings } from '@/lib/data'; 
+import type { SiteSettings } from '@/lib/data'; 
 import { Loader2 } from 'lucide-react';
 
-const initialState = {
+const initialFormActionState = {
   success: false,
   message: '',
   errors: {},
   updatedSiteSettings: undefined as SiteSettings | undefined,
+};
+
+const defaultSiteSettings: SiteSettings = {
+  siteName: "",
+  defaultUserName: "",
+  defaultUserSpecialization: "",
+  defaultProfileImageUrl: "",
+  contactDetails: {
+    email: "",
+    linkedin: "",
+    github: "",
+    twitter: "",
+  }
 };
 
 function SubmitButton() {
@@ -29,13 +43,29 @@ function SubmitButton() {
 }
 
 export default function AdminSettingsPage() {
-  const [currentSettings, setCurrentSettings] = useState<SiteSettings>({...initialSiteSettingsDataFromModule});
-  const [state, formAction] = useActionState(updateSiteSettings, initialState);
+  const [currentSettings, setCurrentSettings] = useState<SiteSettings>(defaultSiteSettings);
+  const [isLoading, setIsLoading] = useState(true);
+  const [state, formAction] = useActionState(updateSiteSettings, initialFormActionState);
   const { toast } = useToast();
 
   useEffect(() => {
-    setCurrentSettings({...initialSiteSettingsDataFromModule});
-  }, []);
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const data = await fetchSiteSettingsForAdmin();
+        setCurrentSettings(data || defaultSiteSettings);
+      } catch (error) {
+        toast({
+          title: 'Error fetching data',
+          description: 'Could not load site settings. Please try again.',
+          variant: 'destructive',
+        });
+        setCurrentSettings(defaultSiteSettings);
+      }
+      setIsLoading(false);
+    }
+    loadData();
+  }, [toast]);
 
   useEffect(() => {
     if (state.message) {
@@ -46,11 +76,17 @@ export default function AdminSettingsPage() {
       });
       if(state.success && state.updatedSiteSettings) {
         setCurrentSettings(state.updatedSiteSettings);
-      } else if (state.success) {
-        setCurrentSettings({...initialSiteSettingsDataFromModule});
       }
     }
   }, [state, toast]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" /> Loading Site Settings...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -63,8 +99,8 @@ export default function AdminSettingsPage() {
         <CardHeader>
           <CardTitle>General Site Configuration</CardTitle>
           <CardDescription>
-            Update the site name and other default values. 
-            Changes are managed in memory and persist for the current server session.
+            Update the site name, default user info, profile image URL, and contact details. 
+            Changes are stored in Firebase Realtime Database.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -114,6 +150,88 @@ export default function AdminSettingsPage() {
               />
               {state.errors?.defaultUserSpecialization && (
                 <p id="specialization-error" className="text-sm text-destructive mt-1">{state.errors.defaultUserSpecialization.join(', ')}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="defaultProfileImageUrl" className="text-sm font-medium">Default Profile Image URL (Fallback for About Me)</Label>
+              <Input
+                type="url"
+                id="defaultProfileImageUrl"
+                name="defaultProfileImageUrl"
+                required
+                className="mt-1"
+                value={currentSettings.defaultProfileImageUrl}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, defaultProfileImageUrl: e.target.value}))}
+                aria-describedby={state.errors?.defaultProfileImageUrl ? "defaultimageurl-error" : undefined}
+              />
+              {state.errors?.defaultProfileImageUrl && (
+                <p id="defaultimageurl-error" className="text-sm text-destructive mt-1">{state.errors.defaultProfileImageUrl.join(', ')}</p>
+              )}
+            </div>
+
+            <h3 className="text-lg font-semibold pt-4 border-t mt-6">Contact Details</h3>
+             <div>
+              <Label htmlFor="contactEmail" className="text-sm font-medium">Contact Email</Label>
+              <Input
+                type="email"
+                id="contactEmail"
+                name="contactEmail"
+                required
+                className="mt-1"
+                value={currentSettings.contactDetails.email}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, contactDetails: {...prev.contactDetails, email: e.target.value}}))}
+                aria-describedby={state.errors?.contactEmail ? "contactemail-error" : undefined}
+              />
+              {state.errors?.contactEmail && (
+                <p id="contactemail-error" className="text-sm text-destructive mt-1">{state.errors.contactEmail.join(', ')}</p>
+              )}
+            </div>
+             <div>
+              <Label htmlFor="contactLinkedin" className="text-sm font-medium">LinkedIn URL</Label>
+              <Input
+                type="url"
+                id="contactLinkedin"
+                name="contactLinkedin"
+                required
+                className="mt-1"
+                value={currentSettings.contactDetails.linkedin}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, contactDetails: {...prev.contactDetails, linkedin: e.target.value}}))}
+                aria-describedby={state.errors?.contactLinkedin ? "contactlinkedin-error" : undefined}
+              />
+              {state.errors?.contactLinkedin && (
+                <p id="contactlinkedin-error" className="text-sm text-destructive mt-1">{state.errors.contactLinkedin.join(', ')}</p>
+              )}
+            </div>
+             <div>
+              <Label htmlFor="contactGithub" className="text-sm font-medium">GitHub URL</Label>
+              <Input
+                type="url"
+                id="contactGithub"
+                name="contactGithub"
+                required
+                className="mt-1"
+                value={currentSettings.contactDetails.github}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, contactDetails: {...prev.contactDetails, github: e.target.value}}))}
+                aria-describedby={state.errors?.contactGithub ? "contactgithub-error" : undefined}
+              />
+              {state.errors?.contactGithub && (
+                <p id="contactgithub-error" className="text-sm text-destructive mt-1">{state.errors.contactGithub.join(', ')}</p>
+              )}
+            </div>
+             <div>
+              <Label htmlFor="contactTwitter" className="text-sm font-medium">Twitter URL (Optional)</Label>
+              <Input
+                type="url"
+                id="contactTwitter"
+                name="contactTwitter"
+                className="mt-1"
+                value={currentSettings.contactDetails.twitter || ''}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, contactDetails: {...prev.contactDetails, twitter: e.target.value}}))}
+                aria-describedby={state.errors?.contactTwitter ? "contacttwitter-error" : undefined}
+              />
+              {state.errors?.contactTwitter && (
+                <p id="contacttwitter-error" className="text-sm text-destructive mt-1">{state.errors.contactTwitter.join(', ')}</p>
               )}
             </div>
             

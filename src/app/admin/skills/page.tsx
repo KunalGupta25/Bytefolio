@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useActionState } from 'react';
@@ -10,17 +11,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { saveSkillAction, deleteSkillAction } from '@/app/actions';
-import { skillsData as initialSkillsDataFromModule } from '@/lib/data';
+import { saveSkillAction, deleteSkillAction, fetchSkillsForAdmin } from '@/app/actions';
 import type { Skill } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
-const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && typeof LucideIcons[key as keyof typeof LucideIcons] !== 'object' && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && key !== 'createLucideIcon') as (keyof typeof LucideIcons)[];
+const iconNames = Object.keys(LucideIcons).filter(key => /^[A-Z]/.test(key) && typeof LucideIcons[key as keyof typeof LucideIcons] !== 'object' && typeof LucideIcons[key as keyof typeof LucideIcons] === 'function' && key !== 'createLucideIcon') as (keyof typeof LucideIcons | string)[];
 
 
 const NULL_ICON_VALUE = "--no-icon--";
-const initialFormState = { 
+const initialFormActionState = { 
   success: false, 
   message: '', 
   errors: {}, 
@@ -39,18 +39,27 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminSkillsPage() {
-  const [skills, setSkills] = useState<Skill[]>([...initialSkillsDataFromModule]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const { toast } = useToast();
 
-  const [formState, formAction] = useActionState(saveSkillAction, initialFormState);
+  const [formState, formAction] = useActionState(saveSkillAction, initialFormActionState);
 
   useEffect(() => {
-    // Initialize from module only on first load or if module reference changes (unlikely for let)
-    // Subsequent updates will come from formState or deleteAction results
-    setSkills([...initialSkillsDataFromModule]);
-  }, []);
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const fetchedSkills = await fetchSkillsForAdmin();
+        setSkills(fetchedSkills || []);
+      } catch (error) {
+         toast({ title: "Error", description: "Could not load skills data.", variant: "destructive" });
+      }
+      setIsLoading(false);
+    }
+    loadData();
+  }, [toast]);
 
 
   useEffect(() => {
@@ -64,10 +73,7 @@ export default function AdminSkillsPage() {
         setIsFormOpen(false);
         setEditingSkill(null); 
         if (formState.skills) {
-          setSkills(formState.skills); // Use the fresh list from the action
-        } else {
-          // Fallback, though ideally formState.skills should always be populated on success
-          setSkills([...initialSkillsDataFromModule]);
+          setSkills(formState.skills);
         }
       }
     }
@@ -91,10 +97,7 @@ export default function AdminSkillsPage() {
         variant: result.success ? 'default' : 'destructive',
       });
       if (result.success && result.skills) {
-        setSkills(result.skills); // Use the fresh list from the action
-      } else if (result.success) {
-         // Fallback
-        setSkills([...initialSkillsDataFromModule]);
+        setSkills(result.skills);
       }
     }
   };
@@ -135,10 +138,10 @@ export default function AdminSkillsPage() {
             <SelectContent className="max-h-60">
                 <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
                 {iconNames.map(name => {
-                    const IconComponent = LucideIcons[name] as React.ElementType;
-                    if (!IconComponent) return null;
+                    const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
+                    if (!IconComponent) return null; // Should not happen with filtered list
                     return (
-                        <SelectItem key={name} value={name}>
+                        <SelectItem key={name} value={name as string}>
                             <div className="flex items-center gap-2">
                             <IconComponent className="h-4 w-4" />
                             {name}
@@ -151,8 +154,16 @@ export default function AdminSkillsPage() {
         {formState.errors?.iconName && <p className="text-sm text-destructive mt-1">{formState.errors.iconName.join(', ')}</p>}
       </div>
     </>
-  ), [editingSkill, formState.errors, categories]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [editingSkill, formState.errors]);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" /> Loading skills...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -160,11 +171,11 @@ export default function AdminSkillsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Manage Skills</h1>
           <p className="text-muted-foreground">Add, edit, or delete skills showcased in your portfolio.</p>
-           <p className="text-sm text-destructive mt-1">Note: Data is managed in memory and persists for the current server session.</p>
+           <p className="text-sm text-muted-foreground mt-1">Note: Data is stored in Firebase Realtime Database.</p>
         </div>
-        <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) {setEditingSkill(null); /* Reset form errors specifically if needed */ } }}>
+        <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) {setEditingSkill(null); } }}>
           <DialogTrigger asChild>
-            <Button onClick={() => { setEditingSkill(null); /* Reset form errors */ setIsFormOpen(true); }}>
+            <Button onClick={() => { setEditingSkill(null); setIsFormOpen(true); }}>
               <PlusCircle className="mr-2 h-4 w-4" /> Add New Skill
             </Button>
           </DialogTrigger>
@@ -203,7 +214,7 @@ export default function AdminSkillsPage() {
             </TableHeader>
             <TableBody>
               {skills.map((skill) => {
-                const IconComponent = skill.iconName && LucideIcons[skill.iconName] && typeof LucideIcons[skill.iconName] === 'function' ? LucideIcons[skill.iconName] as React.ElementType : null;
+                const IconComponent = skill.iconName && typeof skill.iconName === 'string' && LucideIcons[skill.iconName as keyof typeof LucideIcons] ? LucideIcons[skill.iconName as keyof typeof LucideIcons] as React.ElementType : null;
                 return (
                 <TableRow key={skill.id || skill.name}>
                   <TableCell className="font-medium">{skill.name}</TableCell>

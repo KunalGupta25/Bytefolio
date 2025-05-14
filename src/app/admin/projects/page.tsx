@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useActionState } from 'react';
@@ -10,13 +11,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
-import { saveProjectAction, deleteProjectAction } from '@/app/actions';
-import { projectsData as initialProjectsDataFromModule } from '@/lib/data';
+import { saveProjectAction, deleteProjectAction, fetchProjectsForAdmin } from '@/app/actions';
 import type { Project } from '@/lib/data';
 import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
-const initialFormState = { 
+const initialFormActionState = { 
   success: false, 
   message: '', 
   errors: {},
@@ -35,16 +35,27 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([...initialProjectsDataFromModule]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const { toast } = useToast();
 
-  const [formState, formAction] = useActionState(saveProjectAction, initialFormState);
+  const [formState, formAction] = useActionState(saveProjectAction, initialFormActionState);
 
   useEffect(() => {
-    setProjects([...initialProjectsDataFromModule]);
-  }, []);
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const fetchedProjects = await fetchProjectsForAdmin();
+        setProjects(fetchedProjects || []);
+      } catch (error) {
+        toast({ title: "Error", description: "Could not load projects data.", variant: "destructive" });
+      }
+      setIsLoading(false);
+    }
+    loadData();
+  }, [toast]);
 
   useEffect(() => {
     if (formState.message) {
@@ -58,8 +69,6 @@ export default function AdminProjectsPage() {
         setEditingProject(null);
         if (formState.projects) {
           setProjects(formState.projects); 
-        } else {
-          setProjects([...initialProjectsDataFromModule]);
         }
       }
     }
@@ -80,8 +89,6 @@ export default function AdminProjectsPage() {
       });
       if (result.success && result.projects) {
         setProjects(result.projects);
-      } else if (result.success) {
-        setProjects([...initialProjectsDataFromModule]);
       }
     }
   };
@@ -125,7 +132,16 @@ export default function AdminProjectsPage() {
         {formState.errors?.dataAiHint && <p className="text-sm text-destructive mt-1">{formState.errors.dataAiHint.join(', ')}</p>}
       </div>
     </>
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [editingProject, formState.errors]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" /> Loading projects...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -133,7 +149,7 @@ export default function AdminProjectsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Manage Projects</h1>
           <p className="text-muted-foreground">Add, edit, or delete projects.</p>
-           <p className="text-sm text-destructive mt-1">Note: Data is managed in memory and persists for the current server session.</p>
+           <p className="text-sm text-muted-foreground mt-1">Note: Data is stored in Firebase Realtime Database.</p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingProject(null); }}>
           <DialogTrigger asChild>
@@ -172,7 +188,14 @@ export default function AdminProjectsPage() {
               {projects.map((project) => (
                 <TableRow key={project.id}>
                   <TableCell>
-                    <Image src={project.imageUrl} alt={project.title} width={64} height={48} className="object-cover rounded-md" data-ai-hint={project.dataAiHint || "project image"}/>
+                    <Image 
+                      src={project.imageUrl || "https://placehold.co/64x48.png"} 
+                      alt={project.title} 
+                      width={64} 
+                      height={48} 
+                      className="object-cover rounded-md" 
+                      data-ai-hint={project.dataAiHint || "project image"}
+                    />
                   </TableCell>
                   <TableCell className="font-medium">{project.title}</TableCell>
                   <TableCell className="text-xs">{project.tags.join(', ')}</TableCell>

@@ -1,4 +1,5 @@
-import { contactDetails } from '@/lib/data';
+
+import type { ContactDetails } from '@/lib/data';
 import SectionWrapper from './section-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,11 @@ import Link from 'next/link';
 import { Github, Linkedin, Mail, Twitter } from 'lucide-react';
 import { ContactForm } from './contact-form';
 
-export default function ContactSection() {
+interface ContactSectionProps {
+  contactDetails: ContactDetails;
+}
+
+export default function ContactSection({ contactDetails }: ContactSectionProps) {
   return (
     <SectionWrapper id="contact" title="Get In Touch" subtitle="Feel free to reach out. I'm always open to discussing new projects, creative ideas or opportunities to be part of your visions.">
       <div className="grid md:grid-cols-2 gap-12 items-start">

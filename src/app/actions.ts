@@ -1,17 +1,19 @@
+
 'use server';
 
 import { z } from 'zod';
-import type { Skill, EducationItem, Project, Certification, SiteSettings } from '@/lib/data';
-import { 
-  aboutData, 
-  siteSettingsData,
-  skillsData,
-  educationData,
-  projectsData,
-  certificationsData,
-  type AboutData
-} from '@/lib/data'; 
+import type { Skill, EducationItem, Project, Certification, SiteSettings, AboutData, ContactDetails } from '@/lib/data';
+import { db } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
+import { 
+  getAboutData, 
+  getSiteSettings, 
+  getSkills, 
+  getEducationItems, 
+  getProjects, 
+  getCertifications 
+} from '@/lib/data';
+
 
 const NULL_ICON_VALUE = "--no-icon--";
 
@@ -47,7 +49,9 @@ export async function loginAdminAction(prevState: LoginState | undefined, formDa
 
   const { email, password } = validatedFields.data;
 
-  if (email === 'admin@gmail.com' && password === 'k4912005') {
+  // This is a placeholder for actual authentication. 
+  // In a real app, use Firebase Authentication or another secure method.
+  if (email === (process.env.ADMIN_EMAIL || 'admin@gmail.com') && password === (process.env.ADMIN_PASSWORD || 'k4912005')) {
     console.log('Admin login successful for:', email);
     return { success: true, message: 'Login successful!' };
   } else {
@@ -93,15 +97,30 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
   }
 
   const { name, email, message } = validatedFields.data;
-  console.log('Contact form submission received (Simulated):', { name, email, message });
-  return { success: true, message: 'Your message has been sent successfully! (Simulated)' };
+  try {
+    // Example: Store contact message in Firebase
+    const contactMessagesRef = db.ref('contactMessages');
+    const newMessageRef = contactMessagesRef.push();
+    await newMessageRef.set({
+      name,
+      email,
+      message,
+      timestamp: new Date().toISOString(),
+    });
+    console.log('Contact form submission received and stored in Firebase:', { name, email });
+    return { success: true, message: 'Your message has been sent successfully!' };
+  } catch (error) {
+    console.error("Error submitting contact form to Firebase:", error);
+    return { success: false, message: 'Failed to send message. Please try again later.' };
+  }
 }
 
 // --- About Me ---
 const aboutInfoSchema = z.object({
-  professionalSummary: z.string().min(50, { message: "Professional summary must be at least 50 characters." }),
-  bio: z.string().min(50, { message: "Bio must be at least 50 characters." }),
+  professionalSummary: z.string().min(10, { message: "Professional summary must be at least 10 characters." }),
+  bio: z.string().min(10, { message: "Bio must be at least 10 characters." }),
   profileImageUrl: z.string().url({ message: "Invalid URL for profile image." }).optional().or(z.literal('')),
+  dataAiHint: z.string().optional(),
 });
 
 interface AboutInfoState {
@@ -116,6 +135,7 @@ export async function updateAboutInfo(prevState: AboutInfoState | undefined, for
     professionalSummary: formData.get('professionalSummary'),
     bio: formData.get('bio'),
     profileImageUrl: formData.get('profileImageUrl'),
+    dataAiHint: formData.get('dataAiHint') || undefined,
   });
 
   if (!validatedFields.success) {
@@ -126,21 +146,44 @@ export async function updateAboutInfo(prevState: AboutInfoState | undefined, for
     };
   }
   
-  aboutData.professionalSummary = validatedFields.data.professionalSummary;
-  aboutData.bio = validatedFields.data.bio;
-  aboutData.profileImageUrl = validatedFields.data.profileImageUrl || siteSettingsData.defaultProfileImageUrl;
-  
-  console.log('About Me information updated:', aboutData);
-  revalidatePath('/');
-  revalidatePath('/admin/about');
-  return { success: true, message: 'About Me information updated successfully!', updatedAboutData: {...aboutData} };
+  try {
+    const currentSettings = await getSiteSettings(); // To get default profile image if needed
+    const dataToUpdate: AboutData = {
+      professionalSummary: validatedFields.data.professionalSummary,
+      bio: validatedFields.data.bio,
+      profileImageUrl: validatedFields.data.profileImageUrl || currentSettings.defaultProfileImageUrl,
+      dataAiHint: validatedFields.data.dataAiHint
+    };
+    await db.ref('/aboutInfo').set(dataToUpdate);
+    
+    console.log('About Me information updated in Firebase:', dataToUpdate);
+    revalidatePath('/');
+    revalidatePath('/admin/about');
+    const updatedData = await getAboutData(); // Fetch fresh data
+    return { success: true, message: 'About Me information updated successfully!', updatedAboutData: updatedData };
+  } catch (error) {
+    console.error("Error updating About Me info in Firebase:", error);
+    return { success: false, message: 'Failed to update About Me information.' };
+  }
 }
 
 // --- Site Settings ---
+const contactDetailsSchema = z.object({
+  email: z.string().email("Invalid email for contact details."),
+  linkedin: z.string().url("Invalid LinkedIn URL."),
+  github: z.string().url("Invalid GitHub URL."),
+  twitter: z.string().url("Invalid Twitter URL.").optional().or(z.literal('')),
+});
+
 const siteSettingsSchema = z.object({
   siteName: z.string().min(3, "Site name must be at least 3 characters."),
   defaultUserName: z.string().min(2, "Default user name must be at least 2 characters."),
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
+  defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
+  contactEmail: z.string().email(),
+  contactLinkedin: z.string().url(),
+  contactGithub: z.string().url(),
+  contactTwitter: z.string().url().optional().or(z.literal('')),
 });
 
 interface SiteSettingsState {
@@ -155,20 +198,41 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     siteName: formData.get('siteName'),
     defaultUserName: formData.get('defaultUserName'),
     defaultUserSpecialization: formData.get('defaultUserSpecialization'),
+    defaultProfileImageUrl: formData.get('defaultProfileImageUrl'),
+    contactEmail: formData.get('contactEmail'),
+    contactLinkedin: formData.get('contactLinkedin'),
+    contactGithub: formData.get('contactGithub'),
+    contactTwitter: formData.get('contactTwitter'),
   });
 
   if (!validatedFields.success) {
     return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
   }
   
-  siteSettingsData.siteName = validatedFields.data.siteName;
-  siteSettingsData.defaultUserName = validatedFields.data.defaultUserName;
-  siteSettingsData.defaultUserSpecialization = validatedFields.data.defaultUserSpecialization;
-  
-  console.log('Site Settings updated:', siteSettingsData);
-  revalidatePath('/');
-  revalidatePath('/admin/settings');
-  return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: {...siteSettingsData} };
+  try {
+    const settingsToUpdate: SiteSettings = {
+      siteName: validatedFields.data.siteName,
+      defaultUserName: validatedFields.data.defaultUserName,
+      defaultUserSpecialization: validatedFields.data.defaultUserSpecialization,
+      defaultProfileImageUrl: validatedFields.data.defaultProfileImageUrl,
+      contactDetails: {
+        email: validatedFields.data.contactEmail,
+        linkedin: validatedFields.data.contactLinkedin,
+        github: validatedFields.data.contactGithub,
+        twitter: validatedFields.data.contactTwitter || undefined,
+      }
+    };
+    await db.ref('/siteSettings').set(settingsToUpdate);
+    
+    console.log('Site Settings updated in Firebase:', settingsToUpdate);
+    revalidatePath('/');
+    revalidatePath('/admin/settings');
+    const updatedSettings = await getSiteSettings();
+    return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: updatedSettings };
+  } catch (error) {
+    console.error("Error updating Site Settings in Firebase:", error);
+    return { success: false, message: 'Failed to update site settings.' };
+  }
 }
 
 
@@ -204,46 +268,53 @@ export async function saveSkillAction(prevState: SkillCrudState | undefined, for
     return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
   }
   
-  let skillData = validatedFields.data as Skill; 
+  let skillData = { ...validatedFields.data } as Omit<Skill, 'id'> & { id?: string };
   const isNew = !skillData.id;
+  const skillId = skillData.id || db.ref('/skills').push().key;
 
-  if (!isNew && skillData.id) { 
-    const index = skillsData.findIndex(s => s.id === skillData.id);
-    if (index > -1) {
-      skillsData[index] = { ...skillsData[index], ...skillData };
-      console.log('Updating Skill:', skillsData[index]);
-      revalidatePath('/');
-      revalidatePath('/admin/skills');
-      return { success: true, message: `Skill '${skillData.name}' updated successfully!`, updatedSkill: skillsData[index], skills: [...skillsData] };
-    } else {
-       return { success: false, message: `Skill with ID '${skillData.id}' not found for update.` };
-    }
-  } else { 
-    skillData.id = `skill-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    skillsData.push(skillData);
-    console.log('Adding Skill:', skillData);
+  if (!skillId) {
+    return { success: false, message: "Failed to generate skill ID." };
+  }
+  
+  const finalSkillData: Skill = {
+    ...skillData,
+    id: skillId,
+    level: skillData.level ?? undefined, // Ensure level is explicitly undefined if not present
+    iconName: skillData.iconName === NULL_ICON_VALUE ? null : skillData.iconName,
+  };
+
+  try {
+    await db.ref(`/skills/${skillId}`).set(finalSkillData);
+    console.log(isNew ? 'Adding Skill to Firebase:' : 'Updating Skill in Firebase:', finalSkillData);
     revalidatePath('/');
     revalidatePath('/admin/skills');
-    return { success: true, message: `Skill '${skillData.name}' added successfully!`, updatedSkill: skillData, skills: [...skillsData] };
+    const allSkills = await getSkills();
+    return { 
+      success: true, 
+      message: `Skill '${finalSkillData.name}' ${isNew ? 'added' : 'updated'} successfully!`, 
+      updatedSkill: finalSkillData, 
+      skills: allSkills 
+    };
+  } catch (error) {
+    console.error("Error saving skill to Firebase:", error);
+    return { success: false, message: `Failed to save skill '${finalSkillData.name}'.` };
   }
 }
 
 export async function deleteSkillAction(id: string): Promise<{ success: boolean; message: string; skills?: Skill[] }> {
   if (!id) return { success: false, message: "Skill ID is required." };
   
-  const initialLength = skillsData.length;
-  const newSkillsData = skillsData.filter(s => s.id !== id);
-  
-  if (newSkillsData.length < initialLength) {
-    skillsData.length = 0; 
-    skillsData.push(...newSkillsData);
-
-    console.log('Deleting Skill, ID:', id);
+  try {
+    await db.ref(`/skills/${id}`).remove();
+    console.log('Deleting Skill from Firebase, ID:', id);
     revalidatePath('/');
     revalidatePath('/admin/skills');
-    return { success: true, message: `Skill deleted successfully!`, skills: [...skillsData] };
+    const allSkills = await getSkills();
+    return { success: true, message: `Skill deleted successfully!`, skills: allSkills };
+  } catch (error) {
+    console.error("Error deleting skill from Firebase:", error);
+    return { success: false, message: "Failed to delete skill." };
   }
-  return { success: false, message: "Skill not found for deletion." };
 }
 
 
@@ -281,44 +352,52 @@ export async function saveEducationItemAction(prevState: EducationCrudState | un
     return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
   }
 
-  let eduData = validatedFields.data as EducationItem;
+  let eduData = { ...validatedFields.data } as Omit<EducationItem, 'id'> & { id?: string };
   const isNew = !eduData.id;
+  const eduId = eduData.id || db.ref('/education').push().key;
 
-  if (!isNew && eduData.id) {
-    const index = educationData.findIndex(item => item.id === eduData.id);
-    if (index > -1) {
-      educationData[index] = { ...educationData[index], ...eduData };
-      console.log('Updating Education Item:', educationData[index]);
-      revalidatePath('/');
-      revalidatePath('/admin/education');
-      return { success: true, message: `Education item '${eduData.degree}' updated!`, updatedItem: educationData[index], educationItems: [...educationData] };
-    }
-    return { success: false, message: `Education item with ID '${eduData.id}' not found.` };
-  } else {
-    eduData.id = `edu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    educationData.push(eduData);
-    console.log('Adding Education Item:', eduData);
+  if (!eduId) {
+    return { success: false, message: "Failed to generate education item ID." };
+  }
+
+  const finalEduData: EducationItem = {
+    ...eduData,
+    id: eduId,
+    iconName: eduData.iconName === NULL_ICON_VALUE ? null : eduData.iconName,
+  };
+  
+  try {
+    await db.ref(`/education/${eduId}`).set(finalEduData);
+    console.log(isNew ? 'Adding Education Item to Firebase:' : 'Updating Education Item in Firebase:', finalEduData);
     revalidatePath('/');
     revalidatePath('/admin/education');
-    return { success: true, message: `Education item '${eduData.degree}' added!`, updatedItem: eduData, educationItems: [...educationData] };
+    const allItems = await getEducationItems();
+    return { 
+      success: true, 
+      message: `Education item '${finalEduData.degree}' ${isNew ? 'added' : 'updated'} successfully!`, 
+      updatedItem: finalEduData, 
+      educationItems: allItems 
+    };
+  } catch (error) {
+    console.error("Error saving education item to Firebase:", error);
+    return { success: false, message: `Failed to save education item '${finalEduData.degree}'.` };
   }
 }
 
 export async function deleteEducationItemAction(id: string): Promise<{ success: boolean; message: string; educationItems?: EducationItem[] }> {
   if (!id) return { success: false, message: "Education ID is required." };
   
-  const initialLength = educationData.length;
-  const newEducationData = educationData.filter(item => item.id !== id);
-
-  if (newEducationData.length < initialLength) {
-    educationData.length = 0;
-    educationData.push(...newEducationData);
-    console.log('Deleting Education Item, ID:', id);
+  try {
+    await db.ref(`/education/${id}`).remove();
+    console.log('Deleting Education Item from Firebase, ID:', id);
     revalidatePath('/');
     revalidatePath('/admin/education');
-    return { success: true, message: `Education item deleted!`, educationItems: [...educationData] };
+    const allItems = await getEducationItems();
+    return { success: true, message: `Education item deleted successfully!`, educationItems: allItems };
+  } catch (error) {
+    console.error("Error deleting education item from Firebase:", error);
+    return { success: false, message: "Failed to delete education item." };
   }
-  return { success: false, message: "Education item not found." };
 }
 
 
@@ -359,44 +438,54 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
   }
   
-  let projectDataValue = validatedFields.data as Project; 
-  const isNew = !projectDataValue.id;
+  let projectData = { ...validatedFields.data } as Omit<Project, 'id' | 'tags'> & { id?: string, tags: string[] }; 
+  const isNew = !projectData.id;
+  const projectId = projectData.id || db.ref('/projects').push().key;
 
-  if (!isNew && projectDataValue.id) {
-    const index = projectsData.findIndex(p => p.id === projectDataValue.id);
-    if (index > -1) {
-      projectsData[index] = { ...projectsData[index], ...projectDataValue };
-      console.log('Updating Project:', projectsData[index]);
-      revalidatePath('/');
-      revalidatePath('/admin/projects');
-      return { success: true, message: `Project '${projectDataValue.title}' updated!`, updatedProject: projectsData[index], projects: [...projectsData] };
-    }
-    return { success: false, message: `Project with ID '${projectDataValue.id}' not found.` };
-  } else {
-    projectDataValue.id = `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    projectsData.push(projectDataValue);
-    console.log('Adding Project:', projectDataValue);
+  if (!projectId) {
+    return { success: false, message: "Failed to generate project ID." };
+  }
+
+  const finalProjectData: Project = {
+    ...projectData,
+    id: projectId,
+    liveLink: projectData.liveLink || undefined,
+    repoLink: projectData.repoLink || undefined,
+    dataAiHint: projectData.dataAiHint || undefined,
+  };
+
+  try {
+    await db.ref(`/projects/${projectId}`).set(finalProjectData);
+    console.log(isNew ? 'Adding Project to Firebase:' : 'Updating Project in Firebase:', finalProjectData);
     revalidatePath('/');
     revalidatePath('/admin/projects');
-    return { success: true, message: `Project '${projectDataValue.title}' added!`, updatedProject: projectDataValue, projects: [...projectsData] };
+    const allProjects = await getProjects();
+    return { 
+      success: true, 
+      message: `Project '${finalProjectData.title}' ${isNew ? 'added' : 'updated'} successfully!`, 
+      updatedProject: finalProjectData, 
+      projects: allProjects
+    };
+  } catch (error) {
+    console.error("Error saving project to Firebase:", error);
+    return { success: false, message: `Failed to save project '${finalProjectData.title}'.` };
   }
 }
 
 export async function deleteProjectAction(id: string): Promise<{ success: boolean; message: string; projects?: Project[] }> {
   if (!id) return { success: false, message: "Project ID is required." };
 
-  const initialLength = projectsData.length;
-  const newProjectsData = projectsData.filter(p => p.id !== id);
-
-  if (newProjectsData.length < initialLength) {
-    projectsData.length = 0;
-    projectsData.push(...newProjectsData);
-    console.log('Deleting Project, ID:', id);
+  try {
+    await db.ref(`/projects/${id}`).remove();
+    console.log('Deleting Project from Firebase, ID:', id);
     revalidatePath('/');
     revalidatePath('/admin/projects');
-    return { success: true, message: `Project deleted!`, projects: [...projectsData] };
+    const allProjects = await getProjects();
+    return { success: true, message: `Project deleted successfully!`, projects: allProjects };
+  } catch (error) {
+    console.error("Error deleting project from Firebase:", error);
+    return { success: false, message: "Failed to delete project." };
   }
-  return { success: false, message: "Project not found." };
 }
 
 
@@ -434,43 +523,71 @@ export async function saveCertificationAction(prevState: CertificationCrudState 
     return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
   }
 
-  let certData = validatedFields.data as Certification;
+  let certData = { ...validatedFields.data } as Omit<Certification, 'id'> & { id?: string };
   const isNew = !certData.id;
+  const certId = certData.id || db.ref('/certifications').push().key;
 
-  if (!isNew && certData.id) {
-    const index = certificationsData.findIndex(c => c.id === certData.id);
-    if (index > -1) {
-      certificationsData[index] = { ...certificationsData[index], ...certData };
-      console.log('Updating Certification:', certificationsData[index]);
-      revalidatePath('/');
-      revalidatePath('/admin/certifications');
-      return { success: true, message: `Certification '${certData.name}' updated!`, updatedCertification: certificationsData[index], certifications: [...certificationsData] };
-    }
-    return { success: false, message: `Certification with ID '${certData.id}' not found.` };
-  } else {
-    certData.id = `cert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    certificationsData.push(certData);
-    console.log('Adding Certification:', certData);
+  if(!certId) {
+    return { success: false, message: "Failed to generate certification ID."};
+  }
+  
+  const finalCertData: Certification = {
+    ...certData,
+    id: certId,
+    verifyLink: certData.verifyLink || undefined,
+    iconName: certData.iconName === NULL_ICON_VALUE ? null : certData.iconName,
+  };
+
+  try {
+    await db.ref(`/certifications/${certId}`).set(finalCertData);
+    console.log(isNew ? 'Adding Certification to Firebase:' : 'Updating Certification in Firebase:', finalCertData);
     revalidatePath('/');
     revalidatePath('/admin/certifications');
-    return { success: true, message: `Certification '${certData.name}' added!`, updatedCertification: certData, certifications: [...certificationsData] };
+    const allCerts = await getCertifications();
+    return { 
+      success: true, 
+      message: `Certification '${finalCertData.name}' ${isNew ? 'added' : 'updated'} successfully!`, 
+      updatedCertification: finalCertData, 
+      certifications: allCerts
+    };
+  } catch (error) {
+    console.error("Error saving certification to Firebase:", error);
+    return { success: false, message: `Failed to save certification '${finalCertData.name}'.` };
   }
 }
 
 export async function deleteCertificationAction(id: string): Promise<{ success: boolean; message: string; certifications?: Certification[] }> {
   if (!id) return { success: false, message: "Certification ID is required." };
   
-  const initialLength = certificationsData.length;
-  const newCertsData = certificationsData.filter(c => c.id !== id);
-
-  if (newCertsData.length < initialLength) {
-    certificationsData.length = 0;
-    certificationsData.push(...newCertsData);
-    console.log('Deleting Certification, ID:', id);
+  try {
+    await db.ref(`/certifications/${id}`).remove();
+    console.log('Deleting Certification from Firebase, ID:', id);
     revalidatePath('/');
     revalidatePath('/admin/certifications');
-    return { success: true, message: `Certification deleted!`, certifications: [...certificationsData] };
+    const allCerts = await getCertifications();
+    return { success: true, message: `Certification deleted successfully!`, certifications: allCerts };
+  } catch (error) {
+    console.error("Error deleting certification from Firebase:", error);
+    return { success: false, message: "Failed to delete certification." };
   }
-  return { success: false, message: "Certification not found." };
 }
 
+// --- Data Fetcher Actions for Admin Pages ---
+export async function fetchAboutDataForAdmin(): Promise<AboutData> {
+  return getAboutData();
+}
+export async function fetchSiteSettingsForAdmin(): Promise<SiteSettings> {
+  return getSiteSettings();
+}
+export async function fetchSkillsForAdmin(): Promise<Skill[]> {
+  return getSkills();
+}
+export async function fetchEducationItemsForAdmin(): Promise<EducationItem[]> {
+  return getEducationItems();
+}
+export async function fetchProjectsForAdmin(): Promise<Project[]> {
+  return getProjects();
+}
+export async function fetchCertificationsForAdmin(): Promise<Certification[]> {
+  return getCertifications();
+}
