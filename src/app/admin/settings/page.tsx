@@ -24,6 +24,7 @@ const defaultSiteSettings: SiteSettings = {
   defaultUserName: "",
   defaultUserSpecialization: "",
   defaultProfileImageUrl: "",
+  faviconUrl: "",
   contactDetails: {
     email: "",
     linkedin: "",
@@ -99,7 +100,7 @@ export default function AdminSettingsPage() {
         <CardHeader>
           <CardTitle>General Site Configuration</CardTitle>
           <CardDescription>
-            Update the site name, default user info, profile image URL, and contact details. 
+            Update the site name, default user info, profile image URL, favicon URL, and contact details. 
             Changes are stored in Firebase Realtime Database.
           </CardDescription>
         </CardHeader>
@@ -167,6 +168,23 @@ export default function AdminSettingsPage() {
               />
               {state.errors?.defaultProfileImageUrl && (
                 <p id="defaultimageurl-error" className="text-sm text-destructive mt-1">{state.errors.defaultProfileImageUrl.join(', ')}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="faviconUrl" className="text-sm font-medium">Favicon URL</Label>
+              <Input
+                type="url"
+                id="faviconUrl"
+                name="faviconUrl"
+                className="mt-1"
+                placeholder="e.g., /favicon.ico or https://example.com/favicon.png"
+                value={currentSettings.faviconUrl || ''}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, faviconUrl: e.target.value}))}
+                aria-describedby={state.errors?.faviconUrl ? "faviconurl-error" : undefined}
+              />
+              {state.errors?.faviconUrl && (
+                <p id="faviconurl-error" className="text-sm text-destructive mt-1">{state.errors.faviconUrl.join(', ')}</p>
               )}
             </div>
 

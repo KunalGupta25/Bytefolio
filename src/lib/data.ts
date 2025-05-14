@@ -52,6 +52,7 @@ export interface SiteSettings {
   defaultUserName: string; 
   defaultUserSpecialization: string;
   contactDetails: ContactDetails;
+  faviconUrl?: string; // Added faviconUrl
 }
 
 export interface AboutData {
@@ -63,7 +64,7 @@ export interface AboutData {
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
-  defaultProfileImageUrl: "https://picsum.photos/seed/profile/300/300",
+  defaultProfileImageUrl: "https://placehold.co/300x300.png?text=Profile",
   defaultUserName: "Your Name",
   defaultUserSpecialization: "Web Development, AI, Cybersecurity",
   contactDetails: {
@@ -71,13 +72,14 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
     linkedin: 'https://linkedin.com/in/yourusername',
     github: 'https://github.com/yourusername',
     twitter: 'https://twitter.com/yourusername',
-  }
+  },
+  faviconUrl: "/favicon.ico", // Default favicon path
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
   professionalSummary: "I am a dedicated and enthusiastic B.Tech Computer Science student with a strong foundation in software development, problem-solving, and web technologies. I am passionate about creating impactful technology solutions and continuously expanding my knowledge. Eager to contribute to innovative projects.",
   bio: "Beyond coding, I enjoy contributing to open-source projects and exploring new AI advancements. I believe in lifelong learning and am always seeking new challenges. My goal is to leverage my technical skills to make a positive impact.",
-  profileImageUrl: "https://picsum.photos/seed/profile/300/300", 
+  profileImageUrl: "https://placehold.co/300x300.png?text=About+Me", 
   dataAiHint: "professional portrait",
 };
 
@@ -89,23 +91,20 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     const snapshot = await db.ref('/siteSettings').once('value');
     const data = snapshot.val();
     if (data) {
-      // Create a new object starting with defaults, then overwrite with fetched data
       const mergedSettings: SiteSettings = {
         ...DEFAULT_SITE_SETTINGS,
         ...data,
-        // Ensure contactDetails is an object and merge its properties
         contactDetails: {
           ...DEFAULT_SITE_SETTINGS.contactDetails,
           ...(data.contactDetails || {}),
         },
+        faviconUrl: data.faviconUrl !== undefined ? data.faviconUrl : DEFAULT_SITE_SETTINGS.faviconUrl,
       };
       return mergedSettings;
     }
-    // Return a copy of default settings if no data from Firebase
     return { ...DEFAULT_SITE_SETTINGS, contactDetails: { ...DEFAULT_SITE_SETTINGS.contactDetails } };
   } catch (error) {
     console.error("Error fetching site settings:", error);
-    // Return a copy of default settings on error
     return { ...DEFAULT_SITE_SETTINGS, contactDetails: { ...DEFAULT_SITE_SETTINGS.contactDetails } };
   }
 }
@@ -115,14 +114,15 @@ export async function getAboutData(): Promise<AboutData> {
     const snapshot = await db.ref('/aboutInfo').once('value');
     const data = snapshot.val();
     if (data) {
-      // Merge fetched data with defaults
-      return { ...DEFAULT_ABOUT_DATA, ...data };
+      return { 
+        ...DEFAULT_ABOUT_DATA, 
+        ...data,
+        profileImageUrl: data.profileImageUrl || DEFAULT_ABOUT_DATA.profileImageUrl,
+      };
     }
-    // Return a copy of default data if no data from Firebase
     return { ...DEFAULT_ABOUT_DATA };
   } catch (error) {
     console.error("Error fetching about data:", error);
-    // Return a copy of default data on error
     return { ...DEFAULT_ABOUT_DATA };
   }
 }

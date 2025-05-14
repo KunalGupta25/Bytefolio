@@ -1,18 +1,31 @@
+
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google'; // Changed to Inter for body, Geist can be for headings
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/app/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
+import { getSiteSettings } from '@/lib/data'; // Import data fetching function
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
 });
 
-export const metadata: Metadata = {
-  title: 'ByteFolio | CS Student Portfolio',
-  description: 'A modern portfolio for a Computer Science student, showcasing skills, projects, and experience.',
-};
+// Generate dynamic metadata
+export async function generateMetadata(): Promise<Metadata> {
+  const siteSettings = await getSiteSettings();
+  const faviconUrl = siteSettings.faviconUrl || '/favicon.ico'; // Fallback to default
+
+  return {
+    title: `${siteSettings.siteName || 'ByteFolio'} | CS Student Portfolio`,
+    description: 'A modern portfolio for a Computer Science student, showcasing skills, projects, and experience.',
+    icons: {
+      icon: faviconUrl,
+      // You can add other icon types here if needed, e.g., apple-touch-icon
+      // apple: '/apple-icon.png', 
+    },
+  };
+}
 
 export default function RootLayout({
   children,

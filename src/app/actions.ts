@@ -180,6 +180,7 @@ const siteSettingsSchema = z.object({
   defaultUserName: z.string().min(2, "Default user name must be at least 2 characters."),
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
+  faviconUrl: z.string().url("Invalid favicon URL.").optional().or(z.literal('')),
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),
@@ -199,6 +200,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     defaultUserName: formData.get('defaultUserName'),
     defaultUserSpecialization: formData.get('defaultUserSpecialization'),
     defaultProfileImageUrl: formData.get('defaultProfileImageUrl'),
+    faviconUrl: formData.get('faviconUrl'),
     contactEmail: formData.get('contactEmail'),
     contactLinkedin: formData.get('contactLinkedin'),
     contactGithub: formData.get('contactGithub'),
@@ -215,6 +217,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       defaultUserName: validatedFields.data.defaultUserName,
       defaultUserSpecialization: validatedFields.data.defaultUserSpecialization,
       defaultProfileImageUrl: validatedFields.data.defaultProfileImageUrl,
+      faviconUrl: validatedFields.data.faviconUrl || undefined,
       contactDetails: {
         email: validatedFields.data.contactEmail,
         linkedin: validatedFields.data.contactLinkedin,
@@ -225,7 +228,8 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     await db.ref('/siteSettings').set(settingsToUpdate);
     
     console.log('Site Settings updated in Firebase:', settingsToUpdate);
-    revalidatePath('/');
+    revalidatePath('/'); // Revalidate homepage
+    revalidatePath('/layout', 'layout'); // Revalidate layout for favicon change
     revalidatePath('/admin/settings');
     const updatedSettings = await getSiteSettings();
     return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: updatedSettings };
@@ -279,7 +283,7 @@ export async function saveSkillAction(prevState: SkillCrudState | undefined, for
   const finalSkillData: Skill = {
     ...skillData,
     id: skillId,
-    level: skillData.level ?? undefined, // Ensure level is explicitly undefined if not present
+    level: skillData.level ?? undefined, 
     iconName: skillData.iconName === NULL_ICON_VALUE ? null : skillData.iconName,
   };
 
