@@ -73,7 +73,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
     github: 'https://github.com/yourusername',
     twitter: 'https://twitter.com/yourusername',
   },
-  faviconUrl: "/favicon.png", // Updated default
+  faviconUrl: "https://img.icons8.com/?size=512&id=114904&format=png", // Updated default
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
