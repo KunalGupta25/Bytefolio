@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSe
 import { useToast } from '@/hooks/use-toast';
 import { saveSkillAction, deleteSkillAction, fetchSkillsForAdmin } from '@/app/actions';
 import type { Skill } from '@/lib/data';
-import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2, HelpCircle } from 'lucide-react'; // Added HelpCircle for placeholder
 import * as LucideIcons from 'lucide-react';
 
 // Manually curated list of common Lucide icons
@@ -119,7 +119,7 @@ export default function AdminSkillsPage() {
         {formState.errors?.name && <p className="text-sm text-destructive mt-1">{formState.errors.name.join(', ')}</p>}
       </div>
       <div>
-        <Label htmlFor="level">Proficiency Level (0-100)</Label>
+        <Label htmlFor="level">Proficiency Level (0-100, Optional)</Label>
         <Input id="level" name="level" type="number" min="0" max="100" defaultValue={editingSkill?.level ?? ''} />
         {formState.errors?.level && <p className="text-sm text-destructive mt-1">{formState.errors.level.join(', ')}</p>}
       </div>
@@ -141,20 +141,22 @@ export default function AdminSkillsPage() {
             <SelectTrigger id="iconName">
                 <SelectValue placeholder="Select an icon (optional)" />
             </SelectTrigger>
-            <SelectContent className="max-h-60">
-                <SelectItem value={NULL_ICON_VALUE}>None (Clear Icon)</SelectItem>
+            <SelectContent className="max-h-60"> {/* Ensure this allows enough height */}
+                <SelectItem value={NULL_ICON_VALUE}>
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" /> {/* Example: Use a generic icon for "None" */}
+                    None (Clear Icon)
+                  </div>
+                </SelectItem>
                 <SelectSeparator />
                 <SelectGroup>
                   <SelectLabel>Common Icons</SelectLabel>
                   {commonLucideIconNames.map(name => {
-                      const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ElementType;
-                      if (!IconComponent || typeof IconComponent !== 'function') {
-                          return null; 
-                      }
+                      const IconComponent = (LucideIcons as Record<string, React.ElementType | undefined>)[name];
                       return (
                           <SelectItem key={`common-${name}`} value={name}>
                               <div className="flex items-center gap-2">
-                              <IconComponent className="h-4 w-4" />
+                              {IconComponent ? <IconComponent className="h-4 w-4" /> : <span className="h-4 w-4 inline-block border border-dashed border-muted-foreground" title="Icon not found" />}
                               {name}
                               </div>
                           </SelectItem>
@@ -167,7 +169,7 @@ export default function AdminSkillsPage() {
       </div>
     </>
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [editingSkill, formState.errors]);
+  ), [editingSkill, formState.errors, categories]); // Added categories to dependency array
 
   if (isLoading) {
     return (
@@ -226,12 +228,14 @@ export default function AdminSkillsPage() {
             </TableHeader>
             <TableBody>
               {skills.map((skill) => {
-                const IconComponent = skill.iconName && typeof skill.iconName === 'string' && skill.iconName !== NULL_ICON_VALUE && LucideIcons[skill.iconName as keyof typeof LucideIcons] ? LucideIcons[skill.iconName as keyof typeof LucideIcons] as React.ElementType : null;
+                const IconComponent = skill.iconName && skill.iconName !== NULL_ICON_VALUE && (LucideIcons as Record<string, React.ElementType | undefined>)[skill.iconName]
+                  ? (LucideIcons as Record<string, React.ElementType>)[skill.iconName]
+                  : null;
                 return (
                 <TableRow key={skill.id || skill.name}>
                   <TableCell className="font-medium">{skill.name}</TableCell>
                   <TableCell>{skill.category}</TableCell>
-                  <TableCell>{skill.level !== undefined ? `${skill.level}%` : 'N/A'}</TableCell>
+                  <TableCell>{skill.level !== undefined && skill.level !== null ? `${skill.level}%` : 'N/A'}</TableCell>
                   <TableCell>
                     {IconComponent ? <IconComponent className="h-5 w-5" /> : 'None'}
                   </TableCell>
@@ -252,4 +256,3 @@ export default function AdminSkillsPage() {
     </div>
   );
 }
-
