@@ -87,20 +87,43 @@ const DEFAULT_ABOUT_DATA: AboutData = {
 export async function getSiteSettings(): Promise<SiteSettings> {
   try {
     const snapshot = await db.ref('/siteSettings').once('value');
-    return snapshot.val() || DEFAULT_SITE_SETTINGS;
+    const data = snapshot.val();
+    if (data) {
+      // Create a new object starting with defaults, then overwrite with fetched data
+      const mergedSettings: SiteSettings = {
+        ...DEFAULT_SITE_SETTINGS,
+        ...data,
+        // Ensure contactDetails is an object and merge its properties
+        contactDetails: {
+          ...DEFAULT_SITE_SETTINGS.contactDetails,
+          ...(data.contactDetails || {}),
+        },
+      };
+      return mergedSettings;
+    }
+    // Return a copy of default settings if no data from Firebase
+    return { ...DEFAULT_SITE_SETTINGS, contactDetails: { ...DEFAULT_SITE_SETTINGS.contactDetails } };
   } catch (error) {
     console.error("Error fetching site settings:", error);
-    return DEFAULT_SITE_SETTINGS;
+    // Return a copy of default settings on error
+    return { ...DEFAULT_SITE_SETTINGS, contactDetails: { ...DEFAULT_SITE_SETTINGS.contactDetails } };
   }
 }
 
 export async function getAboutData(): Promise<AboutData> {
   try {
     const snapshot = await db.ref('/aboutInfo').once('value');
-    return snapshot.val() || DEFAULT_ABOUT_DATA;
+    const data = snapshot.val();
+    if (data) {
+      // Merge fetched data with defaults
+      return { ...DEFAULT_ABOUT_DATA, ...data };
+    }
+    // Return a copy of default data if no data from Firebase
+    return { ...DEFAULT_ABOUT_DATA };
   } catch (error) {
     console.error("Error fetching about data:", error);
-    return DEFAULT_ABOUT_DATA;
+    // Return a copy of default data on error
+    return { ...DEFAULT_ABOUT_DATA };
   }
 }
 
