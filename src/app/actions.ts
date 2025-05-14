@@ -11,7 +11,8 @@ import {
   getSkills, 
   getEducationItems, 
   getProjects, 
-  getCertifications 
+  getCertifications,
+  getPageViews
 } from '@/lib/data';
 
 
@@ -228,8 +229,8 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     await db.ref('/siteSettings').set(settingsToUpdate);
     
     console.log('Site Settings updated in Firebase:', settingsToUpdate);
-    revalidatePath('/'); // Revalidate homepage
-    revalidatePath('/layout', 'layout'); // Revalidate layout for favicon change
+    revalidatePath('/'); 
+    revalidatePath('/layout', 'layout'); 
     revalidatePath('/admin/settings');
     const updatedSettings = await getSiteSettings();
     return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: updatedSettings };
@@ -410,10 +411,10 @@ const projectSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
-  imageUrl: z.string().url("Valid image URL is required."),
-  tags: z.string().transform(val => val.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)), 
-  liveLink: z.string().url().optional().or(z.literal('')),
-  repoLink: z.string().url().optional().or(z.literal('')),
+  imageUrl: z.string().url("Valid image URL is required. Please include http:// or https://"),
+  tags: z.string().optional().transform(val => (val || "").split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)), 
+  liveLink: z.string().url("Invalid Live Demo URL. Must be a full URL.").optional().or(z.literal('')),
+  repoLink: z.string().url("Invalid Repository URL. Must be a full URL.").optional().or(z.literal('')),
   dataAiHint: z.string().optional(),
 });
 
@@ -426,6 +427,7 @@ interface ProjectCrudState {
 }
 
 export async function saveProjectAction(prevState: ProjectCrudState | undefined, formData: FormData): Promise<ProjectCrudState> {
+  console.log("saveProjectAction called. FormData received:", Object.fromEntries(formData.entries()));
   const rawData = {
     id: formData.get('id') || undefined,
     title: formData.get('title'),
@@ -436,31 +438,42 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     repoLink: formData.get('repoLink') || undefined,
     dataAiHint: formData.get('dataAiHint') || undefined,
   };
+  console.log("Raw data for validation:", rawData);
+
   const validatedFields = projectSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
-    return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
+    const errors = validatedFields.error.flatten().fieldErrors;
+    console.error("Project validation failed. Errors:", JSON.stringify(errors, null, 2));
+    return { 
+      success: false, 
+      message: "Validation failed. Please check the highlighted fields for errors. Ensure all URLs are complete (e.g., start with http:// or https://).", 
+      errors: errors 
+    };
   }
   
+  console.log("Project validation successful. Validated data:", validatedFields.data);
   let projectData = { ...validatedFields.data } as Omit<Project, 'id' | 'tags'> & { id?: string, tags: string[] }; 
   const isNew = !projectData.id;
   const projectId = projectData.id || db.ref('/projects').push().key;
 
   if (!projectId) {
+    console.error("Failed to generate project ID.");
     return { success: false, message: "Failed to generate project ID." };
   }
 
   const finalProjectData: Project = {
     ...projectData,
     id: projectId,
-    liveLink: projectData.liveLink || undefined,
-    repoLink: projectData.repoLink || undefined,
+    liveLink: projectData.liveLink || undefined, // Ensure empty string becomes undefined
+    repoLink: projectData.repoLink || undefined, // Ensure empty string becomes undefined
     dataAiHint: projectData.dataAiHint || undefined,
   };
+  console.log("Final project data to save to Firebase:", finalProjectData);
 
   try {
     await db.ref(`/projects/${projectId}`).set(finalProjectData);
-    console.log(isNew ? 'Adding Project to Firebase:' : 'Updating Project in Firebase:', finalProjectData);
+    console.log(isNew ? 'Adding Project to Firebase successful:' : 'Updating Project in Firebase successful:', finalProjectData);
     revalidatePath('/');
     revalidatePath('/admin/projects');
     const allProjects = await getProjects();
@@ -471,8 +484,12 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
       projects: allProjects
     };
   } catch (error) {
-    console.error("Error saving project to Firebase:", error);
-    return { success: false, message: `Failed to save project '${finalProjectData.title}'.` };
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Error saving project '${finalProjectData.title}' to Firebase:`, errorMessage);
+    return { 
+      success: false, 
+      message: `Failed to save project '${finalProjectData.title}'. Error: ${errorMessage}` 
+    };
   }
 }
 
@@ -595,3 +612,8 @@ export async function fetchProjectsForAdmin(): Promise<Project[]> {
 export async function fetchCertificationsForAdmin(): Promise<Certification[]> {
   return getCertifications();
 }
+export async function fetchPageViewsForAdmin(): Promise<number> {
+  return getPageViews();
+}
+
+    
