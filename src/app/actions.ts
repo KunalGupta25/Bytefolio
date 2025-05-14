@@ -181,7 +181,7 @@ const siteSettingsSchema = z.object({
   defaultUserName: z.string().min(2, "Default user name must be at least 2 characters."),
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
-  faviconUrl: z.string().url("Invalid favicon URL.").optional().or(z.literal('')),
+  faviconUrl: z.string().optional().or(z.literal('')), // Relaxed validation
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),
@@ -434,9 +434,9 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     description: formData.get('description'),
     imageUrl: formData.get('imageUrl'),
     tags: formData.get('tags'), 
-    liveLink: formData.get('liveLink') || undefined, // If empty string, becomes undefined
-    repoLink: formData.get('repoLink') || undefined, // If empty string, becomes undefined
-    dataAiHint: formData.get('dataAiHint') || undefined, // If empty string, becomes undefined
+    liveLink: formData.get('liveLink') || undefined, 
+    repoLink: formData.get('repoLink') || undefined,
+    dataAiHint: formData.get('dataAiHint') || undefined, 
   };
   console.log("Raw data for validation:", rawData);
 
@@ -462,33 +462,28 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     return { success: false, message: "Failed to generate project ID." };
   }
 
-  // Construct the object to be saved to Firebase, omitting undefined fields.
-  const dataForFirebase: any = {
+  const dataForFirebase: Partial<Project> & { id: string } = {
     id: projectId,
     title: projectData.title,
     description: projectData.description,
     imageUrl: projectData.imageUrl,
-    tags: projectData.tags, // Assuming tags is always an array from Zod transform
+    tags: projectData.tags,
   };
 
   if (projectData.liveLink !== undefined) {
-    dataForFirebase.liveLink = projectData.liveLink; // This can be "" or a URL string
+    dataForFirebase.liveLink = projectData.liveLink;
   }
   if (projectData.repoLink !== undefined) {
-    dataForFirebase.repoLink = projectData.repoLink; // This can be "" or a URL string
+    dataForFirebase.repoLink = projectData.repoLink;
   }
-  if (projectData.dataAiHint !== undefined && projectData.dataAiHint.trim() !== '') {
+  if (projectData.dataAiHint !== undefined) {
     dataForFirebase.dataAiHint = projectData.dataAiHint;
-  } else if (projectData.dataAiHint === undefined || projectData.dataAiHint.trim() === '') {
-     // If dataAiHint is undefined or an empty string after trim, do not add it or set to null if you prefer to remove it
-     // For omitting, simply don't add it. For setting to null: dataForFirebase.dataAiHint = null;
   }
-
-
+  
   console.log("Final project data to save to Firebase:", dataForFirebase);
 
   try {
-    await db.ref(`/projects/${projectId}`).set(dataForFirebase as Project); // Cast to Project for type consistency
+    await db.ref(`/projects/${projectId}`).set(dataForFirebase as Project); 
     console.log(isNew ? 'Adding Project to Firebase successful:' : 'Updating Project in Firebase successful:', dataForFirebase);
     revalidatePath('/');
     revalidatePath('/admin/projects');
