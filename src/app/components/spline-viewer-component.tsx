@@ -8,51 +8,74 @@ import React, { useEffect, useState } from 'react';
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'spline-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & { url: string; loading?: string; }, HTMLElement>;
+      'spline-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & { url: string; loading?: string; events_target?: string }, HTMLElement>;
     }
   }
 }
 
 const SplineViewerComponent: React.FC = () => {
+  const [isClient, setIsClient] = useState(false);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
-  const [isComponentMounted, setIsComponentMounted] = useState(false);
   const [readyToRenderSpline, setReadyToRenderSpline] = useState(false);
 
   useEffect(() => {
-    setIsComponentMounted(true);
+    setIsClient(true);
   }, []);
 
   const handleScriptLoad = () => {
+    console.log('Spline script loaded.');
     setIsScriptLoaded(true);
   };
 
   useEffect(() => {
-    if (isComponentMounted && isScriptLoaded) {
-      const timer = setTimeout(() => {
+    if (isClient && isScriptLoaded) {
+      // Check if the custom element is defined
+      if (window.customElements && window.customElements.get('spline-viewer')) {
+        console.log('spline-viewer custom element is defined.');
         setReadyToRenderSpline(true);
-      }, 100); // Small delay to ensure Spline script is fully initialized
+      } else {
+        // It might take a moment for the custom element to be defined after script load
+        // We can add a small delay or a poller here if needed, but often just checking
+        // in a subsequent effect is enough.
+        const checkInterval = setInterval(() => {
+          if (window.customElements && window.customElements.get('spline-viewer')) {
+            console.log('spline-viewer custom element defined after polling.');
+            setReadyToRenderSpline(true);
+            clearInterval(checkInterval);
+          }
+        }, 100);
+        // Clear interval after a timeout to prevent infinite loop if element never defines
+        const timeoutId = setTimeout(() => {
+          clearInterval(checkInterval);
+          if (! (window.customElements && window.customElements.get('spline-viewer'))) {
+            console.error('Spline-viewer custom element not defined after timeout.');
+          }
+        }, 2000); // Wait up to 2 seconds
 
-      return () => clearTimeout(timer);
+        return () => {
+          clearInterval(checkInterval);
+          clearTimeout(timeoutId);
+        };
+      }
     }
-  }, [isComponentMounted, isScriptLoaded]);
+  }, [isClient, isScriptLoaded]);
 
   return (
     <>
       <Script
         type="module"
         src="https://unpkg.com/@splinetool/viewer@1.9.94/build/spline-viewer.js"
-        strategy="lazyOnload"
+        strategy="lazyOnload" 
         onLoad={handleScriptLoad}
         onError={(e) => {
           console.error('Error loading Spline viewer script:', e);
         }}
       />
-      {/* Add relative positioning to the container */}
       <div className="relative w-full h-full flex items-center justify-center rounded-lg overflow-hidden">
-        {readyToRenderSpline ? (
+        {isClient && readyToRenderSpline ? (
           <spline-viewer
             url="https://prod.spline.design/NeMM5nMR9kXUPPhx/scene.splinecode"
-            // Adjust minHeight to be less than or equal to the smallest potential container height
+            events_target="global" // Recommended for broader event handling
             style={{ width: '100%', height: '100%', minHeight: '250px' }}
           />
         ) : (
