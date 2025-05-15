@@ -91,9 +91,9 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     const snapshot = await db.ref('/siteSettings').once('value');
     let data = snapshot.val();
 
+    // Start with a deep copy of defaults to avoid mutation issues.
     const settings: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
     console.log('[getSiteSettings] Initialized settings with defaults. Default faviconUrl:', settings.faviconUrl);
-
 
     if (data && typeof data === 'object') {
       console.log('[getSiteSettings] Fetched data from Firebase:', data);
@@ -102,17 +102,21 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       if (typeof data.defaultUserSpecialization === 'string') settings.defaultUserSpecialization = data.defaultUserSpecialization;
       if (typeof data.defaultProfileImageUrl === 'string') settings.defaultProfileImageUrl = data.defaultProfileImageUrl;
       
+      // More robust handling for faviconUrl
       if (data.hasOwnProperty('faviconUrl')) {
         if (typeof data.faviconUrl === 'string' && data.faviconUrl.trim() !== '') {
             settings.faviconUrl = data.faviconUrl.trim();
         } else { 
+            // If faviconUrl is present but empty, explicitly use default
+            console.log('[getSiteSettings] faviconUrl from Firebase is empty, using default:', DEFAULT_SITE_SETTINGS.faviconUrl);
             settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl;
         }
       } else {
-         settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; // Ensure default if not in DB
+         // If faviconUrl property is not in Firebase data at all, ensure default is used.
+         console.log('[getSiteSettings] faviconUrl property missing from Firebase data, using default:', DEFAULT_SITE_SETTINGS.faviconUrl);
+         settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl;
       }
       console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
-
 
       if (data.contactDetails && typeof data.contactDetails === 'object') {
         const contactData = data.contactDetails as Partial<ContactDetails>;
@@ -130,6 +134,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
             settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
         }
       } else {
+         console.log('[getSiteSettings] contactDetails missing or not an object in Firebase, using defaults.');
          settings.contactDetails = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS.contactDetails));
       }
     } else {
@@ -159,10 +164,20 @@ export async function getAboutData(): Promise<AboutData> {
         if (data.hasOwnProperty('profileImageUrl')) {
             if (typeof data.profileImageUrl === 'string' && data.profileImageUrl.trim() !== '') {
                 about.profileImageUrl = data.profileImageUrl.trim();
+            } else {
+                about.profileImageUrl = DEFAULT_ABOUT_DATA.profileImageUrl;
             }
+        } else {
+            about.profileImageUrl = DEFAULT_ABOUT_DATA.profileImageUrl;
         }
-        if (typeof data.dataAiHint === 'string') about.dataAiHint = data.dataAiHint;
-         else {
+
+        if (data.hasOwnProperty('dataAiHint')) {
+          if (typeof data.dataAiHint === 'string' && data.dataAiHint.trim() !== '') {
+            about.dataAiHint = data.dataAiHint.trim();
+          } else {
+            about.dataAiHint = DEFAULT_ABOUT_DATA.dataAiHint;
+          }
+        } else {
             about.dataAiHint = DEFAULT_ABOUT_DATA.dataAiHint;
         }
     }
@@ -178,13 +193,16 @@ export async function getSkills(): Promise<Skill[]> {
     const snapshot = await db.ref('/skills').once('value');
     const skillsData = snapshot.val();
     if (skillsData && typeof skillsData === 'object') {
-      return Object.entries(skillsData).map(([id, skill]: [string, any]) => ({
-        id: typeof skill.id === 'string' ? skill.id : id, 
-        name: typeof skill.name === 'string' ? skill.name : 'Unnamed Skill',
-        category: typeof skill.category === 'string' && ['Language', 'Framework/Library', 'Tool', 'Database', 'Cloud', 'Other'].includes(skill.category) ? skill.category as Skill['category'] : 'Other',
-        level: skill.level !== undefined && !isNaN(Number(skill.level)) ? Number(skill.level) : undefined,
-        iconName: (typeof skill.iconName === 'string' && skill.iconName.trim() !== '') ? skill.iconName : null,
-      })).filter(Boolean) as Skill[];
+      return Object.entries(skillsData).map(([id, skill]: [string, any]) => {
+        if (!skill || typeof skill !== 'object') return null; // Add null check for skill object
+        return {
+          id: typeof skill.id === 'string' ? skill.id : id, 
+          name: typeof skill.name === 'string' ? skill.name : 'Unnamed Skill',
+          category: typeof skill.category === 'string' && ['Language', 'Framework/Library', 'Tool', 'Database', 'Cloud', 'Other'].includes(skill.category) ? skill.category as Skill['category'] : 'Other',
+          level: skill.level !== undefined && !isNaN(Number(skill.level)) ? Number(skill.level) : undefined,
+          iconName: (typeof skill.iconName === 'string' && skill.iconName.trim() !== '') ? skill.iconName : null,
+        };
+      }).filter(Boolean) as Skill[];
     }
     return [];
   } catch (error) {
@@ -198,14 +216,17 @@ export async function getEducationItems(): Promise<EducationItem[]> {
     const snapshot = await db.ref('/education').once('value');
     const educationData = snapshot.val();
      if (educationData && typeof educationData === 'object') {
-      return Object.entries(educationData).map(([id, item]: [string, any]) => ({
-        id: typeof item.id === 'string' ? item.id : id,
-        degree: typeof item.degree === 'string' ? item.degree : 'N/A',
-        institution: typeof item.institution === 'string' ? item.institution : 'N/A',
-        period: typeof item.period === 'string' ? item.period : 'N/A',
-        description: typeof item.description === 'string' ? item.description : undefined,
-        iconName: (typeof item.iconName === 'string' && item.iconName.trim() !== '') ? item.iconName : null,
-      })).filter(Boolean) as EducationItem[];
+      return Object.entries(educationData).map(([id, item]: [string, any]) => {
+        if (!item || typeof item !== 'object') return null;
+        return {
+          id: typeof item.id === 'string' ? item.id : id,
+          degree: typeof item.degree === 'string' ? item.degree : 'N/A',
+          institution: typeof item.institution === 'string' ? item.institution : 'N/A',
+          period: typeof item.period === 'string' ? item.period : 'N/A',
+          description: typeof item.description === 'string' ? item.description : undefined,
+          iconName: (typeof item.iconName === 'string' && item.iconName.trim() !== '') ? item.iconName : null,
+        };
+      }).filter(Boolean) as EducationItem[];
     }
     return [];
   } catch (error) {
@@ -219,16 +240,19 @@ export async function getProjects(): Promise<Project[]> {
     const snapshot = await db.ref('/projects').once('value');
     const projectsData = snapshot.val();
     if (projectsData && typeof projectsData === 'object') {
-      return Object.entries(projectsData).map(([id, project]: [string, any]) => ({
-        id: typeof project.id === 'string' ? project.id : id,
-        title: typeof project.title === 'string' ? project.title : 'Untitled Project',
-        description: typeof project.description === 'string' ? project.description : '',
-        imageUrl: typeof project.imageUrl === 'string' && project.imageUrl.trim() !== '' ? project.imageUrl.trim() : 'https://placehold.co/600x400.png',
-        tags: Array.isArray(project.tags) ? project.tags.filter((tag): tag is string => typeof tag === 'string') : [],
-        liveLink: (typeof project.liveLink === 'string' && project.liveLink.trim() !== '') ? project.liveLink : undefined,
-        repoLink: (typeof project.repoLink === 'string' && project.repoLink.trim() !== '') ? project.repoLink : undefined,
-        dataAiHint: typeof project.dataAiHint === 'string' ? project.dataAiHint : undefined,
-      })).filter(Boolean) as Project[];
+      return Object.entries(projectsData).map(([id, project]: [string, any]) => {
+        if (!project || typeof project !== 'object') return null;
+        return {
+          id: typeof project.id === 'string' ? project.id : id,
+          title: typeof project.title === 'string' ? project.title : 'Untitled Project',
+          description: typeof project.description === 'string' ? project.description : '',
+          imageUrl: typeof project.imageUrl === 'string' && project.imageUrl.trim() !== '' ? project.imageUrl.trim() : 'https://placehold.co/600x400.png',
+          tags: Array.isArray(project.tags) ? project.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+          liveLink: (typeof project.liveLink === 'string' && project.liveLink.trim() !== '') ? project.liveLink : undefined,
+          repoLink: (typeof project.repoLink === 'string' && project.repoLink.trim() !== '') ? project.repoLink : undefined,
+          dataAiHint: typeof project.dataAiHint === 'string' ? project.dataAiHint : undefined,
+        };
+      }).filter(Boolean) as Project[];
     }
     return [];
   } catch (error) {
@@ -242,14 +266,17 @@ export async function getCertifications(): Promise<Certification[]> {
     const snapshot = await db.ref('/certifications').once('value');
     const certificationsData = snapshot.val();
     if (certificationsData && typeof certificationsData === 'object') {
-      return Object.entries(certificationsData).map(([id, cert]: [string, any]) => ({
-        id: typeof cert.id === 'string' ? cert.id : id,
-        name: typeof cert.name === 'string' ? cert.name : 'Unnamed Certification',
-        organization: typeof cert.organization === 'string' ? cert.organization : 'N/A',
-        date: typeof cert.date === 'string' ? cert.date : 'N/A',
-        verifyLink: (typeof cert.verifyLink === 'string' && cert.verifyLink.trim() !== '') ? cert.verifyLink : undefined,
-        iconName: (typeof cert.iconName === 'string' && cert.iconName.trim() !== '') ? cert.iconName : null,
-      })).filter(Boolean) as Certification[];
+      return Object.entries(certificationsData).map(([id, cert]: [string, any]) => {
+        if (!cert || typeof cert !== 'object') return null;
+        return {
+          id: typeof cert.id === 'string' ? cert.id : id,
+          name: typeof cert.name === 'string' ? cert.name : 'Unnamed Certification',
+          organization: typeof cert.organization === 'string' ? cert.organization : 'N/A',
+          date: typeof cert.date === 'string' ? cert.date : 'N/A',
+          verifyLink: (typeof cert.verifyLink === 'string' && cert.verifyLink.trim() !== '') ? cert.verifyLink : undefined,
+          iconName: (typeof cert.iconName === 'string' && cert.iconName.trim() !== '') ? cert.iconName : null,
+        };
+      }).filter(Boolean) as Certification[];
     }
     return [];
   } catch (error) {

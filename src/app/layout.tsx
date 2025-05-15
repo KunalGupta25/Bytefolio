@@ -13,19 +13,24 @@ const inter = Inter({
 
 // Generate dynamic metadata
 export async function generateMetadata(): Promise<Metadata> {
+  console.log('[generateMetadata] Fetching site settings...');
   const siteSettings = await getSiteSettings();
-  // Use fetched faviconUrl if it's a non-empty string, otherwise default to /favicon.png
-  const faviconUrl = (typeof siteSettings.faviconUrl === 'string' && siteSettings.faviconUrl.trim() !== '')
-                     ? siteSettings.faviconUrl
-                     : '/favicon.png';
+  console.log('[generateMetadata] Site settings fetched:', siteSettings);
+
+  // Use fetched faviconUrl if it's a non-empty string and a valid path, otherwise default to /favicon.png
+  let resolvedFaviconUrl = '/favicon.png'; // Default
+  if (siteSettings.faviconUrl && typeof siteSettings.faviconUrl === 'string' && siteSettings.faviconUrl.trim() !== '') {
+    resolvedFaviconUrl = siteSettings.faviconUrl.trim();
+  }
+  console.log(`[generateMetadata] Resolved faviconUrl to be used: ${resolvedFaviconUrl}`);
 
   return {
     title: `${siteSettings.siteName || 'ByteFolio'} | CS Student Portfolio`,
     description: 'A modern portfolio for a Computer Science student, showcasing skills, projects, and experience.',
     icons: {
-      icon: faviconUrl,
+      icon: resolvedFaviconUrl,
       // You can add other icon types here if needed, e.g., apple-touch-icon
-      // apple: '/apple-icon.png', 
+      // apple: '/apple-icon.png',
     },
   };
 }
