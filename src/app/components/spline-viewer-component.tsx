@@ -19,24 +19,20 @@ const SplineViewerComponent: React.FC = () => {
   const [readyToRenderSpline, setReadyToRenderSpline] = useState(false);
 
   useEffect(() => {
-    // This effect runs once after the component mounts on the client-side
     setIsComponentMounted(true);
   }, []);
 
   const handleScriptLoad = () => {
-    // This callback runs when the Spline viewer script has successfully loaded
     setIsScriptLoaded(true);
   };
 
   useEffect(() => {
     if (isComponentMounted && isScriptLoaded) {
-      // Introduce a small delay to give the Spline library a moment
-      // to fully initialize after the script is loaded.
       const timer = setTimeout(() => {
         setReadyToRenderSpline(true);
-      }, 100); // 100ms delay, can be adjusted
+      }, 100); // Small delay to ensure Spline script is fully initialized
 
-      return () => clearTimeout(timer); // Cleanup timer on unmount
+      return () => clearTimeout(timer);
     }
   }, [isComponentMounted, isScriptLoaded]);
 
@@ -45,19 +41,19 @@ const SplineViewerComponent: React.FC = () => {
       <Script
         type="module"
         src="https://unpkg.com/@splinetool/viewer@1.9.94/build/spline-viewer.js"
-        strategy="lazyOnload" // Load the script after other resources, non-blocking
-        onLoad={handleScriptLoad} // Set state once the script is loaded
+        strategy="lazyOnload"
+        onLoad={handleScriptLoad}
         onError={(e) => {
           console.error('Error loading Spline viewer script:', e);
-          // Optionally, set a state here to show a specific error message to the user
         }}
       />
-      <div className="w-full h-full flex items-center justify-center rounded-lg overflow-hidden">
-        {/* Render Spline viewer only if component is mounted, script is loaded, AND delay has passed */}
+      {/* Add relative positioning to the container */}
+      <div className="relative w-full h-full flex items-center justify-center rounded-lg overflow-hidden">
         {readyToRenderSpline ? (
           <spline-viewer
             url="https://prod.spline.design/NeMM5nMR9kXUPPhx/scene.splinecode"
-            style={{ width: '100%', height: '100%', minHeight: '300px' }}
+            // Adjust minHeight to be less than or equal to the smallest potential container height
+            style={{ width: '100%', height: '100%', minHeight: '250px' }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
