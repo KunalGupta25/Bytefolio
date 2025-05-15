@@ -73,7 +73,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
     github: 'https://github.com/yourusername',
     twitter: 'https://twitter.com/yourusername',
   },
-  faviconUrl: "/favicon.ico", // Corrected default favicon path
+  faviconUrl: "/favicon.png", // Defaulting to /favicon.png for consistency
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -102,15 +102,15 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       if (typeof data.defaultUserSpecialization === 'string') settings.defaultUserSpecialization = data.defaultUserSpecialization;
       if (typeof data.defaultProfileImageUrl === 'string') settings.defaultProfileImageUrl = data.defaultProfileImageUrl;
       
-      // Handle faviconUrl
       if (data.hasOwnProperty('faviconUrl')) {
         if (typeof data.faviconUrl === 'string' && data.faviconUrl.trim() !== '') {
             settings.faviconUrl = data.faviconUrl.trim();
-        } else { // If faviconUrl is null, empty string, or not a string, use the default
+        } else { 
             settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl;
         }
+      } else {
+         settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; // Ensure default if not in DB
       }
-      // If faviconUrl is not in data, it retains the default from initial settings.
       console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
 
 
@@ -123,12 +123,14 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         if (contactData.hasOwnProperty('twitter')) {
             if (typeof contactData.twitter === 'string' && contactData.twitter.trim() !== '') {
                 settings.contactDetails.twitter = contactData.twitter.trim();
-            } else { // If twitter is null, empty, or not a string, use default (which might be undefined)
+            } else { 
                 settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
             }
+        } else {
+            settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
         }
       } else {
-         // If no contactDetails in DB, 'settings.contactDetails' remains as a deep copy of defaults.
+         settings.contactDetails = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS.contactDetails));
       }
     } else {
       console.log('[getSiteSettings] No data from Firebase or data is not an object. Using all defaults. Default faviconUrl:', settings.faviconUrl);
@@ -148,7 +150,7 @@ export async function getAboutData(): Promise<AboutData> {
     const snapshot = await db.ref('/aboutInfo').once('value');
     const data = snapshot.val();
     
-    const about: AboutData = { ...DEFAULT_ABOUT_DATA };
+    const about: AboutData = JSON.parse(JSON.stringify(DEFAULT_ABOUT_DATA));
 
     if (data && typeof data === 'object') {
         if (typeof data.professionalSummary === 'string') about.professionalSummary = data.professionalSummary;
@@ -157,16 +159,17 @@ export async function getAboutData(): Promise<AboutData> {
         if (data.hasOwnProperty('profileImageUrl')) {
             if (typeof data.profileImageUrl === 'string' && data.profileImageUrl.trim() !== '') {
                 about.profileImageUrl = data.profileImageUrl.trim();
-            }  else { // If profileImageUrl is null, empty, or not a string
-               about.profileImageUrl = DEFAULT_ABOUT_DATA.profileImageUrl;
             }
         }
         if (typeof data.dataAiHint === 'string') about.dataAiHint = data.dataAiHint;
+         else {
+            about.dataAiHint = DEFAULT_ABOUT_DATA.dataAiHint;
+        }
     }
     return about;
   } catch (error) {
     console.error("Error fetching about data:", error);
-    return { ...DEFAULT_ABOUT_DATA };
+    return JSON.parse(JSON.stringify(DEFAULT_ABOUT_DATA));
   }
 }
 
@@ -176,11 +179,11 @@ export async function getSkills(): Promise<Skill[]> {
     const skillsData = snapshot.val();
     if (skillsData && typeof skillsData === 'object') {
       return Object.entries(skillsData).map(([id, skill]: [string, any]) => ({
-        id: typeof skill.id === 'string' ? skill.id : id, // Use key as fallback id
+        id: typeof skill.id === 'string' ? skill.id : id, 
         name: typeof skill.name === 'string' ? skill.name : 'Unnamed Skill',
-        category: typeof skill.category === 'string' ? skill.category as Skill['category'] : 'Other',
+        category: typeof skill.category === 'string' && ['Language', 'Framework/Library', 'Tool', 'Database', 'Cloud', 'Other'].includes(skill.category) ? skill.category as Skill['category'] : 'Other',
         level: skill.level !== undefined && !isNaN(Number(skill.level)) ? Number(skill.level) : undefined,
-        iconName: typeof skill.iconName === 'string' ? skill.iconName : null,
+        iconName: (typeof skill.iconName === 'string' && skill.iconName.trim() !== '') ? skill.iconName : null,
       })).filter(Boolean) as Skill[];
     }
     return [];
@@ -201,7 +204,7 @@ export async function getEducationItems(): Promise<EducationItem[]> {
         institution: typeof item.institution === 'string' ? item.institution : 'N/A',
         period: typeof item.period === 'string' ? item.period : 'N/A',
         description: typeof item.description === 'string' ? item.description : undefined,
-        iconName: typeof item.iconName === 'string' ? item.iconName : null,
+        iconName: (typeof item.iconName === 'string' && item.iconName.trim() !== '') ? item.iconName : null,
       })).filter(Boolean) as EducationItem[];
     }
     return [];
@@ -221,9 +224,9 @@ export async function getProjects(): Promise<Project[]> {
         title: typeof project.title === 'string' ? project.title : 'Untitled Project',
         description: typeof project.description === 'string' ? project.description : '',
         imageUrl: typeof project.imageUrl === 'string' && project.imageUrl.trim() !== '' ? project.imageUrl.trim() : 'https://placehold.co/600x400.png',
-        tags: Array.isArray(project.tags) ? project.tags.filter(tag => typeof tag === 'string') : [],
-        liveLink: typeof project.liveLink === 'string' ? project.liveLink : undefined,
-        repoLink: typeof project.repoLink === 'string' ? project.repoLink : undefined,
+        tags: Array.isArray(project.tags) ? project.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+        liveLink: (typeof project.liveLink === 'string' && project.liveLink.trim() !== '') ? project.liveLink : undefined,
+        repoLink: (typeof project.repoLink === 'string' && project.repoLink.trim() !== '') ? project.repoLink : undefined,
         dataAiHint: typeof project.dataAiHint === 'string' ? project.dataAiHint : undefined,
       })).filter(Boolean) as Project[];
     }
@@ -244,8 +247,8 @@ export async function getCertifications(): Promise<Certification[]> {
         name: typeof cert.name === 'string' ? cert.name : 'Unnamed Certification',
         organization: typeof cert.organization === 'string' ? cert.organization : 'N/A',
         date: typeof cert.date === 'string' ? cert.date : 'N/A',
-        verifyLink: typeof cert.verifyLink === 'string' ? cert.verifyLink : undefined,
-        iconName: typeof cert.iconName === 'string' ? cert.iconName : null,
+        verifyLink: (typeof cert.verifyLink === 'string' && cert.verifyLink.trim() !== '') ? cert.verifyLink : undefined,
+        iconName: (typeof cert.iconName === 'string' && cert.iconName.trim() !== '') ? cert.iconName : null,
       })).filter(Boolean) as Certification[];
     }
     return [];
