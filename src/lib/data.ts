@@ -73,7 +73,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
     github: 'https://github.com/yourusername',
     twitter: 'https://twitter.com/yourusername',
   },
-  faviconUrl: "/favicon.png", // Default to your preferred favicon in public folder
+  faviconUrl: "/favicon.ico", // Updated default favicon path
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -91,51 +91,48 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     const snapshot = await db.ref('/siteSettings').once('value');
     const data = snapshot.val();
 
-    // Initialize with a deep copy of defaults to ensure all nested objects exist
-    // and to avoid modifying the original DEFAULT_SITE_SETTINGS object.
     const settings: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
+    console.log('[getSiteSettings] Initialized settings with defaults. Default faviconUrl:', settings.faviconUrl);
+
 
     if (data && typeof data === 'object') {
-      // Merge top-level properties if they exist and are of the correct type
+      console.log('[getSiteSettings] Fetched data from Firebase:', data);
       if (typeof data.siteName === 'string') settings.siteName = data.siteName;
       if (typeof data.defaultUserName === 'string') settings.defaultUserName = data.defaultUserName;
       if (typeof data.defaultUserSpecialization === 'string') settings.defaultUserSpecialization = data.defaultUserSpecialization;
       if (typeof data.defaultProfileImageUrl === 'string') settings.defaultProfileImageUrl = data.defaultProfileImageUrl;
       
-      // Handle faviconUrl specifically: use DB value if it's a non-empty string, otherwise use the default.
       if (typeof data.faviconUrl === 'string' && data.faviconUrl.trim() !== '') {
         settings.faviconUrl = data.faviconUrl.trim();
-      } else {
-        // If fetched faviconUrl is empty, not a string, or not present, it will retain the value from DEFAULT_SITE_SETTINGS
-        // which is already set in 'settings' due to the initial JSON.parse(JSON.stringify(...)).
-        // No explicit assignment to settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl is needed here
-        // because 'settings' already holds that default value unless overwritten.
+      } else if (data.hasOwnProperty('faviconUrl') && (data.faviconUrl === null || data.faviconUrl === '')) {
+        // If faviconUrl is explicitly null or empty string in DB, use the default.
+        settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl;
       }
-      console.log('[getSiteSettings] Fetched data. Resolved faviconUrl:', settings.faviconUrl);
+      // If faviconUrl is not in data, it will retain the default from initial settings.
+      console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
 
-      // Merge contactDetails carefully
+
       if (data.contactDetails && typeof data.contactDetails === 'object') {
-        const contactData = data.contactDetails as Partial<ContactDetails>; // Type assertion for easier access
+        const contactData = data.contactDetails as Partial<ContactDetails>;
         if (typeof contactData.email === 'string') settings.contactDetails.email = contactData.email;
         if (typeof contactData.linkedin === 'string') settings.contactDetails.linkedin = contactData.linkedin;
         if (typeof contactData.github === 'string') settings.contactDetails.github = contactData.github;
         
         if (typeof contactData.twitter === 'string' && contactData.twitter.trim() !== '') {
           settings.contactDetails.twitter = contactData.twitter.trim();
-        } else if (contactData.twitter === undefined || (typeof contactData.twitter === 'string' && contactData.twitter.trim() === '')) {
-           // If Twitter is explicitly empty or undefined in DB, use the default (which might also be undefined or empty)
+        } else if (contactData.hasOwnProperty('twitter') && (contactData.twitter === null || (typeof contactData.twitter === 'string' && contactData.twitter.trim() === ''))) {
            settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
         }
+      } else {
+         // If no contactDetails in DB, 'settings.contactDetails' remains as a deep copy of defaults.
       }
     } else {
-      // No data from Firebase, 'settings' will remain as a deep copy of DEFAULT_SITE_SETTINGS.
-      console.log('[getSiteSettings] No data from Firebase. Using all defaults. Default faviconUrl:', settings.faviconUrl);
+      console.log('[getSiteSettings] No data from Firebase or data is not an object. Using all defaults. Default faviconUrl:', settings.faviconUrl);
     }
     
     return settings;
   } catch (error) {
     console.error("[getSiteSettings] Error fetching site settings:", error);
-    // On error, return a fresh deep copy of defaults to be safe.
     const errorDefaults: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
     console.log('[getSiteSettings] Error condition. Using all defaults. Default faviconUrl:', errorDefaults.faviconUrl);
     return errorDefaults;
@@ -154,6 +151,8 @@ export async function getAboutData(): Promise<AboutData> {
         if (typeof data.bio === 'string') about.bio = data.bio;
         if (typeof data.profileImageUrl === 'string' && data.profileImageUrl.trim() !== '') {
             about.profileImageUrl = data.profileImageUrl.trim();
+        }  else if (data.hasOwnProperty('profileImageUrl') && (data.profileImageUrl === null || data.profileImageUrl === '')) {
+           about.profileImageUrl = DEFAULT_ABOUT_DATA.profileImageUrl;
         }
         if (typeof data.dataAiHint === 'string') about.dataAiHint = data.dataAiHint;
     }
@@ -175,7 +174,7 @@ export async function getSkills(): Promise<Skill[]> {
         category: typeof skill.category === 'string' ? skill.category as Skill['category'] : 'Other',
         level: skill.level !== undefined && !isNaN(Number(skill.level)) ? Number(skill.level) : undefined,
         iconName: typeof skill.iconName === 'string' ? skill.iconName : null,
-      }));
+      })).filter(Boolean) as Skill[]; // filter(Boolean) to remove any potential nulls from bad data
     }
     return [];
   } catch (error) {
@@ -196,7 +195,7 @@ export async function getEducationItems(): Promise<EducationItem[]> {
         period: typeof item.period === 'string' ? item.period : 'N/A',
         description: typeof item.description === 'string' ? item.description : undefined,
         iconName: typeof item.iconName === 'string' ? item.iconName : null,
-      }));
+      })).filter(Boolean) as EducationItem[];
     }
     return [];
   } catch (error) {
@@ -219,7 +218,7 @@ export async function getProjects(): Promise<Project[]> {
         liveLink: typeof project.liveLink === 'string' ? project.liveLink : undefined,
         repoLink: typeof project.repoLink === 'string' ? project.repoLink : undefined,
         dataAiHint: typeof project.dataAiHint === 'string' ? project.dataAiHint : undefined,
-      }));
+      })).filter(Boolean) as Project[];
     }
     return [];
   } catch (error) {
@@ -240,7 +239,7 @@ export async function getCertifications(): Promise<Certification[]> {
         date: typeof cert.date === 'string' ? cert.date : 'N/A',
         verifyLink: typeof cert.verifyLink === 'string' ? cert.verifyLink : undefined,
         iconName: typeof cert.iconName === 'string' ? cert.iconName : null,
-      }));
+      })).filter(Boolean) as Certification[];
     }
     return [];
   } catch (error) {
@@ -259,5 +258,7 @@ export async function getPageViews(): Promise<number> {
     return 0;
   }
 }
+
+    
 
     
