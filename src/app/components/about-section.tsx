@@ -19,8 +19,9 @@ export default function AboutSection({ aboutData, userName }: AboutSectionProps)
             <Image
               src={aboutData.profileImageUrl || "https://placehold.co/300x300.png"}
               alt={`Profile Picture of ${userName}`}
-              layout="fill"
-              objectFit="cover"
+              fill
+              style={{ objectFit: 'cover' }}
+              sizes="(max-width: 768px) 100vw, 300px" // Example sizes, adjust as needed
               priority 
               data-ai-hint={aboutData.dataAiHint || "profile picture"}
               className="transform hover:scale-105 transition-transform duration-300"

@@ -22,8 +22,9 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
               <Image
                 src={project.imageUrl || "https://placehold.co/600x400.png"}
                 alt={project.title}
-                layout="fill"
-                objectFit="cover"
+                fill
+                style={{ objectFit: 'cover' }}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px" // Example sizes
                 data-ai-hint={project.dataAiHint || 'project image'}
                 className="transition-transform duration-500 group-hover:scale-105"
               />

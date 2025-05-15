@@ -73,7 +73,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
     github: 'https://github.com/yourusername',
     twitter: 'https://twitter.com/yourusername',
   },
-  faviconUrl: "/favicon.ico", // Updated default favicon path
+  faviconUrl: "/favicon.ico", // Corrected default favicon path
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -89,7 +89,7 @@ const DEFAULT_ABOUT_DATA: AboutData = {
 export async function getSiteSettings(): Promise<SiteSettings> {
   try {
     const snapshot = await db.ref('/siteSettings').once('value');
-    const data = snapshot.val();
+    let data = snapshot.val();
 
     const settings: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
     console.log('[getSiteSettings] Initialized settings with defaults. Default faviconUrl:', settings.faviconUrl);
@@ -102,13 +102,15 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       if (typeof data.defaultUserSpecialization === 'string') settings.defaultUserSpecialization = data.defaultUserSpecialization;
       if (typeof data.defaultProfileImageUrl === 'string') settings.defaultProfileImageUrl = data.defaultProfileImageUrl;
       
-      if (typeof data.faviconUrl === 'string' && data.faviconUrl.trim() !== '') {
-        settings.faviconUrl = data.faviconUrl.trim();
-      } else if (data.hasOwnProperty('faviconUrl') && (data.faviconUrl === null || data.faviconUrl === '')) {
-        // If faviconUrl is explicitly null or empty string in DB, use the default.
-        settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl;
+      // Handle faviconUrl
+      if (data.hasOwnProperty('faviconUrl')) {
+        if (typeof data.faviconUrl === 'string' && data.faviconUrl.trim() !== '') {
+            settings.faviconUrl = data.faviconUrl.trim();
+        } else { // If faviconUrl is null, empty string, or not a string, use the default
+            settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl;
+        }
       }
-      // If faviconUrl is not in data, it will retain the default from initial settings.
+      // If faviconUrl is not in data, it retains the default from initial settings.
       console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
 
 
@@ -118,10 +120,12 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         if (typeof contactData.linkedin === 'string') settings.contactDetails.linkedin = contactData.linkedin;
         if (typeof contactData.github === 'string') settings.contactDetails.github = contactData.github;
         
-        if (typeof contactData.twitter === 'string' && contactData.twitter.trim() !== '') {
-          settings.contactDetails.twitter = contactData.twitter.trim();
-        } else if (contactData.hasOwnProperty('twitter') && (contactData.twitter === null || (typeof contactData.twitter === 'string' && contactData.twitter.trim() === ''))) {
-           settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
+        if (contactData.hasOwnProperty('twitter')) {
+            if (typeof contactData.twitter === 'string' && contactData.twitter.trim() !== '') {
+                settings.contactDetails.twitter = contactData.twitter.trim();
+            } else { // If twitter is null, empty, or not a string, use default (which might be undefined)
+                settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
+            }
         }
       } else {
          // If no contactDetails in DB, 'settings.contactDetails' remains as a deep copy of defaults.
@@ -149,10 +153,13 @@ export async function getAboutData(): Promise<AboutData> {
     if (data && typeof data === 'object') {
         if (typeof data.professionalSummary === 'string') about.professionalSummary = data.professionalSummary;
         if (typeof data.bio === 'string') about.bio = data.bio;
-        if (typeof data.profileImageUrl === 'string' && data.profileImageUrl.trim() !== '') {
-            about.profileImageUrl = data.profileImageUrl.trim();
-        }  else if (data.hasOwnProperty('profileImageUrl') && (data.profileImageUrl === null || data.profileImageUrl === '')) {
-           about.profileImageUrl = DEFAULT_ABOUT_DATA.profileImageUrl;
+        
+        if (data.hasOwnProperty('profileImageUrl')) {
+            if (typeof data.profileImageUrl === 'string' && data.profileImageUrl.trim() !== '') {
+                about.profileImageUrl = data.profileImageUrl.trim();
+            }  else { // If profileImageUrl is null, empty, or not a string
+               about.profileImageUrl = DEFAULT_ABOUT_DATA.profileImageUrl;
+            }
         }
         if (typeof data.dataAiHint === 'string') about.dataAiHint = data.dataAiHint;
     }
@@ -168,13 +175,13 @@ export async function getSkills(): Promise<Skill[]> {
     const snapshot = await db.ref('/skills').once('value');
     const skillsData = snapshot.val();
     if (skillsData && typeof skillsData === 'object') {
-      return Object.values(skillsData).map((skill: any) => ({
-        id: typeof skill.id === 'string' ? skill.id : '', 
+      return Object.entries(skillsData).map(([id, skill]: [string, any]) => ({
+        id: typeof skill.id === 'string' ? skill.id : id, // Use key as fallback id
         name: typeof skill.name === 'string' ? skill.name : 'Unnamed Skill',
         category: typeof skill.category === 'string' ? skill.category as Skill['category'] : 'Other',
         level: skill.level !== undefined && !isNaN(Number(skill.level)) ? Number(skill.level) : undefined,
         iconName: typeof skill.iconName === 'string' ? skill.iconName : null,
-      })).filter(Boolean) as Skill[]; // filter(Boolean) to remove any potential nulls from bad data
+      })).filter(Boolean) as Skill[];
     }
     return [];
   } catch (error) {
@@ -188,8 +195,8 @@ export async function getEducationItems(): Promise<EducationItem[]> {
     const snapshot = await db.ref('/education').once('value');
     const educationData = snapshot.val();
      if (educationData && typeof educationData === 'object') {
-      return Object.values(educationData).map((item: any) => ({
-        id: typeof item.id === 'string' ? item.id : '',
+      return Object.entries(educationData).map(([id, item]: [string, any]) => ({
+        id: typeof item.id === 'string' ? item.id : id,
         degree: typeof item.degree === 'string' ? item.degree : 'N/A',
         institution: typeof item.institution === 'string' ? item.institution : 'N/A',
         period: typeof item.period === 'string' ? item.period : 'N/A',
@@ -209,8 +216,8 @@ export async function getProjects(): Promise<Project[]> {
     const snapshot = await db.ref('/projects').once('value');
     const projectsData = snapshot.val();
     if (projectsData && typeof projectsData === 'object') {
-      return Object.values(projectsData).map((project: any) => ({
-        id: typeof project.id === 'string' ? project.id : '',
+      return Object.entries(projectsData).map(([id, project]: [string, any]) => ({
+        id: typeof project.id === 'string' ? project.id : id,
         title: typeof project.title === 'string' ? project.title : 'Untitled Project',
         description: typeof project.description === 'string' ? project.description : '',
         imageUrl: typeof project.imageUrl === 'string' && project.imageUrl.trim() !== '' ? project.imageUrl.trim() : 'https://placehold.co/600x400.png',
@@ -232,8 +239,8 @@ export async function getCertifications(): Promise<Certification[]> {
     const snapshot = await db.ref('/certifications').once('value');
     const certificationsData = snapshot.val();
     if (certificationsData && typeof certificationsData === 'object') {
-      return Object.values(certificationsData).map((cert: any) => ({
-        id: typeof cert.id === 'string' ? cert.id : '',
+      return Object.entries(certificationsData).map(([id, cert]: [string, any]) => ({
+        id: typeof cert.id === 'string' ? cert.id : id,
         name: typeof cert.name === 'string' ? cert.name : 'Unnamed Certification',
         organization: typeof cert.organization === 'string' ? cert.organization : 'N/A',
         date: typeof cert.date === 'string' ? cert.date : 'N/A',
@@ -258,7 +265,3 @@ export async function getPageViews(): Promise<number> {
     return 0;
   }
 }
-
-    
-
-    
