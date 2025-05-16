@@ -11,7 +11,7 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
-const codeSignFaviconDataUri = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2324292F">&lt;/&gt;</text></svg>';
+const codeSignFaviconDataUriCyan = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
 
 // Generate dynamic metadata
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,12 +19,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteSettings = await getSiteSettings();
   console.log('[generateMetadata] Site settings fetched:', siteSettings);
 
-  let resolvedFaviconUrl = siteSettings.faviconUrl || codeSignFaviconDataUri; 
+  let resolvedFaviconUrl = siteSettings.faviconUrl || codeSignFaviconDataUriCyan; 
   if (typeof resolvedFaviconUrl === 'string' && resolvedFaviconUrl.trim() === '') {
-    resolvedFaviconUrl = codeSignFaviconDataUri; // Fallback for empty string
+    resolvedFaviconUrl = codeSignFaviconDataUriCyan; // Fallback for empty string
   }
   
-  console.log(`[generateMetadata] Resolved faviconUrl to be used: ${resolvedFaviconUrl.startsWith('data:image/svg+xml') ? 'SVG Data URI' : resolvedFaviconUrl}`);
+  console.log(`[generateMetadata] Resolved faviconUrl to be used: ${resolvedFaviconUrl.startsWith('data:image/svg+xml') ? 'SVG Data URI (Cyan Code Sign)' : resolvedFaviconUrl}`);
 
   return {
     title: `${siteSettings.siteName || 'ByteFolio'} | CS Student Portfolio`,
@@ -56,3 +56,4 @@ export default function RootLayout({
     </html>
   );
 }
+
