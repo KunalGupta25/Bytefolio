@@ -63,55 +63,55 @@ export async function loginAdminAction(prevState: LoginState | undefined, formDa
 }
 
 
-// --- Contact Form (Commented out as it's replaced by forms.app embed) ---
-// const contactFormSchema = z.object({
-//   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-//   email: z.string().email({ message: "Invalid email address." }),
-//   message: z.string().min(10, { message: "Message must be at least 10 characters." }),
-// });
+// --- Contact Form ---
+const contactFormSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Invalid email address." }),
+  message: z.string().min(10, { message: "Message must be at least 10 characters." }),
+});
 
-// interface ContactFormState {
-//   success: boolean;
-//   message: string;
-//   errors?: {
-//     name?: string[];
-//     email?: string[];
-//     message?: string[];
-//   };
-// }
+interface ContactFormState {
+  success: boolean;
+  message: string;
+  errors?: {
+    name?: string[];
+    email?: string[];
+    message?: string[];
+  };
+}
 
-// export async function submitContactForm(prevState: ContactFormState | undefined, formData: FormData): Promise<ContactFormState> {
-//   const validatedFields = contactFormSchema.safeParse({
-//     name: formData.get('name'),
-//     email: formData.get('email'),
-//     message: formData.get('message'),
-//   });
+export async function submitContactForm(prevState: ContactFormState | undefined, formData: FormData): Promise<ContactFormState> {
+  const validatedFields = contactFormSchema.safeParse({
+    name: formData.get('name'),
+    email: formData.get('email'),
+    message: formData.get('message'),
+  });
 
-//   if (!validatedFields.success) {
-//     return {
-//       success: false,
-//       message: "Validation failed. Please check your input.",
-//       errors: validatedFields.error.flatten().fieldErrors,
-//     };
-//   }
+  if (!validatedFields.success) {
+    return {
+      success: false,
+      message: "Validation failed. Please check your input.",
+      errors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
 
-//   const { name, email, message } = validatedFields.data;
-//   try {
-//     const contactMessagesRef = db.ref('contactMessages');
-//     const newMessageRef = contactMessagesRef.push();
-//     await newMessageRef.set({
-//       name,
-//       email,
-//       message,
-//       timestamp: new Date().toISOString(),
-//     });
-//     console.log('Contact form submission received and stored in Firebase:', { name, email });
-//     return { success: true, message: 'Your message has been sent successfully!' };
-//   } catch (error) {
-//     console.error("Error submitting contact form to Firebase:", error);
-//     return { success: false, message: 'Failed to send message. Please try again later.' };
-//   }
-// }
+  const { name, email, message } = validatedFields.data;
+  try {
+    const contactMessagesRef = db.ref('contactMessages');
+    const newMessageRef = contactMessagesRef.push();
+    await newMessageRef.set({
+      name,
+      email,
+      message,
+      timestamp: new Date().toISOString(),
+    });
+    console.log('Contact form submission received and stored in Firebase:', { name, email });
+    return { success: true, message: 'Your message has been sent successfully!' };
+  } catch (error) {
+    console.error("Error submitting contact form to Firebase:", error);
+    return { success: false, message: 'Failed to send message. Please try again later.' };
+  }
+}
 
 // --- About Me ---
 const aboutInfoSchema = z.object({
