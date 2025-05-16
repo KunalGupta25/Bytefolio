@@ -90,7 +90,7 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
   if (!validatedFields.success) {
     return {
       success: false,
-      message: "Validation failed. Please check your input.",
+      message: "Validation failed. Please check the specific error messages under each field.",
       errors: validatedFields.error.flatten().fieldErrors,
     };
   }
@@ -626,3 +626,4 @@ export async function fetchCertificationsForAdmin(): Promise<Certification[]> {
 export async function fetchPageViewsForAdmin(): Promise<number> {
   return getPageViews();
 }
+
