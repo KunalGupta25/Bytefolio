@@ -62,9 +62,11 @@ export interface AboutData {
   dataAiHint?: string;
 }
 
+const blueHeartFaviconDataUri = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💙</text></svg>';
+
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
-  defaultProfileImageUrl: "https://placehold.co/300x300.png",
+  defaultProfileImageUrl: "https://lh3.googleusercontent.com/a-/ALV-UjXlEp3UbpzOvswJRl8PStFntRuPMgpOSHtMFTGXSg4BTVOskf6d31hc3kBKNRScDxqBU7D63kAcfVUzhhItXnF66HIY0mJWliJb-k0av-uMWTU_yTFweuA6svrwePdK9dA2Y5TygyG1rF0oQneEoT16kA2KmYn4EwfNzuUrptLRxx8sX-9j1PfX3vw6tB8kHJhY-p42Hy_PVCOLjymy6HfjkPIfKK4hVgFFvKNkQdK-B7GDmibln22aEyMrmnBykIDu28qLKQollZgmOfIuNKILQtOSzQdUzMrGfLvOfBUKgr0dH41mH49yhGHCmpl3cOOnoc2O7Hs2VDIT7zoUrR-6-OFc8aFnz9zNwW0WLihRuuiQfBAv1sL3rPTscU0gKWhIku1U1O3kXzYH4uvDCjkkk7_1hwOgi6VtclHMaytiqrV4LDJLgilCaTq85bawcQxa2yAKl-xgCilCwSYmE8wWYpk0-FZWlqU1h_-yyP2tdMJEBoTV6qYk5GLrbS4zGlPbPHKvdTygqsrMvzny1kqIc9NL9NrHpdQ_BJLaHjU7_V-zctzmrracTpnv49qX37-MGYh_VnNOmd72vSTNYyoYMDzrpQvQyxpeHZ6Nzcd5sq0jN3ORYmA9cR_TwAfBydACi6-8Zd2i_f42XcS1f_iiBMRArdr5PKBx0D21Pyd_SXsXExZmyZ63cMSiObCxmIMG7edbaHLFkAjL0p22zlEpZhVPRCB70IzlJ2xf8wTlBuw2uBh7y5JlQgy6YfvQ35BX3ShJc3X88RhohmTZWvM3WiNq83OIjGlSaXfsvp4FyoSnXz/irnE1N9E1OgzHt4D6TZk1F7yVmlhdhYPJbZUqD7CaAlvEDZutPgzSnWjenr9F_r7AtMTJaZrwxCAXRWS4yBSQuGxhfNF3IC6l5TJ0ZZll4UNFrbRpEJ2xnwQtRaduJ7lM87sMdqTsBs2g9I2QyCNiNqt8KN6hp4ohW48Mw-kr822Q=s192-c-rg-br100", // Example, replace with your actual default
   defaultUserName: "Your Name",
   defaultUserSpecialization: "Web Development, AI, Cybersecurity",
   contactDetails: {
@@ -73,7 +75,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
     github: 'https://github.com/yourusername',
     twitter: 'https://twitter.com/yourusername',
   },
-  faviconUrl: "/favicon.png", // Defaulting to /favicon.png for consistency
+  faviconUrl: blueHeartFaviconDataUri,
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -87,13 +89,12 @@ const DEFAULT_ABOUT_DATA: AboutData = {
 // --- Data Fetching Functions from Firebase ---
 
 export async function getSiteSettings(): Promise<SiteSettings> {
+  console.log('[getSiteSettings] Initializing settings with defaults. Default faviconUrl:', DEFAULT_SITE_SETTINGS.faviconUrl);
   try {
     const snapshot = await db.ref('/siteSettings').once('value');
-    let data = snapshot.val();
+    const data = snapshot.val();
 
-    // Start with a deep copy of defaults to avoid mutation issues.
     const settings: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
-    console.log('[getSiteSettings] Initialized settings with defaults. Default faviconUrl:', settings.faviconUrl);
 
     if (data && typeof data === 'object') {
       console.log('[getSiteSettings] Fetched data from Firebase:', data);
@@ -102,19 +103,14 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       if (typeof data.defaultUserSpecialization === 'string') settings.defaultUserSpecialization = data.defaultUserSpecialization;
       if (typeof data.defaultProfileImageUrl === 'string') settings.defaultProfileImageUrl = data.defaultProfileImageUrl;
       
-      // More robust handling for faviconUrl
       if (data.hasOwnProperty('faviconUrl')) {
         if (typeof data.faviconUrl === 'string' && data.faviconUrl.trim() !== '') {
             settings.faviconUrl = data.faviconUrl.trim();
         } else { 
-            // If faviconUrl is present but empty, explicitly use default
-            console.log('[getSiteSettings] faviconUrl from Firebase is empty, using default:', DEFAULT_SITE_SETTINGS.faviconUrl);
-            settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl;
+            settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; // Use default if empty string from DB
         }
       } else {
-         // If faviconUrl property is not in Firebase data at all, ensure default is used.
-         console.log('[getSiteSettings] faviconUrl property missing from Firebase data, using default:', DEFAULT_SITE_SETTINGS.faviconUrl);
-         settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl;
+         settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; // Use default if prop not in DB
       }
       console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
 
@@ -194,7 +190,7 @@ export async function getSkills(): Promise<Skill[]> {
     const skillsData = snapshot.val();
     if (skillsData && typeof skillsData === 'object') {
       return Object.entries(skillsData).map(([id, skill]: [string, any]) => {
-        if (!skill || typeof skill !== 'object') return null; // Add null check for skill object
+        if (!skill || typeof skill !== 'object') return null; 
         return {
           id: typeof skill.id === 'string' ? skill.id : id, 
           name: typeof skill.name === 'string' ? skill.name : 'Unnamed Skill',

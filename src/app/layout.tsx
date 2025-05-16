@@ -17,12 +17,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteSettings = await getSiteSettings();
   console.log('[generateMetadata] Site settings fetched:', siteSettings);
 
-  // Use fetched faviconUrl if it's a non-empty string and a valid path, otherwise default to /favicon.png
-  let resolvedFaviconUrl = '/favicon.png'; // Default
-  if (siteSettings.faviconUrl && typeof siteSettings.faviconUrl === 'string' && siteSettings.faviconUrl.trim() !== '') {
-    resolvedFaviconUrl = siteSettings.faviconUrl.trim();
+  // Use fetched faviconUrl if it's a non-empty string (could be data URI or path), otherwise default to a fallback (though defaultSiteSettings should handle this).
+  let resolvedFaviconUrl = siteSettings.faviconUrl || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💙</text></svg>'; // Fallback if somehow settings.faviconUrl is undefined
+  if (typeof resolvedFaviconUrl === 'string' && resolvedFaviconUrl.trim() === '') {
+    resolvedFaviconUrl = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💙</text></svg>'; // Fallback for empty string
   }
-  console.log(`[generateMetadata] Resolved faviconUrl to be used: ${resolvedFaviconUrl}`);
+  
+  console.log(`[generateMetadata] Resolved faviconUrl to be used: ${resolvedFaviconUrl.startsWith('data:image/svg+xml') ? 'SVG Data URI' : resolvedFaviconUrl}`);
 
   return {
     title: `${siteSettings.siteName || 'ByteFolio'} | CS Student Portfolio`,
