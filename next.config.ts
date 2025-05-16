@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'mp-cdn.elgato.com', // Ensure this entry is present and correct
+        hostname: 'mp-cdn.elgato.com',
         port: '',
         pathname: '/**',
       },
@@ -46,6 +46,12 @@ const nextConfig: NextConfig = {
         hostname: 'raw.githubusercontent.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'github.com',
+        port: '',
+        pathname: '/**/raw/**', // Allows paths like /USER/REPO/raw/BRANCH/IMAGE.png
       }
     ],
   },
