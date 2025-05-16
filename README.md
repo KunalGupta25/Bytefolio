@@ -29,10 +29,12 @@ Click the button above to deploy this project to Netlify.
         *   `FIREBASE_DATABASE_URL`
         *   `ADMIN_EMAIL`
         *   `ADMIN_PASSWORD`
+        *   `RESEND_API_KEY` (Your API key from Resend)
+        *   `CONTACT_FORM_RECIPIENT_EMAIL` (The email address to receive contact form submissions)
     *   Netlify's build will fail if these are not set up correctly, as the Firebase Admin SDK needs them during the build process and at runtime for server actions.
 
-2.  **Check your `next.config.js`**:
-    *   Ensure all hostnames for `next/image` (like `picsum.photos`, `placehold.co`, `lh3.googleusercontent.com`, `media.licdn.com`, `mp-cdn.elgato.com`, `w0.peakpx.com` if you decide to use `next/image` for it) are correctly listed in the `images.remotePatterns`. We've added these throughout our conversation.
+2.  **Check your `next.config.ts`**:
+    *   Ensure all hostnames for `next/image` are correctly listed in `images.remotePatterns`. We've added several, including a wildcard for any HTTPS source, but it's good to be aware of.
 
 3.  **Push to GitHub**:
     *   Make sure all your latest changes, including the `.gitignore` and `netlify.toml`, are committed and pushed to your `https://github.com/KunalGupta25/portfolio-1` repository.

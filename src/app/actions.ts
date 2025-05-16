@@ -14,6 +14,7 @@ import {
   getCertifications,
   getPageViews
 } from '@/lib/data';
+import { Resend } from 'resend';
 
 
 const NULL_ICON_VALUE = "--no-icon--";
@@ -106,6 +107,33 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
       timestamp: new Date().toISOString(),
     });
     console.log('Contact form submission received and stored in Firebase:', { name, email });
+
+    // Send email notification via Resend
+    if (process.env.RESEND_API_KEY && process.env.CONTACT_FORM_RECIPIENT_EMAIL) {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      try {
+        await resend.emails.send({
+          from: 'ByteFolio Contact <onboarding@resend.dev>', // Default for unverified domains, or your verified sender
+          to: process.env.CONTACT_FORM_RECIPIENT_EMAIL,
+          subject: `New Contact Form Submission from ${name}`,
+          html: `
+            <p>You received a new message from your portfolio contact form:</p>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Message:</strong></p>
+            <p>${message.replace(/\n/g, '<br>')}</p>
+          `,
+        });
+        console.log('Contact form email sent successfully via Resend.');
+      } catch (emailError) {
+        console.error("Error sending contact form email via Resend:", emailError);
+        // Do not fail the whole action if email fails, just log it.
+        // The message is already saved to Firebase.
+      }
+    } else {
+      console.warn('Resend API key or recipient email not configured in environment variables. Skipping email notification.');
+    }
+
     return { success: true, message: 'Your message has been sent successfully!' };
   } catch (error) {
     console.error("Error submitting contact form to Firebase:", error);
