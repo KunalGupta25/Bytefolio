@@ -13,26 +13,27 @@ const FORMS_APP_OPTIONS = { opacity: 0 }; // Updated options
 const FormsAppEmbed: React.FC = () => {
   return (
     <>
-      {/* This div will be targeted by the forms.app script.
-          For 'fullscreen' type, explicit width/height styles are typically not needed here
-          as the script will manage the fullscreen presentation. */}
+      {/* This div might still be used by the script as an identifier or for certain non-fullscreen modes */}
       <div id={FORMS_APP_ID} />
       <Script
         src="https://forms.app/cdn/embed.js"
         strategy="lazyOnload" // Loads when the browser is idle
         onLoad={() => {
           if (typeof (window as any).formsapp === 'function') {
-            try {
-              new (window as any).formsapp(
-                FORMS_APP_ID,
-                FORMS_APP_TYPE, // Use updated type
-                FORMS_APP_OPTIONS, // Use updated options
-                FORMS_APP_HOST
-              );
-              console.log(`forms.app initialized for ID: ${FORMS_APP_ID} with type: ${FORMS_APP_TYPE}`);
-            } catch (e) {
-              console.error('Error initializing forms.app:', e);
-            }
+            // Defer initialization to the next browser tick
+            setTimeout(() => {
+              try {
+                new (window as any).formsapp(
+                  FORMS_APP_ID,
+                  FORMS_APP_TYPE,
+                  FORMS_APP_OPTIONS,
+                  FORMS_APP_HOST
+                );
+                console.log(`forms.app initialized for ID: ${FORMS_APP_ID} with type: ${FORMS_APP_TYPE}`);
+              } catch (e) {
+                console.error('Error initializing forms.app:', e);
+              }
+            }, 0);
           } else {
             console.error('formsapp function not found on window object after script load.');
           }
