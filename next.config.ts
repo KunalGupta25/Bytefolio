@@ -52,6 +52,15 @@ const nextConfig: NextConfig = {
         hostname: 'github.com',
         port: '',
         pathname: '/**/raw/**', // Allows paths like /USER/REPO/raw/BRANCH/IMAGE.png
+      },
+      // Added wildcard for any HTTPS source
+      // Note: Allowing all domains has security implications.
+      // Ensure you trust the sources of the image URLs you use.
+      {
+        protocol: 'https',
+        hostname: '**', // Wildcard for any hostname
+        port: '',
+        pathname: '/**', // Allow any path
       }
     ],
   },
