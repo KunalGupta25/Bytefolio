@@ -62,20 +62,20 @@ export interface AboutData {
   dataAiHint?: string;
 }
 
-const blueHeartFaviconDataUri = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💙</text></svg>';
+const codeSignFaviconDataUri = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2324292F">&lt;/&gt;</text></svg>';
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
-  defaultProfileImageUrl: "https://lh3.googleusercontent.com/a-/ALV-UjXlEp3UbpzOvswJRl8PStFntRuPMgpOSHtMFTGXSg4BTVOskf6d31hc3kBKNRScDxqBU7D63kAcfVUzhhItXnF66HIY0mJWliJb-k0av-uMWTU_yTFweuA6svrwePdK9dA2Y5TygyG1rF0oQneEoT16kA2KmYn4EwfNzuUrptLRxx8sX-9j1PfX3vw6tB8kHJhY-p42Hy_PVCOLjymy6HfjkPIfKK4hVgFFvKNkQdK-B7GDmibln22aEyMrmnBykIDu28qLKQollZgmOfIuNKILQtOSzQdUzMrGfLvOfBUKgr0dH41mH49yhGHCmpl3cOOnoc2O7Hs2VDIT7zoUrR-6-OFc8aFnz9zNwW0WLihRuuiQfBAv1sL3rPTscU0gKWhIku1U1O3kXzYH4uvDCjkkk7_1hwOgi6VtclHMaytiqrV4LDJLgilCaTq85bawcQxa2yAKl-xgCilCwSYmE8wWYpk0-FZWlqU1h_-yyP2tdMJEBoTV6qYk5GLrbS4zGlPbPHKvdTygqsrMvzny1kqIc9NL9NrHpdQ_BJLaHjU7_V-zctzmrracTpnv49qX37-MGYh_VnNOmd72vSTNYyoYMDzrpQvQyxpeHZ6Nzcd5sq0jN3ORYmA9cR_TwAfBydACi6-8Zd2i_f42XcS1f_iiBMRArdr5PKBx0D21Pyd_SXsXExZmyZ63cMSiObCxmIMG7edbaHLFkAjL0p22zlEpZhVPRCB70IzlJ2xf8wTlBuw2uBh7y5JlQgy6YfvQ35BX3ShJc3X88RhohmTZWvM3WiNq83OIjGlSaXfsvp4FyoSnXz/irnE1N9E1OgzHt4D6TZk1F7yVmlhdhYPJbZUqD7CaAlvEDZutPgzSnWjenr9F_r7AtMTJaZrwxCAXRWS4yBSQuGxhfNF3IC6l5TJ0ZZll4UNFrbRpEJ2xnwQtRaduJ7lM87sMdqTsBs2g9I2QyCNiNqt8KN6hp4ohW48Mw-kr822Q=s192-c-rg-br100", // Example, replace with your actual default
-  defaultUserName: "Your Name",
-  defaultUserSpecialization: "Web Development, AI, Cybersecurity",
+  defaultProfileImageUrl: "https://lh3.googleusercontent.com/a-/ALV-UjXlEp3UbpzOvswJRl8PStFntRuPMgpOSHtMFTGXSg4BTVOskf6d31hc3kBKNRScDxqBU7D63kAcfVUzhhItXnF66HIY0mJWliJb-k0av-uMWTU_yTFweuA6svrwePdK9dA2Y5TygyG1rF0oQneEoT16kA2KmYn4EwfNzuUrptLRxx8sX-9j1PfX3vw6tB8kHJhY-p42Hy_PVCOLjymy6HfjkPIfKK4hVgFFvKNkQdK-B7GDmibln22aEyMrmnBykIDu28qLKQollZgmOfIuNKILQtOSzQdUzMrGfLvOfBUKgr0dH41mH49yhGHCmpl3cOOnoc2O7Hs2VDIT7zoUrR-6-OFc8aFnz9zNwW0WLihRuuiQfBAv1sL3rPTscU0gKWhIku1U1O3kXzYH4uvDCjkkk7_1hwOgi6VtclHMaytiqrV4LDJLgilCaTq85bawcQxa2yAKl-xgCilCwSYmE8wWYpk0-FZWlqU1h_-yyP2tdMJEBoTV6qYk5GLrbS4zGlPbPHKvdTygqsrMvzny1kqIc9NL9NrHpdQ_BJLaHjU7_V-zctzmrracTpnv49qX37-MGYh_VnNOmd72vSTNYyoYMDzrpQvQyxpeHZ6Nzcd5sq0jN3ORYmA9cR_TwAfBydACi6-8Zd2i_f42XcS1f_iiBMRArdr5PKBx0D21Pyd_SXsXExZmyZ63cMSiObCxmIMG7edbaHLFkAjL0p22zlEpZhVPRCB70IzlJ2xf8wTlBuw2uBh7y5JlQgy6YfvQ35BX3ShJc3X88RhohmTZWvM3WiNq83OIjGlSaXfsvp4FyoSnXz_irnE1N9E1OgzHt4D6TZk1F7yVmlhdhYPJbZUqD7CaAlvEDZutPgzSnWjenr9F_r7AtMTJaZrwxCAXRWS4yBSQuGxhfNF3IC6l5TJ0ZZll4UNFrbRpEJ2xnwQtRaduJ7lM87sMdqTsBs2g9I2QyCNiNqt8KN6hp4ohW48Mw-kr822Q=s192-c-rg-br100",
+  defaultUserName: "Kunal Gupta",
+  defaultUserSpecialization: "Web Development, AI & Machine Learning ",
   contactDetails: {
     email: 'youremail@example.com',
     linkedin: 'https://linkedin.com/in/yourusername',
     github: 'https://github.com/yourusername',
     twitter: 'https://twitter.com/yourusername',
   },
-  faviconUrl: blueHeartFaviconDataUri,
+  faviconUrl: codeSignFaviconDataUri,
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -107,10 +107,10 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         if (typeof data.faviconUrl === 'string' && data.faviconUrl.trim() !== '') {
             settings.faviconUrl = data.faviconUrl.trim();
         } else { 
-            settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; // Use default if empty string from DB
+            settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; 
         }
       } else {
-         settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; // Use default if prop not in DB
+         settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; 
       }
       console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
 

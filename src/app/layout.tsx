@@ -11,16 +11,17 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
+const codeSignFaviconDataUri = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2324292F">&lt;/&gt;</text></svg>';
+
 // Generate dynamic metadata
 export async function generateMetadata(): Promise<Metadata> {
   console.log('[generateMetadata] Fetching site settings...');
   const siteSettings = await getSiteSettings();
   console.log('[generateMetadata] Site settings fetched:', siteSettings);
 
-  // Use fetched faviconUrl if it's a non-empty string (could be data URI or path), otherwise default to a fallback (though defaultSiteSettings should handle this).
-  let resolvedFaviconUrl = siteSettings.faviconUrl || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💙</text></svg>'; // Fallback if somehow settings.faviconUrl is undefined
+  let resolvedFaviconUrl = siteSettings.faviconUrl || codeSignFaviconDataUri; 
   if (typeof resolvedFaviconUrl === 'string' && resolvedFaviconUrl.trim() === '') {
-    resolvedFaviconUrl = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💙</text></svg>'; // Fallback for empty string
+    resolvedFaviconUrl = codeSignFaviconDataUri; // Fallback for empty string
   }
   
   console.log(`[generateMetadata] Resolved faviconUrl to be used: ${resolvedFaviconUrl.startsWith('data:image/svg+xml') ? 'SVG Data URI' : resolvedFaviconUrl}`);
@@ -30,8 +31,6 @@ export async function generateMetadata(): Promise<Metadata> {
     description: 'A modern portfolio for a Computer Science student, showcasing skills, projects, and experience.',
     icons: {
       icon: resolvedFaviconUrl,
-      // You can add other icon types here if needed, e.g., apple-touch-icon
-      // apple: '/apple-icon.png',
     },
   };
 }
