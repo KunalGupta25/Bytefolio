@@ -53,7 +53,10 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**/raw/**', // Allows paths like /USER/REPO/raw/BRANCH/IMAGE.png
       },
-      // Added wildcard for any HTTPS source
+      // THIS WILDCARD ALLOWS ANY HTTPS SOURCE:
+      // If images still don't load, ensure:
+      // 1. The image URL is correct and uses HTTPS.
+      // 2. You've restarted your Next.js development server after any config changes.
       // Note: Allowing all domains has security implications.
       // Ensure you trust the sources of the image URLs you use.
       {
