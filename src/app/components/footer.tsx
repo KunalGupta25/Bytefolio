@@ -29,9 +29,7 @@ export default function Footer({ siteName, userName, contactDetails }: FooterPro
         <p className="text-sm">
           &copy; {currentYear} {siteName}. Designed & Built by {userName}.
         </p>
-        <p className="text-xs mt-2">
-          <Link href="/admin" className="hover:text-accent transition-colors">Admin Panel</Link>
-        </p>
+        {/* Admin Panel link removed */}
       </div>
     </footer>
   );
