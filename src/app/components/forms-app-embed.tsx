@@ -7,15 +7,16 @@ import React from 'react';
 // Configuration for your specific forms.app form
 const FORMS_APP_ID = "6826fcd8aaa45f0009052b17";
 const FORMS_APP_HOST = "https://6f81sl5n.forms.app";
-const FORMS_APP_OPTIONS = { width: '100%', height: '600px', opacity: 0 }; 
-// Note: Original width was '50vw'. Changed to '100%' to better fit within the card layout.
-// If '50vw' is strictly needed, this can be reverted.
+const FORMS_APP_TYPE = 'fullscreen'; // Updated embed type
+const FORMS_APP_OPTIONS = { opacity: 0 }; // Updated options
 
 const FormsAppEmbed: React.FC = () => {
   return (
     <>
-      {/* This div will be targeted by the forms.app script using its ID */}
-      <div id={FORMS_APP_ID} style={{ width: FORMS_APP_OPTIONS.width, height: FORMS_APP_OPTIONS.height }} />
+      {/* This div will be targeted by the forms.app script.
+          For 'fullscreen' type, explicit width/height styles are typically not needed here
+          as the script will manage the fullscreen presentation. */}
+      <div id={FORMS_APP_ID} />
       <Script
         src="https://forms.app/cdn/embed.js"
         strategy="lazyOnload" // Loads when the browser is idle
@@ -24,11 +25,11 @@ const FormsAppEmbed: React.FC = () => {
             try {
               new (window as any).formsapp(
                 FORMS_APP_ID,
-                'standard', // Type of embed
-                FORMS_APP_OPTIONS, // Options
-                FORMS_APP_HOST // Host
+                FORMS_APP_TYPE, // Use updated type
+                FORMS_APP_OPTIONS, // Use updated options
+                FORMS_APP_HOST
               );
-              console.log('forms.app initialized for ID:', FORMS_APP_ID);
+              console.log(`forms.app initialized for ID: ${FORMS_APP_ID} with type: ${FORMS_APP_TYPE}`);
             } catch (e) {
               console.error('Error initializing forms.app:', e);
             }
