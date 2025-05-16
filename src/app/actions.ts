@@ -172,6 +172,7 @@ const siteSettingsSchema = z.object({
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
   faviconUrl: z.string().optional().or(z.literal('')), 
+  resumeUrl: z.string().optional().or(z.literal('')), // Added for CV/Resume Link
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),
@@ -192,6 +193,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     defaultUserSpecialization: formData.get('defaultUserSpecialization'),
     defaultProfileImageUrl: formData.get('defaultProfileImageUrl'),
     faviconUrl: formData.get('faviconUrl'),
+    resumeUrl: formData.get('resumeUrl'), // Added for CV/Resume Link
     contactEmail: formData.get('contactEmail'),
     contactLinkedin: formData.get('contactLinkedin'),
     contactGithub: formData.get('contactGithub'),
@@ -209,6 +211,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       defaultUserSpecialization: validatedFields.data.defaultUserSpecialization,
       defaultProfileImageUrl: validatedFields.data.defaultProfileImageUrl,
       faviconUrl: validatedFields.data.faviconUrl || undefined,
+      resumeUrl: validatedFields.data.resumeUrl || undefined, // Added for CV/Resume Link
       contactDetails: {
         email: validatedFields.data.contactEmail,
         linkedin: validatedFields.data.contactLinkedin,
@@ -406,7 +409,6 @@ const projectSchema = z.object({
   liveLink: z.string().url("Invalid Live Demo URL. Must be a full URL.").optional().or(z.literal('')),
   repoLink: z.string().url("Invalid Repository URL. Must be a full URL.").optional().or(z.literal('')),
   dataAiHint: z.string().optional(),
-  // createdAt: z.string().optional(), // No longer needed in schema, managed by server
 });
 
 interface ProjectCrudState {
@@ -453,8 +455,7 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     return { success: false, message: "Failed to generate project ID." };
   }
 
-  // Construct the base project object to save/update
-  const projectToSave: Omit<Project, 'id' | 'createdAt'> & { id: string; createdAt?: string } = {
+  const projectToSave: Partial<Omit<Project, 'id' | 'createdAt'>> & { id: string; createdAt?: string } = {
     id: projectId,
     title: projectData.title,
     description: projectData.description,
@@ -470,7 +471,7 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     let finalProjectData: Project;
     if (isNew) {
       projectToSave.createdAt = new Date().toISOString();
-      finalProjectData = projectToSave as Project;
+      finalProjectData = projectToSave as Project; // Type assertion
       await db.ref(`/projects/${projectId}`).set(finalProjectData);
       console.log('Adding New Project to Firebase successful:', finalProjectData);
     } else {
@@ -479,8 +480,8 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
       const existingProjectData = existingProjectSnapshot.val() as Project | null;
       
       projectToSave.createdAt = existingProjectData?.createdAt || new Date().toISOString(); // Preserve or fallback
-      finalProjectData = projectToSave as Project;
-      await db.ref(`/projects/${projectId}`).set(finalProjectData);
+      finalProjectData = projectToSave as Project; // Type assertion
+      await db.ref(`/projects/${projectId}`).update(finalProjectData); // Use update for existing
       console.log('Updating Project in Firebase successful:', finalProjectData);
     }
     
@@ -626,3 +627,6 @@ export async function fetchCertificationsForAdmin(): Promise<Certification[]> {
 export async function fetchPageViewsForAdmin(): Promise<number> {
   return getPageViews();
 }
+
+
+    

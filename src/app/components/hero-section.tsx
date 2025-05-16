@@ -2,15 +2,15 @@
 import { Button } from '@/components/ui/button';
 import { ArrowDown, Download } from 'lucide-react';
 import Link from 'next/link';
-// import ThreeScenePlaceholder from './three-scene-placeholder'; // Placeholder for 3D object
-// No longer importing siteSettingsData, will receive props
 
 interface HeroSectionProps {
   userName: string;
   userSpecialization: string;
+  resumeUrl: string; // Added resumeUrl prop
 }
 
-export default function HeroSection({ userName, userSpecialization }: HeroSectionProps) {
+export default function HeroSection({ userName, userSpecialization, resumeUrl }: HeroSectionProps) {
+  const downloadName = userName ? `${userName.replace(/\s+/g, '_')}_Resume.pdf` : 'Resume.pdf';
   return (
     <section id="hero" className="relative bg-gradient-to-br from-background via-secondary to-background text-foreground min-h-[calc(100vh-4rem)] flex items-center justify-center py-20 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
@@ -28,8 +28,7 @@ export default function HeroSection({ userName, userSpecialization }: HeroSectio
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="shadow-lg hover:shadow-md transition-shadow">
-            {/* Link to your resume PDF in public folder */}
-            <a href="/resume.pdf" download={`${userName.replace(/\s+/g, '_')}_Resume.pdf`}> 
+            <a href={resumeUrl || "/resume.pdf"} download={downloadName}> 
               <Download className="mr-2 h-5 w-5" />
               Download CV
             </a>
@@ -41,10 +40,8 @@ export default function HeroSection({ userName, userSpecialization }: HeroSectio
             <ArrowDown className="h-8 w-8 text-muted-foreground animate-bounce" />
          </Link>
       </div>
-      {/* Optional: Add a subtle background pattern or visual element */}
-      {/* <div className="absolute inset-0 opacity-5 dark:opacity-[0.03]">
-        <ThreeScenePlaceholder />
-      </div> */}
     </section>
   );
 }
+
+    

@@ -35,6 +35,7 @@ export default async function PortfolioPage() {
         <HeroSection 
           userName={siteSettings.defaultUserName} 
           userSpecialization={siteSettings.defaultUserSpecialization} 
+          resumeUrl={siteSettings.resumeUrl || "/resume.pdf"} // Pass resumeUrl
         />
         <AboutSection 
           aboutData={aboutData} 
@@ -50,3 +51,5 @@ export default async function PortfolioPage() {
     </div>
   );
 }
+
+    

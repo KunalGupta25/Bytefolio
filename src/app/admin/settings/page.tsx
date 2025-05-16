@@ -25,6 +25,7 @@ const defaultSiteSettings: SiteSettings = {
   defaultUserSpecialization: "",
   defaultProfileImageUrl: "",
   faviconUrl: "",
+  resumeUrl: "", // Added for CV/Resume Link
   contactDetails: {
     email: "",
     linkedin: "",
@@ -100,7 +101,7 @@ export default function AdminSettingsPage() {
         <CardHeader>
           <CardTitle>General Site Configuration</CardTitle>
           <CardDescription>
-            Update the site name, default user info, profile image URL, favicon URL, and contact details.
+            Update site name, default user info, profile image, favicon, resume URL, and contact details.
             Changes are stored in Firebase Realtime Database.
           </CardDescription>
         </CardHeader>
@@ -178,13 +179,30 @@ export default function AdminSettingsPage() {
                 id="faviconUrl"
                 name="faviconUrl"
                 className="mt-1"
-                placeholder="e.g., /favicon.ico or https://example.com/favicon.png"
+                placeholder="e.g., /favicon.ico or data:image/svg+xml,..."
                 value={currentSettings.faviconUrl || ''}
                 onChange={(e) => setCurrentSettings(prev => ({...prev, faviconUrl: e.target.value}))}
                 aria-describedby={state.errors?.faviconUrl ? "faviconurl-error" : undefined}
               />
               {state.errors?.faviconUrl && (
                 <p id="faviconurl-error" className="text-sm text-destructive mt-1">{state.errors.faviconUrl.join(', ')}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="resumeUrl" className="text-sm font-medium">Resume/CV URL</Label>
+              <Input
+                type="text"
+                id="resumeUrl"
+                name="resumeUrl"
+                className="mt-1"
+                placeholder="e.g., /resume.pdf or https://example.com/resume.pdf"
+                value={currentSettings.resumeUrl || ''}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, resumeUrl: e.target.value}))}
+                aria-describedby={state.errors?.resumeUrl ? "resumeurl-error" : undefined}
+              />
+              {state.errors?.resumeUrl && (
+                <p id="resumeurl-error" className="text-sm text-destructive mt-1">{state.errors.resumeUrl.join(', ')}</p>
               )}
             </div>
 
@@ -260,3 +278,5 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
+
+    
