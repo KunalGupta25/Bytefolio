@@ -50,8 +50,6 @@ export async function loginAdminAction(prevState: LoginState | undefined, formDa
 
   const { email, password } = validatedFields.data;
 
-  // This is a placeholder for actual authentication. 
-  // In a real app, use Firebase Authentication or another secure method.
   if (email === (process.env.ADMIN_EMAIL || 'admin@gmail.com') && password === (process.env.ADMIN_PASSWORD || 'k4912005')) {
     console.log('Admin login successful for:', email);
     return { success: true, message: 'Login successful!' };
@@ -99,7 +97,6 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
 
   const { name, email, message } = validatedFields.data;
   try {
-    // Example: Store contact message in Firebase
     const contactMessagesRef = db.ref('contactMessages');
     const newMessageRef = contactMessagesRef.push();
     await newMessageRef.set({
@@ -120,7 +117,7 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
 const aboutInfoSchema = z.object({
   professionalSummary: z.string().min(10, { message: "Professional summary must be at least 10 characters." }),
   bio: z.string().min(10, { message: "Bio must be at least 10 characters." }),
-  profileImageUrl: z.string().url({ message: "Invalid URL for profile image." }).optional().or(z.literal('')),
+  profileImageUrl: z.string().optional().or(z.literal('')), 
   dataAiHint: z.string().optional(),
 });
 
@@ -148,7 +145,7 @@ export async function updateAboutInfo(prevState: AboutInfoState | undefined, for
   }
   
   try {
-    const currentSettings = await getSiteSettings(); // To get default profile image if needed
+    const currentSettings = await getSiteSettings(); 
     const dataToUpdate: AboutData = {
       professionalSummary: validatedFields.data.professionalSummary,
       bio: validatedFields.data.bio,
@@ -160,7 +157,7 @@ export async function updateAboutInfo(prevState: AboutInfoState | undefined, for
     console.log('About Me information updated in Firebase:', dataToUpdate);
     revalidatePath('/');
     revalidatePath('/admin/about');
-    const updatedData = await getAboutData(); // Fetch fresh data
+    const updatedData = await getAboutData(); 
     return { success: true, message: 'About Me information updated successfully!', updatedAboutData: updatedData };
   } catch (error) {
     console.error("Error updating About Me info in Firebase:", error);
@@ -169,19 +166,12 @@ export async function updateAboutInfo(prevState: AboutInfoState | undefined, for
 }
 
 // --- Site Settings ---
-const contactDetailsSchema = z.object({
-  email: z.string().email("Invalid email for contact details."),
-  linkedin: z.string().url("Invalid LinkedIn URL."),
-  github: z.string().url("Invalid GitHub URL."),
-  twitter: z.string().url("Invalid Twitter URL.").optional().or(z.literal('')),
-});
-
 const siteSettingsSchema = z.object({
   siteName: z.string().min(3, "Site name must be at least 3 characters."),
   defaultUserName: z.string().min(2, "Default user name must be at least 2 characters."),
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
-  faviconUrl: z.string().optional().or(z.literal('')), // Relaxed validation
+  faviconUrl: z.string().optional().or(z.literal('')), 
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),
@@ -416,6 +406,7 @@ const projectSchema = z.object({
   liveLink: z.string().url("Invalid Live Demo URL. Must be a full URL.").optional().or(z.literal('')),
   repoLink: z.string().url("Invalid Repository URL. Must be a full URL.").optional().or(z.literal('')),
   dataAiHint: z.string().optional(),
+  // createdAt: z.string().optional(), // No longer needed in schema, managed by server
 });
 
 interface ProjectCrudState {
@@ -462,7 +453,8 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     return { success: false, message: "Failed to generate project ID." };
   }
 
-  const dataForFirebase: Partial<Project> & { id: string } = {
+  // Construct the base project object to save/update
+  const projectToSave: Omit<Project, 'id' | 'createdAt'> & { id: string; createdAt?: string } = {
     id: projectId,
     title: projectData.title,
     description: projectData.description,
@@ -470,39 +462,47 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     tags: projectData.tags,
   };
 
-  if (projectData.liveLink !== undefined) {
-    dataForFirebase.liveLink = projectData.liveLink;
-  }
-  if (projectData.repoLink !== undefined) {
-    dataForFirebase.repoLink = projectData.repoLink;
-  }
-  if (projectData.dataAiHint !== undefined) {
-    dataForFirebase.dataAiHint = projectData.dataAiHint;
-  }
-  
-  console.log("Final project data to save to Firebase:", dataForFirebase);
+  if (projectData.liveLink !== undefined) projectToSave.liveLink = projectData.liveLink;
+  if (projectData.repoLink !== undefined) projectToSave.repoLink = projectData.repoLink;
+  if (projectData.dataAiHint !== undefined) projectToSave.dataAiHint = projectData.dataAiHint;
 
   try {
-    await db.ref(`/projects/${projectId}`).set(dataForFirebase as Project); 
-    console.log(isNew ? 'Adding Project to Firebase successful:' : 'Updating Project in Firebase successful:', dataForFirebase);
+    let finalProjectData: Project;
+    if (isNew) {
+      projectToSave.createdAt = new Date().toISOString();
+      finalProjectData = projectToSave as Project;
+      await db.ref(`/projects/${projectId}`).set(finalProjectData);
+      console.log('Adding New Project to Firebase successful:', finalProjectData);
+    } else {
+      // For updates, fetch existing project to preserve createdAt
+      const existingProjectSnapshot = await db.ref(`/projects/${projectId}`).once('value');
+      const existingProjectData = existingProjectSnapshot.val() as Project | null;
+      
+      projectToSave.createdAt = existingProjectData?.createdAt || new Date().toISOString(); // Preserve or fallback
+      finalProjectData = projectToSave as Project;
+      await db.ref(`/projects/${projectId}`).set(finalProjectData);
+      console.log('Updating Project in Firebase successful:', finalProjectData);
+    }
+    
     revalidatePath('/');
     revalidatePath('/admin/projects');
-    const allProjects = await getProjects();
+    const allProjects = await getProjects(); // Fetches sorted projects
     return { 
       success: true, 
-      message: `Project '${dataForFirebase.title}' ${isNew ? 'added' : 'updated'} successfully!`, 
-      updatedProject: dataForFirebase as Project, 
+      message: `Project '${finalProjectData.title}' ${isNew ? 'added' : 'updated'} successfully!`, 
+      updatedProject: finalProjectData, 
       projects: allProjects
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`Error saving project '${dataForFirebase.title}' to Firebase:`, errorMessage);
+    console.error(`Error saving project '${projectData.title}' to Firebase:`, errorMessage);
     return { 
       success: false, 
-      message: `Failed to save project '${dataForFirebase.title}'. Error: ${errorMessage}` 
+      message: `Failed to save project '${projectData.title}'. Error: ${errorMessage}` 
     };
   }
 }
+
 
 export async function deleteProjectAction(id: string): Promise<{ success: boolean; message: string; projects?: Project[] }> {
   if (!id) return { success: false, message: "Project ID is required." };
@@ -618,7 +618,7 @@ export async function fetchEducationItemsForAdmin(): Promise<EducationItem[]> {
   return getEducationItems();
 }
 export async function fetchProjectsForAdmin(): Promise<Project[]> {
-  return getProjects();
+  return getProjects(); // Will return sorted projects
 }
 export async function fetchCertificationsForAdmin(): Promise<Certification[]> {
   return getCertifications();
@@ -626,5 +626,3 @@ export async function fetchCertificationsForAdmin(): Promise<Certification[]> {
 export async function fetchPageViewsForAdmin(): Promise<number> {
   return getPageViews();
 }
-
-    

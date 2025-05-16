@@ -13,8 +13,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/hooks/use-toast';
 import { saveProjectAction, deleteProjectAction, fetchProjectsForAdmin } from '@/app/actions';
 import type { Project } from '@/lib/data';
-import { PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2, CalendarDays } from 'lucide-react';
 import Image from 'next/image';
+import { format } from 'date-fns';
 
 const initialFormActionState = { 
   success: false, 
@@ -96,6 +97,7 @@ export default function AdminProjectsPage() {
   const ProjectFormFields = useMemo(() => (
     <>
       {editingProject?.id && <input type="hidden" name="id" defaultValue={editingProject.id} />}
+      {/* createdAt is managed by the server, no need for a form field */}
       <div>
         <Label htmlFor="title">Project Title</Label>
         <Input id="title" name="title" required defaultValue={editingProject?.title || ''} />
@@ -148,7 +150,7 @@ export default function AdminProjectsPage() {
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-primary">Manage Projects</h1>
-          <p className="text-muted-foreground">Add, edit, or delete projects.</p>
+          <p className="text-muted-foreground">Add, edit, or delete projects. New projects appear at the top on the homepage.</p>
            <p className="text-sm text-muted-foreground mt-1">Note: Data is stored in Firebase Realtime Database.</p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setEditingProject(null); }}>
@@ -180,6 +182,7 @@ export default function AdminProjectsPage() {
               <TableRow>
                 <TableHead>Image</TableHead>
                 <TableHead>Title</TableHead>
+                <TableHead>Created At</TableHead>
                 <TableHead>Tags</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -198,6 +201,9 @@ export default function AdminProjectsPage() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{project.title}</TableCell>
+                  <TableCell className="text-xs">
+                    {project.createdAt ? format(new Date(project.createdAt), 'PPp') : 'N/A'}
+                  </TableCell>
                   <TableCell className="text-xs">{project.tags.join(', ')}</TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(project)}>

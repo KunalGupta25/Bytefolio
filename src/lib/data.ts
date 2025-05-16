@@ -29,6 +29,7 @@ export interface Project {
   liveLink?: string;
   repoLink?: string;
   dataAiHint?: string;
+  createdAt?: string; // Added for sorting
 }
 
 export interface Certification {
@@ -66,7 +67,7 @@ const codeSignFaviconDataUriCyan = 'data:image/svg+xml,<svg xmlns="http://www.w3
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
-  defaultProfileImageUrl: "https://placehold.co/300x300.png", // Changed from LinkedIn URL
+  defaultProfileImageUrl: "https://placehold.co/300x300.png",
   defaultUserName: "Kunal Gupta",
   defaultUserSpecialization: "Web Development, AI & Machine Learning ",
   contactDetails: {
@@ -81,7 +82,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
 const DEFAULT_ABOUT_DATA: AboutData = {
   professionalSummary: "I am a dedicated and enthusiastic B.Tech Computer Science student with a strong foundation in software development, problem-solving, and web technologies. I am passionate about creating impactful technology solutions and continuously expanding my knowledge. Eager to contribute to innovative projects.",
   bio: "Beyond coding, I enjoy contributing to open-source projects and exploring new AI advancements. I believe in lifelong learning and am always seeking new challenges. My goal is to leverage my technical skills to make a positive impact.",
-  profileImageUrl: "https://placehold.co/300x300.png",
+  profileImageUrl: "https://placehold.co/300x300.png", // Default image
   dataAiHint: "coding laptop",
 };
 
@@ -104,8 +105,9 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       if (typeof data.defaultProfileImageUrl === 'string') settings.defaultProfileImageUrl = data.defaultProfileImageUrl;
       
       if (data.hasOwnProperty('faviconUrl')) {
-        if (typeof data.faviconUrl === 'string' && data.faviconUrl.trim() !== '') {
-            settings.faviconUrl = data.faviconUrl.trim();
+        const fbFaviconUrl = data.faviconUrl;
+        if (typeof fbFaviconUrl === 'string' && fbFaviconUrl.trim() !== '') {
+            settings.faviconUrl = fbFaviconUrl.trim();
         } else { 
             settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; 
         }
@@ -121,8 +123,9 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         if (typeof contactData.github === 'string') settings.contactDetails.github = contactData.github;
         
         if (contactData.hasOwnProperty('twitter')) {
-            if (typeof contactData.twitter === 'string' && contactData.twitter.trim() !== '') {
-                settings.contactDetails.twitter = contactData.twitter.trim();
+            const fbTwitter = contactData.twitter;
+            if (typeof fbTwitter === 'string' && fbTwitter.trim() !== '') {
+                settings.contactDetails.twitter = fbTwitter.trim();
             } else { 
                 settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
             }
@@ -236,7 +239,7 @@ export async function getProjects(): Promise<Project[]> {
     const snapshot = await db.ref('/projects').once('value');
     const projectsData = snapshot.val();
     if (projectsData && typeof projectsData === 'object') {
-      return Object.entries(projectsData).map(([id, project]: [string, any]) => {
+      const projectsArray = Object.entries(projectsData).map(([id, project]: [string, any]) => {
         if (!project || typeof project !== 'object') return null;
         return {
           id: typeof project.id === 'string' ? project.id : id,
@@ -247,8 +250,18 @@ export async function getProjects(): Promise<Project[]> {
           liveLink: (typeof project.liveLink === 'string' && project.liveLink.trim() !== '') ? project.liveLink : undefined,
           repoLink: (typeof project.repoLink === 'string' && project.repoLink.trim() !== '') ? project.repoLink : undefined,
           dataAiHint: typeof project.dataAiHint === 'string' ? project.dataAiHint : undefined,
+          createdAt: typeof project.createdAt === 'string' ? project.createdAt : new Date(0).toISOString(), // Provide a default old date if missing
         };
       }).filter(Boolean) as Project[];
+
+      // Sort projects by createdAt in descending order (newest first)
+      projectsArray.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+      
+      return projectsArray;
     }
     return [];
   } catch (error) {
@@ -291,4 +304,3 @@ export async function getPageViews(): Promise<number> {
     return 0;
   }
 }
-
