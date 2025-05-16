@@ -11,9 +11,6 @@ declare global {
       'spline-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & { 
         url: string; 
         events_target?: string;
-        // The 'loading' attribute (e.g., 'lazy') is part of the spline-viewer's own API,
-        // separate from next/script strategy.
-        // We'll rely on next/script's strategy for script loading.
       }, HTMLElement>;
     }
   }
@@ -42,23 +39,21 @@ const SplineViewerComponent: React.FC = () => {
       <Script
         type="module"
         src="https://unpkg.com/@splinetool/viewer@1.9.94/build/spline-viewer.js"
-        strategy="lazyOnload" // Loads the script when the browser is idle
+        strategy="lazyOnload" 
         onLoad={() => {
-          console.log("Spline viewer script successfully loaded via next/script.");
-          // At this point, the <spline-viewer> custom element should be defined.
+          console.log("Spline viewer script successfully loaded.");
         }}
         onError={(e) => {
-          console.error('Error loading Spline viewer script via next/script:', e);
+          console.error('Error loading Spline viewer script:', e);
         }}
       />
+      {/* Ensure this div takes up the full space of its parent container in AboutSection */}
       <div className="relative w-full h-full flex items-center justify-center rounded-lg overflow-hidden">
         {/* The spline-viewer custom element will be processed by the script loaded above. */}
         <spline-viewer
           url="https://prod.spline.design/NeMM5nMR9kXUPPhx/scene.splinecode"
-          events_target="global" // Recommended for broader event handling
-          style={{ width: '100%', height: '100%', minHeight: '250px' }}
-          // The 'loading' attribute on the element itself can also be set to 'lazy'
-          // if supported by the spline-viewer element, e.g., loading="lazy"
+          events_target="global" 
+          style={{ width: '100%', height: '100%', minHeight: '250px' }} // minHeight to ensure it has some dimension
         />
       </div>
     </>
