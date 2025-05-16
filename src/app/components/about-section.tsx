@@ -13,28 +13,25 @@ interface AboutSectionProps {
 export default function AboutSection({ aboutData, userName }: AboutSectionProps) {
   return (
     <SectionWrapper id="about" title="About Me" subtitle="A little bit about my journey and passion for technology.">
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start">
-        {/* Visual Column: Profile Image & Spline Viewer */}
-        <div className="lg:col-span-2 flex flex-col items-center space-y-8">
+      {/* Main container: flex-col for mobile, grid for large screens */}
+      <div className="flex flex-col lg:grid lg:grid-cols-5 lg:gap-x-12 lg:gap-y-8 gap-8 items-start">
+        {/* 1. Profile Image (Order 1 on mobile) */}
+        <div className="w-full lg:col-span-2 flex justify-center lg:justify-start lg:items-start">
           <div className="relative w-52 h-52 md:w-64 md:h-64 rounded-full overflow-hidden shadow-xl border-4 border-accent transform hover:scale-105 transition-transform duration-300">
             <Image
               src={aboutData.profileImageUrl || "https://placehold.co/300x300.png"}
               alt={`Profile Picture of ${userName}`}
               fill
               style={{ objectFit: 'cover' }}
-              sizes="(max-width: 768px) 208px, 256px" // Adjusted sizes for w-52 and w-64
-              priority 
+              sizes="(max-width: 768px) 208px, 256px"
+              priority
               data-ai-hint={aboutData.dataAiHint || "profile picture"}
-              className="transform hover:scale-105 transition-transform duration-300"
             />
-          </div>
-          <div className="w-full h-72 md:h-96 rounded-lg overflow-hidden shadow-lg border border-border bg-card">
-           <SplineViewerComponent />
           </div>
         </div>
 
-        {/* Text Column: Summary & Bio Cards */}
-        <div className="lg:col-span-3 space-y-6">
+        {/* 2. Professional Summary (Order 2 on mobile) */}
+        <div className="w-full lg:col-span-3">
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-primary">Professional Summary</CardTitle>
@@ -45,8 +42,19 @@ export default function AboutSection({ aboutData, userName }: AboutSectionProps)
               </p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* 3. Spline Viewer (Order 3 on mobile) */}
+        <div className="w-full lg:col-span-2">
+          <div className="w-full h-72 md:h-96 rounded-lg overflow-hidden shadow-lg border border-border bg-card">
+            <SplineViewerComponent />
+          </div>
+        </div>
+
+        {/* 4. Bio Card (Order 4 on mobile) */}
+        <div className="w-full lg:col-span-3">
           <Card className="shadow-lg">
-             <CardHeader>
+            <CardHeader>
               <CardTitle className="text-2xl text-primary">More About Me</CardTitle>
             </CardHeader>
             <CardContent>
