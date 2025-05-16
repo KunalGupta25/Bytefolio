@@ -63,55 +63,55 @@ export async function loginAdminAction(prevState: LoginState | undefined, formDa
 }
 
 
-// --- Contact Form ---
-const contactFormSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Invalid email address." }),
-  message: z.string().min(10, { message: "Message must be at least 10 characters." }),
-});
+// --- Contact Form (Commented out as it's replaced by forms.app embed) ---
+// const contactFormSchema = z.object({
+//   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+//   email: z.string().email({ message: "Invalid email address." }),
+//   message: z.string().min(10, { message: "Message must be at least 10 characters." }),
+// });
 
-interface ContactFormState {
-  success: boolean;
-  message: string;
-  errors?: {
-    name?: string[];
-    email?: string[];
-    message?: string[];
-  };
-}
+// interface ContactFormState {
+//   success: boolean;
+//   message: string;
+//   errors?: {
+//     name?: string[];
+//     email?: string[];
+//     message?: string[];
+//   };
+// }
 
-export async function submitContactForm(prevState: ContactFormState | undefined, formData: FormData): Promise<ContactFormState> {
-  const validatedFields = contactFormSchema.safeParse({
-    name: formData.get('name'),
-    email: formData.get('email'),
-    message: formData.get('message'),
-  });
+// export async function submitContactForm(prevState: ContactFormState | undefined, formData: FormData): Promise<ContactFormState> {
+//   const validatedFields = contactFormSchema.safeParse({
+//     name: formData.get('name'),
+//     email: formData.get('email'),
+//     message: formData.get('message'),
+//   });
 
-  if (!validatedFields.success) {
-    return {
-      success: false,
-      message: "Validation failed. Please check your input.",
-      errors: validatedFields.error.flatten().fieldErrors,
-    };
-  }
+//   if (!validatedFields.success) {
+//     return {
+//       success: false,
+//       message: "Validation failed. Please check your input.",
+//       errors: validatedFields.error.flatten().fieldErrors,
+//     };
+//   }
 
-  const { name, email, message } = validatedFields.data;
-  try {
-    const contactMessagesRef = db.ref('contactMessages');
-    const newMessageRef = contactMessagesRef.push();
-    await newMessageRef.set({
-      name,
-      email,
-      message,
-      timestamp: new Date().toISOString(),
-    });
-    console.log('Contact form submission received and stored in Firebase:', { name, email });
-    return { success: true, message: 'Your message has been sent successfully!' };
-  } catch (error) {
-    console.error("Error submitting contact form to Firebase:", error);
-    return { success: false, message: 'Failed to send message. Please try again later.' };
-  }
-}
+//   const { name, email, message } = validatedFields.data;
+//   try {
+//     const contactMessagesRef = db.ref('contactMessages');
+//     const newMessageRef = contactMessagesRef.push();
+//     await newMessageRef.set({
+//       name,
+//       email,
+//       message,
+//       timestamp: new Date().toISOString(),
+//     });
+//     console.log('Contact form submission received and stored in Firebase:', { name, email });
+//     return { success: true, message: 'Your message has been sent successfully!' };
+//   } catch (error) {
+//     console.error("Error submitting contact form to Firebase:", error);
+//     return { success: false, message: 'Failed to send message. Please try again later.' };
+//   }
+// }
 
 // --- About Me ---
 const aboutInfoSchema = z.object({
@@ -172,7 +172,7 @@ const siteSettingsSchema = z.object({
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
   faviconUrl: z.string().optional().or(z.literal('')), 
-  resumeUrl: z.string().optional().or(z.literal('')), // Added for CV/Resume Link
+  resumeUrl: z.string().optional().or(z.literal('')), 
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),
@@ -193,7 +193,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     defaultUserSpecialization: formData.get('defaultUserSpecialization'),
     defaultProfileImageUrl: formData.get('defaultProfileImageUrl'),
     faviconUrl: formData.get('faviconUrl'),
-    resumeUrl: formData.get('resumeUrl'), // Added for CV/Resume Link
+    resumeUrl: formData.get('resumeUrl'), 
     contactEmail: formData.get('contactEmail'),
     contactLinkedin: formData.get('contactLinkedin'),
     contactGithub: formData.get('contactGithub'),
@@ -211,7 +211,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       defaultUserSpecialization: validatedFields.data.defaultUserSpecialization,
       defaultProfileImageUrl: validatedFields.data.defaultProfileImageUrl,
       faviconUrl: validatedFields.data.faviconUrl || undefined,
-      resumeUrl: validatedFields.data.resumeUrl || undefined, // Added for CV/Resume Link
+      resumeUrl: validatedFields.data.resumeUrl || undefined, 
       contactDetails: {
         email: validatedFields.data.contactEmail,
         linkedin: validatedFields.data.contactLinkedin,
@@ -471,23 +471,22 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     let finalProjectData: Project;
     if (isNew) {
       projectToSave.createdAt = new Date().toISOString();
-      finalProjectData = projectToSave as Project; // Type assertion
+      finalProjectData = projectToSave as Project; 
       await db.ref(`/projects/${projectId}`).set(finalProjectData);
       console.log('Adding New Project to Firebase successful:', finalProjectData);
     } else {
-      // For updates, fetch existing project to preserve createdAt
       const existingProjectSnapshot = await db.ref(`/projects/${projectId}`).once('value');
       const existingProjectData = existingProjectSnapshot.val() as Project | null;
       
-      projectToSave.createdAt = existingProjectData?.createdAt || new Date().toISOString(); // Preserve or fallback
-      finalProjectData = projectToSave as Project; // Type assertion
-      await db.ref(`/projects/${projectId}`).update(finalProjectData); // Use update for existing
+      projectToSave.createdAt = existingProjectData?.createdAt || new Date().toISOString(); 
+      finalProjectData = projectToSave as Project; 
+      await db.ref(`/projects/${projectId}`).update(finalProjectData); 
       console.log('Updating Project in Firebase successful:', finalProjectData);
     }
     
     revalidatePath('/');
     revalidatePath('/admin/projects');
-    const allProjects = await getProjects(); // Fetches sorted projects
+    const allProjects = await getProjects(); 
     return { 
       success: true, 
       message: `Project '${finalProjectData.title}' ${isNew ? 'added' : 'updated'} successfully!`, 
@@ -619,7 +618,7 @@ export async function fetchEducationItemsForAdmin(): Promise<EducationItem[]> {
   return getEducationItems();
 }
 export async function fetchProjectsForAdmin(): Promise<Project[]> {
-  return getProjects(); // Will return sorted projects
+  return getProjects(); 
 }
 export async function fetchCertificationsForAdmin(): Promise<Certification[]> {
   return getCertifications();
@@ -627,6 +626,3 @@ export async function fetchCertificationsForAdmin(): Promise<Certification[]> {
 export async function fetchPageViewsForAdmin(): Promise<number> {
   return getPageViews();
 }
-
-
-    

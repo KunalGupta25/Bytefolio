@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Github, Linkedin, Mail, Twitter } from 'lucide-react';
-import { ContactForm } from './contact-form';
+// import { ContactForm } from './contact-form'; // Old form
+import FormsAppEmbed from './forms-app-embed'; // New embedded form
 
 interface ContactSectionProps {
   contactDetails: ContactDetails;
@@ -20,7 +21,8 @@ export default function ContactSection({ contactDetails }: ContactSectionProps) 
             <CardTitle className="text-2xl text-primary">Send me a message</CardTitle>
           </CardHeader>
           <CardContent>
-            <ContactForm />
+            {/* <ContactForm /> Replaced with FormsAppEmbed */}
+            <FormsAppEmbed />
           </CardContent>
         </Card>
         <div className="space-y-6">
