@@ -4,7 +4,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/app/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
-import { getSiteSettings } from '@/lib/data'; // Import data fetching function
+import { getSiteSettings } from '@/lib/data'; 
 
 const inter = Inter({
   subsets: ['latin'],
@@ -13,7 +13,6 @@ const inter = Inter({
 
 const codeSignFaviconDataUriCyan = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
 
-// Generate dynamic metadata
 export async function generateMetadata(): Promise<Metadata> {
   console.log('[generateMetadata] Fetching site settings...');
   const siteSettings = await getSiteSettings();
@@ -41,11 +40,13 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const siteSettings = await getSiteSettings();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
@@ -58,6 +59,9 @@ export default function RootLayout({
           {children}
           <Toaster />
         </ThemeProvider>
+        {siteSettings.customHtmlWidget && (
+          <div dangerouslySetInnerHTML={{ __html: siteSettings.customHtmlWidget }} />
+        )}
       </body>
     </html>
   );

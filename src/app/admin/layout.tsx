@@ -13,7 +13,8 @@ import {
   UserCircle,
   LogOut,
   Loader2,
-  Palette, // Added for Site Settings / Theme
+  Palette,
+  Puzzle, // Added for Integrations
 } from "lucide-react"
 import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -40,7 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ThemeToggleButton } from "@/app/components/theme-toggle-button"
-import { SidebarInset } from "@/components/ui/sidebar" // Make sure SidebarInset is exported and used correctly
+import { SidebarInset } from "@/components/ui/sidebar"
 
 const ADMIN_AUTH_TOKEN_KEY = 'adminAuthToken';
 
@@ -51,7 +52,8 @@ const adminNavItems = [
   { name: "Education", href: "/admin/education", icon: GraduationCap },
   { name: "Projects", href: "/admin/projects", icon: Briefcase },
   { name: "Certifications", href: "/admin/certifications", icon: Award },
-  { name: "Site Settings", href: "/admin/settings", icon: Palette }, // Updated icon
+  { name: "Site Settings", href: "/admin/settings", icon: Palette },
+  { name: "Integrations", href: "/admin/integrations", icon: Puzzle }, // New item
 ];
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
@@ -60,20 +62,20 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticating, setIsAuthenticating] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const userName = "Admin User"; // Placeholder
-  const userEmail = "admin@example.com"; // Placeholder
+  const userName = "Admin User"; 
+  const userEmail = "admin@example.com"; 
 
   useEffect(() => {
     const token = localStorage.getItem(ADMIN_AUTH_TOKEN_KEY);
     if (token === 'true') {
       setIsAuthenticated(true);
       if (pathname === '/admin/login') {
-        router.replace('/admin'); // Redirect from login if already authenticated
+        router.replace('/admin'); 
       }
     } else {
       setIsAuthenticated(false);
       if (pathname !== '/admin/login') {
-        router.replace('/admin/login'); // Redirect to login if not authenticated and not on login page
+        router.replace('/admin/login'); 
       }
     }
     setIsAuthenticating(false);
@@ -94,17 +96,13 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!isAuthenticated && pathname !== '/admin/login') {
-    // This should ideally not be reached if useEffect works correctly,
-    // but acts as a fallback.
-    return null; // Or a redirect component, but router.replace in useEffect is preferred
+    return null; 
   }
   
   if (!isAuthenticated && pathname === '/admin/login') {
-     // Render children directly if on login page and not authenticated
     return <>{children}</>;
   }
   
-  // If authenticated, render the admin layout
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon">
@@ -144,7 +142,6 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background/80 backdrop-blur-md px-4 md:px-6">
             <SidebarTrigger className="md:hidden" />
             <div className="flex-1">
-              {/* Breadcrumbs or page title can go here */}
             </div>
             <div className="flex items-center gap-4">
                 <ThemeToggleButton />

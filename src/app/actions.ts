@@ -113,7 +113,7 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
       const resend = new Resend(process.env.RESEND_API_KEY);
       try {
         await resend.emails.send({
-          from: 'ByteFolio Contact <onboarding@resend.dev>', // Default for unverified domains, or your verified sender
+          from: 'ByteFolio Contact <onboarding@resend.dev>', 
           to: process.env.CONTACT_FORM_RECIPIENT_EMAIL,
           subject: `New Contact Form Submission from ${name}`,
           html: `
@@ -127,8 +127,6 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
         console.log('Contact form email sent successfully via Resend.');
       } catch (emailError) {
         console.error("Error sending contact form email via Resend:", emailError);
-        // Do not fail the whole action if email fails, just log it.
-        // The message is already saved to Firebase.
       }
     } else {
       console.warn('Resend API key or recipient email not configured in environment variables. Skipping email notification.');
@@ -196,8 +194,8 @@ export async function updateAboutInfo(prevState: AboutInfoState | undefined, for
 // --- Site Settings ---
 const siteSettingsSchema = z.object({
   siteName: z.string().min(3, "Site name must be at least 3 characters."),
-  siteTitleSuffix: z.string().min(3, "Site title suffix must be at least 3 characters."), // New
-  siteDescription: z.string().min(10, "Site description must be at least 10 characters.").max(160, "Site description should be max 160 characters."), // New
+  siteTitleSuffix: z.string().min(3, "Site title suffix must be at least 3 characters."),
+  siteDescription: z.string().min(10, "Site description must be at least 10 characters.").max(160, "Site description should be max 160 characters."),
   defaultUserName: z.string().min(2, "Default user name must be at least 2 characters."),
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
@@ -207,6 +205,7 @@ const siteSettingsSchema = z.object({
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),
   contactTwitter: z.string().url().optional().or(z.literal('')),
+  customHtmlWidget: z.string().optional(), // New field for custom HTML/script
 });
 
 interface SiteSettingsState {
@@ -219,8 +218,8 @@ interface SiteSettingsState {
 export async function updateSiteSettings(prevState: SiteSettingsState | undefined, formData: FormData): Promise<SiteSettingsState> {
   const validatedFields = siteSettingsSchema.safeParse({
     siteName: formData.get('siteName'),
-    siteTitleSuffix: formData.get('siteTitleSuffix'), // New
-    siteDescription: formData.get('siteDescription'), // New
+    siteTitleSuffix: formData.get('siteTitleSuffix'),
+    siteDescription: formData.get('siteDescription'),
     defaultUserName: formData.get('defaultUserName'),
     defaultUserSpecialization: formData.get('defaultUserSpecialization'),
     defaultProfileImageUrl: formData.get('defaultProfileImageUrl'),
@@ -230,6 +229,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     contactLinkedin: formData.get('contactLinkedin'),
     contactGithub: formData.get('contactGithub'),
     contactTwitter: formData.get('contactTwitter'),
+    customHtmlWidget: formData.get('customHtmlWidget'), // Get new field
   });
 
   if (!validatedFields.success) {
@@ -239,13 +239,14 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
   try {
     const settingsToUpdate: SiteSettings = {
       siteName: validatedFields.data.siteName,
-      siteTitleSuffix: validatedFields.data.siteTitleSuffix, // New
-      siteDescription: validatedFields.data.siteDescription, // New
+      siteTitleSuffix: validatedFields.data.siteTitleSuffix,
+      siteDescription: validatedFields.data.siteDescription,
       defaultUserName: validatedFields.data.defaultUserName,
       defaultUserSpecialization: validatedFields.data.defaultUserSpecialization,
       defaultProfileImageUrl: validatedFields.data.defaultProfileImageUrl,
       faviconUrl: validatedFields.data.faviconUrl || undefined,
       resumeUrl: validatedFields.data.resumeUrl || undefined, 
+      customHtmlWidget: validatedFields.data.customHtmlWidget || undefined, // Save new field
       contactDetails: {
         email: validatedFields.data.contactEmail,
         linkedin: validatedFields.data.contactLinkedin,
@@ -259,6 +260,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     revalidatePath('/'); 
     revalidatePath('/layout', 'layout'); 
     revalidatePath('/admin/settings');
+    revalidatePath('/admin/integrations'); // Revalidate new admin page
     const updatedSettings = await getSiteSettings();
     return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: updatedSettings };
   } catch (error) {
@@ -497,9 +499,10 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     tags: projectData.tags,
   };
 
-  if (projectData.liveLink !== undefined) projectToSave.liveLink = projectData.liveLink;
-  if (projectData.repoLink !== undefined) projectToSave.repoLink = projectData.repoLink;
-  if (projectData.dataAiHint !== undefined) projectToSave.dataAiHint = projectData.dataAiHint;
+  if (projectData.liveLink !== undefined && projectData.liveLink !== '') projectToSave.liveLink = projectData.liveLink;
+  if (projectData.repoLink !== undefined && projectData.repoLink !== '') projectToSave.repoLink = projectData.repoLink;
+  if (projectData.dataAiHint !== undefined && projectData.dataAiHint !== '') projectToSave.dataAiHint = projectData.dataAiHint;
+
 
   try {
     let finalProjectData: Project;

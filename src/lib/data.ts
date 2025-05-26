@@ -49,14 +49,15 @@ export interface ContactDetails {
 }
 export interface SiteSettings {
   siteName: string;
-  siteTitleSuffix: string; // New: e.g., "Kunal Gupta Portfolio"
-  siteDescription: string; // New: For SEO meta description
+  siteTitleSuffix: string;
+  siteDescription: string;
   defaultProfileImageUrl: string;
   defaultUserName: string;
   defaultUserSpecialization: string;
   contactDetails: ContactDetails;
   faviconUrl?: string;
   resumeUrl?: string;
+  customHtmlWidget?: string; // New field for custom HTML/script
 }
 
 export interface AboutData {
@@ -70,8 +71,8 @@ const codeSignFaviconDataUriCyan = 'data:image/svg+xml,<svg xmlns="http://www.w3
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
-  siteTitleSuffix: "Kunal Gupta Portfolio", // Updated default suffix
-  siteDescription: "A modern portfolio for Kunal Gupta, a Computer Science student, showcasing skills, projects, and experience.", // Updated default description
+  siteTitleSuffix: "Kunal Gupta Portfolio",
+  siteDescription: "A modern portfolio for Kunal Gupta, a Computer Science student, showcasing skills, projects, and experience.",
   defaultProfileImageUrl: "https://placehold.co/300x300.png",
   defaultUserName: "Kunal Gupta",
   defaultUserSpecialization: "Web Development, AI & Machine Learning ",
@@ -83,6 +84,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   },
   faviconUrl: codeSignFaviconDataUriCyan,
   resumeUrl: "/resume.pdf",
+  customHtmlWidget: "", // Default for new field
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -101,14 +103,13 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     const snapshot = await db.ref('/siteSettings').once('value');
     const data = snapshot.val();
 
-    // Start with a deep copy of defaults
     const settings: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
 
     if (data && typeof data === 'object') {
       console.log('[getSiteSettings] Fetched data from Firebase:', data);
       if (typeof data.siteName === 'string' && data.siteName.trim() !== '') settings.siteName = data.siteName.trim();
-      if (typeof data.siteTitleSuffix === 'string' && data.siteTitleSuffix.trim() !== '') settings.siteTitleSuffix = data.siteTitleSuffix.trim(); // New
-      if (typeof data.siteDescription === 'string' && data.siteDescription.trim() !== '') settings.siteDescription = data.siteDescription.trim(); // New
+      if (typeof data.siteTitleSuffix === 'string' && data.siteTitleSuffix.trim() !== '') settings.siteTitleSuffix = data.siteTitleSuffix.trim();
+      if (typeof data.siteDescription === 'string' && data.siteDescription.trim() !== '') settings.siteDescription = data.siteDescription.trim();
       if (typeof data.defaultUserName === 'string' && data.defaultUserName.trim() !== '') settings.defaultUserName = data.defaultUserName.trim();
       if (typeof data.defaultUserSpecialization === 'string' && data.defaultUserSpecialization.trim() !== '') settings.defaultUserSpecialization = data.defaultUserSpecialization.trim();
       if (typeof data.defaultProfileImageUrl === 'string' && data.defaultProfileImageUrl.trim() !== '') settings.defaultProfileImageUrl = data.defaultProfileImageUrl.trim();
@@ -117,6 +118,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         const fbFaviconUrl = data.faviconUrl;
         if (typeof fbFaviconUrl === 'string' && fbFaviconUrl.trim() !== '') {
             settings.faviconUrl = fbFaviconUrl.trim();
+        } else if (fbFaviconUrl === null || fbFaviconUrl === "") {
+             settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; // Fallback to default if explicitly empty/null in DB
         }
       }
       console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
@@ -125,6 +128,12 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         const fbResumeUrl = data.resumeUrl;
         if (typeof fbResumeUrl === 'string' && fbResumeUrl.trim() !== '') {
           settings.resumeUrl = fbResumeUrl.trim();
+        }
+      }
+
+      if (data.hasOwnProperty('customHtmlWidget')) {
+        if (typeof data.customHtmlWidget === 'string') {
+          settings.customHtmlWidget = data.customHtmlWidget; // No trim, preserve whitespace for scripts
         }
       }
 
@@ -151,7 +160,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   } catch (error) {
     console.error("[getSiteSettings] Error fetching site settings:", error);
     const errorDefaults: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
-    console.log('[getSiteSettings] Error condition. Using all defaults.');
+    console.log('[getSiteSettings] Error condition. Using all defaults. Default faviconUrl:', errorDefaults.faviconUrl);
     return errorDefaults;
   }
 }
@@ -170,6 +179,8 @@ export async function getAboutData(): Promise<AboutData> {
         if (data.hasOwnProperty('profileImageUrl')) {
             if (typeof data.profileImageUrl === 'string' && data.profileImageUrl.trim() !== '') {
                 about.profileImageUrl = data.profileImageUrl.trim();
+            } else if (data.profileImageUrl === null || data.profileImageUrl === "") {
+                about.profileImageUrl = DEFAULT_ABOUT_DATA.profileImageUrl;
             }
         }
 
