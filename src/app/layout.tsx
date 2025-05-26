@@ -11,19 +11,21 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
-const codeSignFaviconDataUriCyan = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
+// Default favicon if none is set in Firebase (Code Sign in Cyan)
+const CODE_SIGN_FAVICON_CYAN = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
 
 export async function generateMetadata(): Promise<Metadata> {
   console.log('[generateMetadata] Fetching site settings...');
   const siteSettings = await getSiteSettings();
   console.log('[generateMetadata] Site settings fetched:', siteSettings);
 
-  let resolvedFaviconUrl = siteSettings.faviconUrl || codeSignFaviconDataUriCyan; 
-  if (typeof resolvedFaviconUrl === 'string' && resolvedFaviconUrl.trim() === '') {
-    resolvedFaviconUrl = codeSignFaviconDataUriCyan; 
+  let resolvedFaviconUrl = siteSettings.faviconUrl || CODE_SIGN_FAVICON_CYAN; 
+  // Ensure it's a non-empty string; otherwise, fallback.
+  if (typeof resolvedFaviconUrl !== 'string' || resolvedFaviconUrl.trim() === '') {
+    resolvedFaviconUrl = CODE_SIGN_FAVICON_CYAN; 
   }
   
-  console.log(`[generateMetadata] Resolved faviconUrl to be used: ${resolvedFaviconUrl.startsWith('data:image/svg+xml') ? 'SVG Data URI (Cyan Code Sign)' : resolvedFaviconUrl}`);
+  console.log(`[generateMetadata] Resolved faviconUrl to be used: ${resolvedFaviconUrl.startsWith('data:image/svg+xml') ? 'SVG Data URI' : resolvedFaviconUrl}`);
 
   const pageTitle = `${siteSettings.siteName || 'ByteFolio'} | ${siteSettings.siteTitleSuffix || 'Portfolio'}`;
   const pageDescription = siteSettings.siteDescription || 'A modern portfolio showcasing skills, projects, and experience.';
@@ -60,7 +62,10 @@ export default async function RootLayout({
           <Toaster />
         </ThemeProvider>
         {siteSettings.customHtmlWidget && (
-          <div dangerouslySetInnerHTML={{ __html: siteSettings.customHtmlWidget }} />
+          <div 
+            className="bg-transparent" // Explicitly set background to transparent
+            dangerouslySetInnerHTML={{ __html: siteSettings.customHtmlWidget }} 
+          />
         )}
       </body>
     </html>
