@@ -200,12 +200,14 @@ const siteSettingsSchema = z.object({
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
   faviconUrl: z.string().optional().or(z.literal('')), 
-  resumeUrl: z.string().optional().or(z.literal('')), 
+  resumeUrl: z.string().url("Invalid Resume/CV URL. Must be a full URL.").optional().or(z.literal('')), 
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),
   contactTwitter: z.string().url().optional().or(z.literal('')),
-  customHtmlWidget: z.string().optional(), // New field for custom HTML/script
+  customHtmlWidget: z.string().optional(),
+  blogUrl: z.string().url("Invalid Blog URL. Must be a full URL.").optional().or(z.literal('')),
+  kofiUrl: z.string().url("Invalid Ko-fi URL. Must be a full URL.").optional().or(z.literal('')),
 });
 
 interface SiteSettingsState {
@@ -229,7 +231,9 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     contactLinkedin: formData.get('contactLinkedin'),
     contactGithub: formData.get('contactGithub'),
     contactTwitter: formData.get('contactTwitter'),
-    customHtmlWidget: formData.get('customHtmlWidget'), // Get new field
+    customHtmlWidget: formData.get('customHtmlWidget'),
+    blogUrl: formData.get('blogUrl'),
+    kofiUrl: formData.get('kofiUrl'),
   });
 
   if (!validatedFields.success) {
@@ -246,7 +250,9 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       defaultProfileImageUrl: validatedFields.data.defaultProfileImageUrl,
       faviconUrl: validatedFields.data.faviconUrl || undefined,
       resumeUrl: validatedFields.data.resumeUrl || undefined, 
-      customHtmlWidget: validatedFields.data.customHtmlWidget || undefined, // Save new field
+      customHtmlWidget: validatedFields.data.customHtmlWidget || undefined,
+      blogUrl: validatedFields.data.blogUrl || undefined,
+      kofiUrl: validatedFields.data.kofiUrl || undefined,
       contactDetails: {
         email: validatedFields.data.contactEmail,
         linkedin: validatedFields.data.contactLinkedin,
@@ -260,7 +266,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     revalidatePath('/'); 
     revalidatePath('/layout', 'layout'); 
     revalidatePath('/admin/settings');
-    revalidatePath('/admin/integrations'); // Revalidate new admin page
+    revalidatePath('/admin/integrations');
     const updatedSettings = await getSiteSettings();
     return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: updatedSettings };
   } catch (error) {

@@ -3,9 +3,10 @@
 
 import Link from 'next/link';
 import { ThemeToggleButton } from './theme-toggle-button';
-import { Code2 } from 'lucide-react';
+import { Code2, BookOpen } from 'lucide-react'; // Added BookOpen for Blog
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { Button } from '@/components/ui/button';
 
 const navItems = [
   { name: 'About', href: '#about' },
@@ -18,9 +19,10 @@ const navItems = [
 
 interface NavigationProps {
   siteName: string;
+  blogUrl?: string;
 }
 
-export default function Navigation({ siteName }: NavigationProps) {
+export default function Navigation({ siteName, blogUrl }: NavigationProps) {
   const [isScrolled, setIsScrolled] = React.useState(false);
 
   React.useEffect(() => {
@@ -42,7 +44,7 @@ export default function Navigation({ siteName }: NavigationProps) {
             <Code2 className="h-8 w-8 text-accent" />
             <span>{siteName}</span>
           </Link>
-          <nav className="hidden md:flex items-center space-x-2 lg:space-x-4">
+          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
             {navItems.map((item) => (
               <Link
                 key={item.name}
@@ -52,6 +54,13 @@ export default function Navigation({ siteName }: NavigationProps) {
                 {item.name}
               </Link>
             ))}
+            {blogUrl && (
+              <Button asChild variant="ghost" className="text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                <Link href={blogUrl} target="_blank" rel="noopener noreferrer">
+                  <BookOpen className="mr-1.5 h-4 w-4" /> Blog
+                </Link>
+              </Button>
+            )}
           </nav>
           <div className="flex items-center">
             <ThemeToggleButton />

@@ -57,7 +57,9 @@ export interface SiteSettings {
   contactDetails: ContactDetails;
   faviconUrl?: string;
   resumeUrl?: string;
-  customHtmlWidget?: string; // New field for custom HTML/script
+  customHtmlWidget?: string;
+  blogUrl?: string; // New field for Blog URL
+  kofiUrl?: string;  // New field for Ko-fi URL
 }
 
 export interface AboutData {
@@ -67,7 +69,7 @@ export interface AboutData {
   dataAiHint?: string;
 }
 
-const codeSignFaviconDataUriCyan = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
+const CODE_SIGN_FAVICON_CYAN = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
@@ -82,9 +84,11 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
     github: 'https://github.com/yourusername',
     twitter: 'https://twitter.com/yourusername',
   },
-  faviconUrl: codeSignFaviconDataUriCyan,
+  faviconUrl: CODE_SIGN_FAVICON_CYAN,
   resumeUrl: "/resume.pdf",
-  customHtmlWidget: "", // Default for new field
+  customHtmlWidget: "",
+  blogUrl: "", // Default for new field
+  kofiUrl: "",   // Default for new field
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -118,8 +122,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         const fbFaviconUrl = data.faviconUrl;
         if (typeof fbFaviconUrl === 'string' && fbFaviconUrl.trim() !== '') {
             settings.faviconUrl = fbFaviconUrl.trim();
-        } else if (fbFaviconUrl === null || fbFaviconUrl === "") {
-             settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; // Fallback to default if explicitly empty/null in DB
+        } else if (fbFaviconUrl === null || fbFaviconUrl === "" || fbFaviconUrl === "--no-icon--") {
+             settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; 
         }
       }
       console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
@@ -128,14 +132,24 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         const fbResumeUrl = data.resumeUrl;
         if (typeof fbResumeUrl === 'string' && fbResumeUrl.trim() !== '') {
           settings.resumeUrl = fbResumeUrl.trim();
+        } else {
+          settings.resumeUrl = DEFAULT_SITE_SETTINGS.resumeUrl;
         }
       }
 
       if (data.hasOwnProperty('customHtmlWidget')) {
         if (typeof data.customHtmlWidget === 'string') {
-          settings.customHtmlWidget = data.customHtmlWidget; // No trim, preserve whitespace for scripts
+          settings.customHtmlWidget = data.customHtmlWidget;
         }
       }
+      
+      if (data.hasOwnProperty('blogUrl') && typeof data.blogUrl === 'string') {
+        settings.blogUrl = data.blogUrl.trim();
+      }
+      if (data.hasOwnProperty('kofiUrl') && typeof data.kofiUrl === 'string') {
+        settings.kofiUrl = data.kofiUrl.trim();
+      }
+
 
       if (data.contactDetails && typeof data.contactDetails === 'object') {
         const contactData = data.contactDetails as Partial<ContactDetails>;
@@ -209,7 +223,7 @@ export async function getSkills(): Promise<Skill[]> {
           name: typeof skill.name === 'string' ? skill.name : 'Unnamed Skill',
           category: typeof skill.category === 'string' && ['Language', 'Framework/Library', 'Tool', 'Database', 'Cloud', 'Other'].includes(skill.category) ? skill.category as Skill['category'] : 'Other',
           level: skill.level !== undefined && !isNaN(Number(skill.level)) ? Number(skill.level) : undefined,
-          iconName: (typeof skill.iconName === 'string' && skill.iconName.trim() !== '') ? skill.iconName : null,
+          iconName: (typeof skill.iconName === 'string' && skill.iconName.trim() !== '' && skill.iconName.trim() !== '--no-icon--') ? skill.iconName : null,
         };
       }).filter(Boolean) as Skill[];
     }
@@ -233,7 +247,7 @@ export async function getEducationItems(): Promise<EducationItem[]> {
           institution: typeof item.institution === 'string' ? item.institution : 'N/A',
           period: typeof item.period === 'string' ? item.period : 'N/A',
           description: typeof item.description === 'string' ? item.description : undefined,
-          iconName: (typeof item.iconName === 'string' && item.iconName.trim() !== '') ? item.iconName : null,
+          iconName: (typeof item.iconName === 'string' && item.iconName.trim() !== '' && item.iconName.trim() !== '--no-icon--') ? item.iconName : null,
         };
       }).filter(Boolean) as EducationItem[];
     }
@@ -292,7 +306,7 @@ export async function getCertifications(): Promise<Certification[]> {
           organization: typeof cert.organization === 'string' ? cert.organization : 'N/A',
           date: typeof cert.date === 'string' ? cert.date : 'N/A',
           verifyLink: (typeof cert.verifyLink === 'string' && cert.verifyLink.trim() !== '') ? cert.verifyLink : undefined,
-          iconName: (typeof cert.iconName === 'string' && cert.iconName.trim() !== '') ? cert.iconName : null,
+          iconName: (typeof cert.iconName === 'string' && cert.iconName.trim() !== '' && cert.iconName.trim() !== '--no-icon--') ? cert.iconName : null,
         };
       }).filter(Boolean) as Certification[];
     }

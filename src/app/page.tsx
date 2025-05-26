@@ -30,12 +30,15 @@ export default async function PortfolioPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navigation siteName={siteSettings.siteName} />
+      <Navigation 
+        siteName={siteSettings.siteName} 
+        blogUrl={siteSettings.blogUrl} 
+      />
       <main className="flex-grow">
         <HeroSection 
           userName={siteSettings.defaultUserName} 
           userSpecialization={siteSettings.defaultUserSpecialization} 
-          resumeUrl={siteSettings.resumeUrl || "/resume.pdf"} // Pass resumeUrl
+          resumeUrl={siteSettings.resumeUrl || "/resume.pdf"} 
         />
         <AboutSection 
           aboutData={aboutData} 
@@ -45,11 +48,16 @@ export default async function PortfolioPage() {
         <EducationSection educationItems={educationItems} />
         <ProjectsSection projects={projects} />
         <CertificationsSection certifications={certifications} />
-        <ContactSection contactDetails={siteSettings.contactDetails} />
+        <ContactSection 
+          contactDetails={siteSettings.contactDetails} 
+          kofiUrl={siteSettings.kofiUrl} 
+        />
       </main>
-      <Footer siteName={siteSettings.siteName} userName={siteSettings.defaultUserName} contactDetails={siteSettings.contactDetails} />
+      <Footer 
+        siteName={siteSettings.siteName} 
+        userName={siteSettings.defaultUserName} 
+        contactDetails={siteSettings.contactDetails} 
+      />
     </div>
   );
 }
-
-    

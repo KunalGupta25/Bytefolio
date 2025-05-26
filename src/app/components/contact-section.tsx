@@ -4,15 +4,15 @@ import SectionWrapper from './section-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Github, Linkedin, Mail, Twitter } from 'lucide-react';
-import { ContactForm } from './contact-form'; // Restored old form
-// import FormsAppEmbed from './forms-app-embed'; // Removed embedded form
+import { Github, Linkedin, Mail, Twitter, Coffee } from 'lucide-react'; // Added Coffee icon
+import { ContactForm } from './contact-form'; 
 
 interface ContactSectionProps {
   contactDetails: ContactDetails;
+  kofiUrl?: string; // Added kofiUrl prop
 }
 
-export default function ContactSection({ contactDetails }: ContactSectionProps) {
+export default function ContactSection({ contactDetails, kofiUrl }: ContactSectionProps) {
   return (
     <SectionWrapper id="contact" title="Get In Touch" subtitle="Feel free to reach out. I'm always open to discussing new projects, creative ideas or opportunities to be part of your visions.">
       <div className="grid md:grid-cols-2 gap-12 items-start">
@@ -21,8 +21,7 @@ export default function ContactSection({ contactDetails }: ContactSectionProps) 
             <CardTitle className="text-2xl text-primary">Send me a message</CardTitle>
           </CardHeader>
           <CardContent>
-            <ContactForm /> {/* Restored */}
-            {/* <FormsAppEmbed /> Removed */}
+            <ContactForm /> 
           </CardContent>
         </Card>
         <div className="space-y-6">
@@ -64,9 +63,16 @@ export default function ContactSection({ contactDetails }: ContactSectionProps) 
               <CardTitle className="text-2xl text-primary">Let&apos;s Collaborate</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-foreground leading-relaxed">
+              <p className="text-foreground leading-relaxed mb-4">
                 I&apos;m excited to connect with fellow developers, designers, and potential employers. Whether you have a question or just want to say hi, I&apos;ll try my best to get back to you!
               </p>
+              {kofiUrl && (
+                <Button asChild variant="default" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
+                  <Link href={kofiUrl} target="_blank" rel="noopener noreferrer">
+                    <Coffee className="mr-2 h-5 w-5" /> Support me on Ko-fi
+                  </Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -29,6 +29,8 @@ const defaultSiteSettings: SiteSettings = {
   defaultProfileImageUrl: "",
   faviconUrl: "",
   resumeUrl: "",
+  blogUrl: "",
+  kofiUrl: "",
   contactDetails: {
     email: "",
     linkedin: "",
@@ -104,7 +106,7 @@ export default function AdminSettingsPage() {
         <CardHeader>
           <CardTitle>General Site Configuration</CardTitle>
           <CardDescription>
-            Update site name, title suffix, meta description, default user info, profile image, favicon, resume URL, and contact details.
+            Update site name, title suffix, meta description, default user info, profile image, favicon, resume URL, external links, and contact details.
             Changes are stored in Firebase Realtime Database.
           </CardDescription>
         </CardHeader>
@@ -231,7 +233,7 @@ export default function AdminSettingsPage() {
             <div>
               <Label htmlFor="resumeUrl" className="text-sm font-medium">Resume/CV URL</Label>
               <Input
-                type="text"
+                type="url"
                 id="resumeUrl"
                 name="resumeUrl"
                 className="mt-1"
@@ -244,6 +246,41 @@ export default function AdminSettingsPage() {
                 <p id="resumeurl-error" className="text-sm text-destructive mt-1">{state.errors.resumeUrl.join(', ')}</p>
               )}
             </div>
+            
+            <div>
+              <Label htmlFor="blogUrl" className="text-sm font-medium">Blog URL (Optional)</Label>
+              <Input
+                type="url"
+                id="blogUrl"
+                name="blogUrl"
+                className="mt-1"
+                placeholder="https://yourblog.com"
+                value={currentSettings.blogUrl || ''}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, blogUrl: e.target.value}))}
+                aria-describedby={state.errors?.blogUrl ? "blogurl-error" : undefined}
+              />
+              {state.errors?.blogUrl && (
+                <p id="blogurl-error" className="text-sm text-destructive mt-1">{state.errors.blogUrl.join(', ')}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="kofiUrl" className="text-sm font-medium">Ko-fi Profile URL (Optional)</Label>
+              <Input
+                type="url"
+                id="kofiUrl"
+                name="kofiUrl"
+                className="mt-1"
+                placeholder="https://ko-fi.com/yourusername"
+                value={currentSettings.kofiUrl || ''}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, kofiUrl: e.target.value}))}
+                aria-describedby={state.errors?.kofiUrl ? "kofiurl-error" : undefined}
+              />
+              {state.errors?.kofiUrl && (
+                <p id="kofiurl-error" className="text-sm text-destructive mt-1">{state.errors.kofiUrl.join(', ')}</p>
+              )}
+            </div>
+
 
             <h3 className="text-lg font-semibold pt-4 border-t mt-6">Contact Details</h3>
              <div>
