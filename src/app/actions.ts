@@ -200,7 +200,7 @@ const siteSettingsSchema = z.object({
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
   faviconUrl: z.string().optional().or(z.literal('')), 
-  resumeUrl: z.string().url("Invalid Resume/CV URL. Must be a full URL.").optional().or(z.literal('')), 
+  resumeUrl: z.string().optional().or(z.literal('')), // Allow any string or empty for relative paths
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),

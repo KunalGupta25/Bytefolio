@@ -231,9 +231,9 @@ export default function AdminSettingsPage() {
             </div>
 
             <div>
-              <Label htmlFor="resumeUrl" className="text-sm font-medium">Resume/CV URL</Label>
+              <Label htmlFor="resumeUrl" className="text-sm font-medium">Resume/CV URL (Full URL or relative path e.g. /resume.pdf)</Label>
               <Input
-                type="url"
+                type="text"
                 id="resumeUrl"
                 name="resumeUrl"
                 className="mt-1"
