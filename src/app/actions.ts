@@ -196,6 +196,8 @@ export async function updateAboutInfo(prevState: AboutInfoState | undefined, for
 // --- Site Settings ---
 const siteSettingsSchema = z.object({
   siteName: z.string().min(3, "Site name must be at least 3 characters."),
+  siteTitleSuffix: z.string().min(3, "Site title suffix must be at least 3 characters."), // New
+  siteDescription: z.string().min(10, "Site description must be at least 10 characters.").max(160, "Site description should be max 160 characters."), // New
   defaultUserName: z.string().min(2, "Default user name must be at least 2 characters."),
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
@@ -217,6 +219,8 @@ interface SiteSettingsState {
 export async function updateSiteSettings(prevState: SiteSettingsState | undefined, formData: FormData): Promise<SiteSettingsState> {
   const validatedFields = siteSettingsSchema.safeParse({
     siteName: formData.get('siteName'),
+    siteTitleSuffix: formData.get('siteTitleSuffix'), // New
+    siteDescription: formData.get('siteDescription'), // New
     defaultUserName: formData.get('defaultUserName'),
     defaultUserSpecialization: formData.get('defaultUserSpecialization'),
     defaultProfileImageUrl: formData.get('defaultProfileImageUrl'),
@@ -235,6 +239,8 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
   try {
     const settingsToUpdate: SiteSettings = {
       siteName: validatedFields.data.siteName,
+      siteTitleSuffix: validatedFields.data.siteTitleSuffix, // New
+      siteDescription: validatedFields.data.siteDescription, // New
       defaultUserName: validatedFields.data.defaultUserName,
       defaultUserSpecialization: validatedFields.data.defaultUserSpecialization,
       defaultProfileImageUrl: validatedFields.data.defaultProfileImageUrl,
@@ -654,4 +660,4 @@ export async function fetchCertificationsForAdmin(): Promise<Certification[]> {
 export async function fetchPageViewsForAdmin(): Promise<number> {
   return getPageViews();
 }
-
+    

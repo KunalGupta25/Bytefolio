@@ -49,12 +49,14 @@ export interface ContactDetails {
 }
 export interface SiteSettings {
   siteName: string;
+  siteTitleSuffix: string; // New: e.g., "Kunal Gupta Portfolio"
+  siteDescription: string; // New: For SEO meta description
   defaultProfileImageUrl: string;
   defaultUserName: string;
   defaultUserSpecialization: string;
   contactDetails: ContactDetails;
   faviconUrl?: string;
-  resumeUrl?: string; // Added for CV/Resume link
+  resumeUrl?: string;
 }
 
 export interface AboutData {
@@ -68,6 +70,8 @@ const codeSignFaviconDataUriCyan = 'data:image/svg+xml,<svg xmlns="http://www.w3
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
+  siteTitleSuffix: "Kunal Gupta Portfolio", // Updated default suffix
+  siteDescription: "A modern portfolio for Kunal Gupta, a Computer Science student, showcasing skills, projects, and experience.", // Updated default description
   defaultProfileImageUrl: "https://placehold.co/300x300.png",
   defaultUserName: "Kunal Gupta",
   defaultUserSpecialization: "Web Development, AI & Machine Learning ",
@@ -78,7 +82,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
     twitter: 'https://twitter.com/yourusername',
   },
   faviconUrl: codeSignFaviconDataUriCyan,
-  resumeUrl: "/resume.pdf", // Default resume URL
+  resumeUrl: "/resume.pdf",
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -102,16 +106,18 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 
     if (data && typeof data === 'object') {
       console.log('[getSiteSettings] Fetched data from Firebase:', data);
-      if (typeof data.siteName === 'string') settings.siteName = data.siteName;
-      if (typeof data.defaultUserName === 'string') settings.defaultUserName = data.defaultUserName;
-      if (typeof data.defaultUserSpecialization === 'string') settings.defaultUserSpecialization = data.defaultUserSpecialization;
-      if (typeof data.defaultProfileImageUrl === 'string') settings.defaultProfileImageUrl = data.defaultProfileImageUrl;
+      if (typeof data.siteName === 'string' && data.siteName.trim() !== '') settings.siteName = data.siteName.trim();
+      if (typeof data.siteTitleSuffix === 'string' && data.siteTitleSuffix.trim() !== '') settings.siteTitleSuffix = data.siteTitleSuffix.trim(); // New
+      if (typeof data.siteDescription === 'string' && data.siteDescription.trim() !== '') settings.siteDescription = data.siteDescription.trim(); // New
+      if (typeof data.defaultUserName === 'string' && data.defaultUserName.trim() !== '') settings.defaultUserName = data.defaultUserName.trim();
+      if (typeof data.defaultUserSpecialization === 'string' && data.defaultUserSpecialization.trim() !== '') settings.defaultUserSpecialization = data.defaultUserSpecialization.trim();
+      if (typeof data.defaultProfileImageUrl === 'string' && data.defaultProfileImageUrl.trim() !== '') settings.defaultProfileImageUrl = data.defaultProfileImageUrl.trim();
       
       if (data.hasOwnProperty('faviconUrl')) {
         const fbFaviconUrl = data.faviconUrl;
         if (typeof fbFaviconUrl === 'string' && fbFaviconUrl.trim() !== '') {
             settings.faviconUrl = fbFaviconUrl.trim();
-        } // else it keeps the default from DEFAULT_SITE_SETTINGS
+        }
       }
       console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
 
@@ -119,7 +125,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         const fbResumeUrl = data.resumeUrl;
         if (typeof fbResumeUrl === 'string' && fbResumeUrl.trim() !== '') {
           settings.resumeUrl = fbResumeUrl.trim();
-        } // else it keeps the default
+        }
       }
 
       if (data.contactDetails && typeof data.contactDetails === 'object') {
@@ -132,21 +138,20 @@ export async function getSiteSettings(): Promise<SiteSettings> {
             const fbTwitter = contactData.twitter;
             if (typeof fbTwitter === 'string' && fbTwitter.trim() !== '') {
                 settings.contactDetails.twitter = fbTwitter.trim();
-            } // else keeps default
+            }
         }
       } else {
          console.log('[getSiteSettings] contactDetails missing or not an object in Firebase, using defaults from DEFAULT_SITE_SETTINGS.');
-         // Already handled by starting with defaults
       }
     } else {
-      console.log('[getSiteSettings] No data from Firebase or data is not an object. Using all defaults. Default faviconUrl:', settings.faviconUrl);
+      console.log('[getSiteSettings] No data from Firebase or data is not an object. Using all defaults.');
     }
-    
+    console.log('[getSiteSettings] Final settings returned:', settings);
     return settings;
   } catch (error) {
     console.error("[getSiteSettings] Error fetching site settings:", error);
     const errorDefaults: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
-    console.log('[getSiteSettings] Error condition. Using all defaults. Default faviconUrl:', errorDefaults.faviconUrl);
+    console.log('[getSiteSettings] Error condition. Using all defaults.');
     return errorDefaults;
   }
 }
@@ -159,8 +164,8 @@ export async function getAboutData(): Promise<AboutData> {
     const about: AboutData = JSON.parse(JSON.stringify(DEFAULT_ABOUT_DATA));
 
     if (data && typeof data === 'object') {
-        if (typeof data.professionalSummary === 'string') about.professionalSummary = data.professionalSummary;
-        if (typeof data.bio === 'string') about.bio = data.bio;
+        if (typeof data.professionalSummary === 'string' && data.professionalSummary.trim() !== '') about.professionalSummary = data.professionalSummary.trim();
+        if (typeof data.bio === 'string' && data.bio.trim() !== '') about.bio = data.bio.trim();
         
         if (data.hasOwnProperty('profileImageUrl')) {
             if (typeof data.profileImageUrl === 'string' && data.profileImageUrl.trim() !== '') {
@@ -297,5 +302,4 @@ export async function getPageViews(): Promise<number> {
     return 0;
   }
 }
-
     

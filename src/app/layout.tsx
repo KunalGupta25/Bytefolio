@@ -21,14 +21,20 @@ export async function generateMetadata(): Promise<Metadata> {
 
   let resolvedFaviconUrl = siteSettings.faviconUrl || codeSignFaviconDataUriCyan; 
   if (typeof resolvedFaviconUrl === 'string' && resolvedFaviconUrl.trim() === '') {
-    resolvedFaviconUrl = codeSignFaviconDataUriCyan; // Fallback for empty string
+    resolvedFaviconUrl = codeSignFaviconDataUriCyan; 
   }
   
   console.log(`[generateMetadata] Resolved faviconUrl to be used: ${resolvedFaviconUrl.startsWith('data:image/svg+xml') ? 'SVG Data URI (Cyan Code Sign)' : resolvedFaviconUrl}`);
 
+  const pageTitle = `${siteSettings.siteName || 'ByteFolio'} | ${siteSettings.siteTitleSuffix || 'Portfolio'}`;
+  const pageDescription = siteSettings.siteDescription || 'A modern portfolio showcasing skills, projects, and experience.';
+
+  console.log(`[generateMetadata] Page Title: ${pageTitle}`);
+  console.log(`[generateMetadata] Page Description: ${pageDescription}`);
+
   return {
-    title: `${siteSettings.siteName || 'ByteFolio'} | CS Student Portfolio`,
-    description: 'A modern portfolio for a Computer Science student, showcasing skills, projects, and experience.',
+    title: pageTitle,
+    description: pageDescription,
     icons: {
       icon: resolvedFaviconUrl,
     },
@@ -56,4 +62,4 @@ export default function RootLayout({
     </html>
   );
 }
-
+    

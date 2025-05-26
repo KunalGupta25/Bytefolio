@@ -6,6 +6,7 @@ import { useFormStatus } from 'react-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { updateSiteSettings, fetchSiteSettingsForAdmin } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
@@ -21,11 +22,13 @@ const initialFormActionState = {
 
 const defaultSiteSettings: SiteSettings = {
   siteName: "",
+  siteTitleSuffix: "",
+  siteDescription: "",
   defaultUserName: "",
   defaultUserSpecialization: "",
   defaultProfileImageUrl: "",
   faviconUrl: "",
-  resumeUrl: "", // Added for CV/Resume Link
+  resumeUrl: "",
   contactDetails: {
     email: "",
     linkedin: "",
@@ -101,14 +104,14 @@ export default function AdminSettingsPage() {
         <CardHeader>
           <CardTitle>General Site Configuration</CardTitle>
           <CardDescription>
-            Update site name, default user info, profile image, favicon, resume URL, and contact details.
+            Update site name, title suffix, meta description, default user info, profile image, favicon, resume URL, and contact details.
             Changes are stored in Firebase Realtime Database.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="space-y-6">
             <div>
-              <Label htmlFor="siteName" className="text-sm font-medium">Site Name</Label>
+              <Label htmlFor="siteName" className="text-sm font-medium">Site Name (Brand)</Label>
               <Input
                 id="siteName"
                 name="siteName"
@@ -122,6 +125,42 @@ export default function AdminSettingsPage() {
                 <p id="sitename-error" className="text-sm text-destructive mt-1">{state.errors.siteName.join(', ')}</p>
               )}
             </div>
+
+            <div>
+              <Label htmlFor="siteTitleSuffix" className="text-sm font-medium">Site Title Suffix (e.g., Your Name Portfolio)</Label>
+              <Input
+                id="siteTitleSuffix"
+                name="siteTitleSuffix"
+                required
+                className="mt-1"
+                value={currentSettings.siteTitleSuffix}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, siteTitleSuffix: e.target.value}))}
+                aria-describedby={state.errors?.siteTitleSuffix ? "sitetitlesuffix-error" : undefined}
+              />
+              {state.errors?.siteTitleSuffix && (
+                <p id="sitetitlesuffix-error" className="text-sm text-destructive mt-1">{state.errors.siteTitleSuffix.join(', ')}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="siteDescription" className="text-sm font-medium">Site Meta Description (for SEO)</Label>
+              <Textarea
+                id="siteDescription"
+                name="siteDescription"
+                required
+                rows={3}
+                className="mt-1 min-h-[80px]"
+                value={currentSettings.siteDescription}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, siteDescription: e.target.value}))}
+                aria-describedby={state.errors?.siteDescription ? "sitedescription-error" : undefined}
+                maxLength={160}
+              />
+              {state.errors?.siteDescription && (
+                <p id="sitedescription-error" className="text-sm text-destructive mt-1">{state.errors.siteDescription.join(', ')}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">Max 160 characters recommended.</p>
+            </div>
+
 
             <div>
               <Label htmlFor="defaultUserName" className="text-sm font-medium">Default User Name (for Hero Section)</Label>
@@ -173,7 +212,7 @@ export default function AdminSettingsPage() {
             </div>
 
             <div>
-              <Label htmlFor="faviconUrl" className="text-sm font-medium">Favicon URL</Label>
+              <Label htmlFor="faviconUrl" className="text-sm font-medium">Favicon URL (e.g., /favicon.ico or data:image/svg+xml,...)</Label>
               <Input
                 type="text"
                 id="faviconUrl"
@@ -278,5 +317,4 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
-
     
