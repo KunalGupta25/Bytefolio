@@ -127,6 +127,7 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
         console.log('Contact form email sent successfully via Resend.');
       } catch (emailError) {
         console.error("Error sending contact form email via Resend:", emailError);
+        // Do not return failure for email sending, as the message is already in DB
       }
     } else {
       console.warn('Resend API key or recipient email not configured in environment variables. Skipping email notification.');
@@ -200,7 +201,7 @@ const siteSettingsSchema = z.object({
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
   faviconUrl: z.string().optional().or(z.literal('')), 
-  resumeUrl: z.string().optional().or(z.literal('')), // Allow any string or empty for relative paths
+  resumeUrl: z.string().optional().or(z.literal('')),
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),
@@ -218,7 +219,13 @@ interface SiteSettingsState {
 }
 
 export async function updateSiteSettings(prevState: SiteSettingsState | undefined, formData: FormData): Promise<SiteSettingsState> {
-  const validatedFields = siteSettingsSchema.safeParse({
+  console.log("--- updateSiteSettings Action Triggered ---");
+  console.log("Received formData entries:");
+  for (const [key, value] of formData.entries()) {
+    console.log(`  ${key}: "${value}"`);
+  }
+
+  const dataToValidate = {
     siteName: formData.get('siteName'),
     siteTitleSuffix: formData.get('siteTitleSuffix'),
     siteDescription: formData.get('siteDescription'),
@@ -234,11 +241,22 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     customHtmlWidget: formData.get('customHtmlWidget'),
     blogUrl: formData.get('blogUrl'),
     kofiUrl: formData.get('kofiUrl'),
-  });
+  };
+  
+  console.log("Data prepared for Zod validation:", dataToValidate);
+
+  const validatedFields = siteSettingsSchema.safeParse(dataToValidate);
 
   if (!validatedFields.success) {
-    return { success: false, message: "Validation failed.", errors: validatedFields.error.flatten().fieldErrors };
+    console.error("Site Settings Zod validation failed. Errors:", JSON.stringify(validatedFields.error.flatten().fieldErrors, null, 2));
+    return { 
+      success: false, 
+      message: "Validation failed. Please check the specific error messages under each field. Server logs contain more details.", 
+      errors: validatedFields.error.flatten().fieldErrors 
+    };
   }
+  
+  console.log("Site Settings Zod validation successful. Validated data:", validatedFields.data);
   
   try {
     const settingsToUpdate: SiteSettings = {
@@ -270,11 +288,11 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     const updatedSettings = await getSiteSettings();
     return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: updatedSettings };
   } catch (error) {
-    console.error("Error updating Site Settings in Firebase:", error);
-    return { success: false, message: 'Failed to update site settings.' };
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Error updating Site Settings in Firebase: ${errorMessage}`, error);
+    return { success: false, message: `Failed to update site settings. Server error: ${errorMessage}` };
   }
 }
-
 
 // --- Skills CRUD ---
 const skillSchema = z.object({
@@ -451,6 +469,7 @@ const projectSchema = z.object({
   liveLink: z.string().url("Invalid Live Demo URL. Must be a full URL.").optional().or(z.literal('')),
   repoLink: z.string().url("Invalid Repository URL. Must be a full URL.").optional().or(z.literal('')),
   dataAiHint: z.string().optional(),
+  createdAt: z.string().datetime().optional(), // For sorting, managed by server
 });
 
 interface ProjectCrudState {
@@ -471,7 +490,8 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     tags: formData.get('tags'), 
     liveLink: formData.get('liveLink') || undefined, 
     repoLink: formData.get('repoLink') || undefined,
-    dataAiHint: formData.get('dataAiHint') || undefined, 
+    dataAiHint: formData.get('dataAiHint') || undefined,
+    // createdAt is not taken from form, it's set by server
   };
   console.log("Raw data for validation:", rawData);
 
@@ -497,55 +517,62 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     return { success: false, message: "Failed to generate project ID." };
   }
 
-  const projectToSave: Partial<Omit<Project, 'id' | 'createdAt'>> & { id: string; createdAt?: string } = {
+  const dataForFirebase: Partial<Project> & { id: string; createdAt: string } = {
     id: projectId,
     title: projectData.title,
     description: projectData.description,
     imageUrl: projectData.imageUrl,
     tags: projectData.tags,
+    createdAt: isNew ? new Date().toISOString() : projectData.createdAt || new Date().toISOString(), // Set if new, else try to preserve
   };
 
-  if (projectData.liveLink !== undefined && projectData.liveLink !== '') projectToSave.liveLink = projectData.liveLink;
-  if (projectData.repoLink !== undefined && projectData.repoLink !== '') projectToSave.repoLink = projectData.repoLink;
-  if (projectData.dataAiHint !== undefined && projectData.dataAiHint !== '') projectToSave.dataAiHint = projectData.dataAiHint;
+  // Only include optional fields if they are not undefined and not empty strings
+  if (projectData.liveLink) {
+    dataForFirebase.liveLink = projectData.liveLink;
+  }
+  if (projectData.repoLink) {
+    dataForFirebase.repoLink = projectData.repoLink;
+  }
+  if (projectData.dataAiHint) {
+    dataForFirebase.dataAiHint = projectData.dataAiHint;
+  }
 
+  // If updating, fetch existing project to preserve createdAt if not passed
+  if (!isNew && !projectData.createdAt) {
+    try {
+      const existingProjectSnapshot = await db.ref(`/projects/${projectId}`).once('value');
+      const existingProject = existingProjectSnapshot.val();
+      if (existingProject && existingProject.createdAt) {
+        dataForFirebase.createdAt = existingProject.createdAt;
+      }
+    } catch (fetchError) {
+      console.warn(`Could not fetch existing project ${projectId} to preserve createdAt:`, fetchError);
+    }
+  }
+  
+  console.log("Final project data to save to Firebase:", dataForFirebase);
 
   try {
-    let finalProjectData: Project;
-    if (isNew) {
-      projectToSave.createdAt = new Date().toISOString();
-      finalProjectData = projectToSave as Project; 
-      await db.ref(`/projects/${projectId}`).set(finalProjectData);
-      console.log('Adding New Project to Firebase successful:', finalProjectData);
-    } else {
-      const existingProjectSnapshot = await db.ref(`/projects/${projectId}`).once('value');
-      const existingProjectData = existingProjectSnapshot.val() as Project | null;
-      
-      projectToSave.createdAt = existingProjectData?.createdAt || new Date().toISOString(); 
-      finalProjectData = projectToSave as Project; 
-      await db.ref(`/projects/${projectId}`).update(finalProjectData); 
-      console.log('Updating Project in Firebase successful:', finalProjectData);
-    }
-    
+    await db.ref(`/projects/${projectId}`).set(dataForFirebase as Project); 
+    console.log(isNew ? 'Adding Project to Firebase successful:' : 'Updating Project in Firebase successful:', dataForFirebase);
     revalidatePath('/');
     revalidatePath('/admin/projects');
-    const allProjects = await getProjects(); 
+    const allProjects = await getProjects();
     return { 
       success: true, 
-      message: `Project '${finalProjectData.title}' ${isNew ? 'added' : 'updated'} successfully!`, 
-      updatedProject: finalProjectData, 
+      message: `Project '${dataForFirebase.title}' ${isNew ? 'added' : 'updated'} successfully!`, 
+      updatedProject: dataForFirebase as Project, 
       projects: allProjects
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`Error saving project '${projectData.title}' to Firebase:`, errorMessage);
+    console.error(`Error saving project '${dataForFirebase.title}' to Firebase:`, errorMessage);
     return { 
       success: false, 
-      message: `Failed to save project '${projectData.title}'. Error: ${errorMessage}` 
+      message: `Failed to save project '${dataForFirebase.title}'. Error: ${errorMessage}` 
     };
   }
 }
-
 
 export async function deleteProjectAction(id: string): Promise<{ success: boolean; message: string; projects?: Project[] }> {
   if (!id) return { success: false, message: "Project ID is required." };
@@ -661,7 +688,7 @@ export async function fetchEducationItemsForAdmin(): Promise<EducationItem[]> {
   return getEducationItems();
 }
 export async function fetchProjectsForAdmin(): Promise<Project[]> {
-  return getProjects(); 
+  return getProjects();
 }
 export async function fetchCertificationsForAdmin(): Promise<Certification[]> {
   return getCertifications();
