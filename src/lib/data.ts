@@ -29,7 +29,7 @@ export interface Project {
   liveLink?: string;
   repoLink?: string;
   dataAiHint?: string;
-  createdAt?: string; // Added for sorting
+  createdAt?: string; 
 }
 
 export interface Certification {
@@ -56,10 +56,10 @@ export interface SiteSettings {
   defaultUserSpecialization: string;
   contactDetails: ContactDetails;
   faviconUrl?: string;
-  resumeUrl?: string;
+  resumeUrl?: string; // This will now be primarily sourced from environment variable
   customHtmlWidget?: string;
-  blogUrl?: string; // New field for Blog URL
-  kofiUrl?: string;  // New field for Ko-fi URL
+  blogUrl?: string; 
+  kofiUrl?: string;  
 }
 
 export interface AboutData {
@@ -73,22 +73,22 @@ const CODE_SIGN_FAVICON_CYAN = 'data:image/svg+xml,<svg xmlns="http://www.w3.org
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
-  siteTitleSuffix: "Kunal Gupta Portfolio",
-  siteDescription: "A modern portfolio for Kunal Gupta, a Computer Science student, showcasing skills, projects, and experience.",
-  defaultProfileImageUrl: "https://placehold.co/300x300.png",
+  siteTitleSuffix: "Kunal Gupta's Portfolio",
+  siteDescription: "Kunal Gupta specializes in Artificial Intelligence, showcasing AI projects, web development skills, and innovative technology solutions.",
+  defaultProfileImageUrl: "https://media.licdn.com/dms/image/v2/D4D03AQFpZkJ--9b3hQ/profile-displayphoto-shrink_400_400/B4DZcDFDseIAAg-/0/1748103348062?e=1753315200&v=beta&t=6TmYnYE_93tflEjgHRcjuXgreyXpdfhJ3AlSTyX0isY",
   defaultUserName: "Kunal Gupta",
-  defaultUserSpecialization: "Web Development, AI & Machine Learning ",
+  defaultUserSpecialization: "Web Development, AI Agents",
   contactDetails: {
-    email: 'youremail@example.com',
-    linkedin: 'https://linkedin.com/in/yourusername',
-    github: 'https://github.com/yourusername',
-    twitter: 'https://twitter.com/yourusername',
+    email: 'kunalgupta250119@gmail.com',
+    linkedin: 'https://linkedin.com/in/kunalgupta25',
+    github: 'https://github.com/kunalgupta25',
+    twitter: 'https://x.com/Kunal_Gupta25',
   },
   faviconUrl: CODE_SIGN_FAVICON_CYAN,
-  resumeUrl: "/resume.pdf",
+  resumeUrl: process.env.NEXT_PUBLIC_RESUME_URL || "/resume.pdf", // Default from env or fallback
   customHtmlWidget: "",
-  blogUrl: "", // Default for new field
-  kofiUrl: "",   // Default for new field
+  blogUrl: "", 
+  kofiUrl: "",   
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -107,7 +107,11 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     const snapshot = await db.ref('/siteSettings').once('value');
     const data = snapshot.val();
 
+    // Start with a deep copy of defaults to ensure all keys exist
     const settings: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
+    
+    // Set resumeUrl from environment variable or default, overriding any Firebase value
+    settings.resumeUrl = process.env.NEXT_PUBLIC_RESUME_URL || DEFAULT_SITE_SETTINGS.resumeUrl || "/resume.pdf";
 
     if (data && typeof data === 'object') {
       console.log('[getSiteSettings] Fetched data from Firebase:', data);
@@ -128,53 +132,60 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       }
       console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
 
-      if (data.hasOwnProperty('resumeUrl')) {
-        const fbResumeUrl = data.resumeUrl;
-        if (typeof fbResumeUrl === 'string' && fbResumeUrl.trim() !== '') {
-          settings.resumeUrl = fbResumeUrl.trim();
-        } else {
-          settings.resumeUrl = DEFAULT_SITE_SETTINGS.resumeUrl;
-        }
-      }
-
+      // customHtmlWidget and contactDetails are handled below to ensure defaults apply if structure is missing
       if (data.hasOwnProperty('customHtmlWidget')) {
-        if (typeof data.customHtmlWidget === 'string') {
+        if (typeof data.customHtmlWidget === 'string') { // Can be empty string
           settings.customHtmlWidget = data.customHtmlWidget;
+        } else if (data.customHtmlWidget === null) {
+          settings.customHtmlWidget = DEFAULT_SITE_SETTINGS.customHtmlWidget; // Default to empty string
         }
       }
       
-      if (data.hasOwnProperty('blogUrl') && typeof data.blogUrl === 'string') {
-        settings.blogUrl = data.blogUrl.trim();
+      if (data.hasOwnProperty('blogUrl')) {
+         if (typeof data.blogUrl === 'string') {
+            settings.blogUrl = data.blogUrl.trim();
+         } else if (data.blogUrl === null || data.blogUrl === "") {
+            settings.blogUrl = DEFAULT_SITE_SETTINGS.blogUrl;
+         }
       }
-      if (data.hasOwnProperty('kofiUrl') && typeof data.kofiUrl === 'string') {
-        settings.kofiUrl = data.kofiUrl.trim();
-      }
-
+      if (data.hasOwnProperty('kofiUrl')) {
+        if (typeof data.kofiUrl === 'string') {
+           settings.kofiUrl = data.kofiUrl.trim();
+        } else if (data.kofiUrl === null || data.kofiUrl === "") {
+           settings.kofiUrl = DEFAULT_SITE_SETTINGS.kofiUrl;
+        }
+     }
 
       if (data.contactDetails && typeof data.contactDetails === 'object') {
         const contactData = data.contactDetails as Partial<ContactDetails>;
-        if (typeof contactData.email === 'string') settings.contactDetails.email = contactData.email;
-        if (typeof contactData.linkedin === 'string') settings.contactDetails.linkedin = contactData.linkedin;
-        if (typeof contactData.github === 'string') settings.contactDetails.github = contactData.github;
+        if (typeof contactData.email === 'string') settings.contactDetails.email = contactData.email; else settings.contactDetails.email = DEFAULT_SITE_SETTINGS.contactDetails.email;
+        if (typeof contactData.linkedin === 'string') settings.contactDetails.linkedin = contactData.linkedin; else settings.contactDetails.linkedin = DEFAULT_SITE_SETTINGS.contactDetails.linkedin;
+        if (typeof contactData.github === 'string') settings.contactDetails.github = contactData.github; else settings.contactDetails.github = DEFAULT_SITE_SETTINGS.contactDetails.github;
         
         if (contactData.hasOwnProperty('twitter')) {
             const fbTwitter = contactData.twitter;
             if (typeof fbTwitter === 'string' && fbTwitter.trim() !== '') {
                 settings.contactDetails.twitter = fbTwitter.trim();
+            } else {
+                settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
             }
+        } else {
+             settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
         }
       } else {
          console.log('[getSiteSettings] contactDetails missing or not an object in Firebase, using defaults from DEFAULT_SITE_SETTINGS.');
+         settings.contactDetails = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS.contactDetails));
       }
     } else {
-      console.log('[getSiteSettings] No data from Firebase or data is not an object. Using all defaults.');
+      console.log('[getSiteSettings] No data from Firebase or data is not an object. Using all defaults (env for resume).');
     }
-    console.log('[getSiteSettings] Final settings returned:', settings);
+    console.log('[getSiteSettings] Final settings returned (resumeUrl from env):', settings);
     return settings;
   } catch (error) {
     console.error("[getSiteSettings] Error fetching site settings:", error);
     const errorDefaults: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
-    console.log('[getSiteSettings] Error condition. Using all defaults. Default faviconUrl:', errorDefaults.faviconUrl);
+    errorDefaults.resumeUrl = process.env.NEXT_PUBLIC_RESUME_URL || DEFAULT_SITE_SETTINGS.resumeUrl || "/resume.pdf";
+    console.log('[getSiteSettings] Error condition. Using all defaults (env for resume). Default faviconUrl:', errorDefaults.faviconUrl);
     return errorDefaults;
   }
 }
@@ -201,6 +212,8 @@ export async function getAboutData(): Promise<AboutData> {
         if (data.hasOwnProperty('dataAiHint')) {
           if (typeof data.dataAiHint === 'string' && data.dataAiHint.trim() !== '') {
             about.dataAiHint = data.dataAiHint.trim();
+          } else if (data.dataAiHint === null || data.dataAiHint === "") {
+            about.dataAiHint = DEFAULT_ABOUT_DATA.dataAiHint;
           }
         }
     }
@@ -223,7 +236,7 @@ export async function getSkills(): Promise<Skill[]> {
           name: typeof skill.name === 'string' ? skill.name : 'Unnamed Skill',
           category: typeof skill.category === 'string' && ['Language', 'Framework/Library', 'Tool', 'Database', 'Cloud', 'Other'].includes(skill.category) ? skill.category as Skill['category'] : 'Other',
           level: skill.level !== undefined && !isNaN(Number(skill.level)) ? Number(skill.level) : undefined,
-          iconName: (typeof skill.iconName === 'string' && skill.iconName.trim() !== '' && skill.iconName.trim() !== '--no-icon--') ? skill.iconName : null,
+          iconName: (typeof skill.iconName === 'string' && skill.iconName.trim() !== '' && skill.iconName.trim() !== NULL_ICON_VALUE) ? skill.iconName : null,
         };
       }).filter(Boolean) as Skill[];
     }
@@ -247,7 +260,7 @@ export async function getEducationItems(): Promise<EducationItem[]> {
           institution: typeof item.institution === 'string' ? item.institution : 'N/A',
           period: typeof item.period === 'string' ? item.period : 'N/A',
           description: typeof item.description === 'string' ? item.description : undefined,
-          iconName: (typeof item.iconName === 'string' && item.iconName.trim() !== '' && item.iconName.trim() !== '--no-icon--') ? item.iconName : null,
+          iconName: (typeof item.iconName === 'string' && item.iconName.trim() !== '' && item.iconName.trim() !== NULL_ICON_VALUE) ? item.iconName : null,
         };
       }).filter(Boolean) as EducationItem[];
     }
@@ -306,7 +319,7 @@ export async function getCertifications(): Promise<Certification[]> {
           organization: typeof cert.organization === 'string' ? cert.organization : 'N/A',
           date: typeof cert.date === 'string' ? cert.date : 'N/A',
           verifyLink: (typeof cert.verifyLink === 'string' && cert.verifyLink.trim() !== '') ? cert.verifyLink : undefined,
-          iconName: (typeof cert.iconName === 'string' && cert.iconName.trim() !== '' && cert.iconName.trim() !== '--no-icon--') ? cert.iconName : null,
+          iconName: (typeof cert.iconName === 'string' && cert.iconName.trim() !== '' && cert.iconName.trim() !== NULL_ICON_VALUE) ? cert.iconName : null,
         };
       }).filter(Boolean) as Certification[];
     }

@@ -1,3 +1,4 @@
+
 # Firebase Studio
 
 This is a NextJS starter in Firebase Studio.
@@ -31,6 +32,7 @@ Click the button above to deploy this project to Netlify.
         *   `ADMIN_PASSWORD`
         *   `RESEND_API_KEY` (Your API key from Resend)
         *   `CONTACT_FORM_RECIPIENT_EMAIL` (The email address to receive contact form submissions)
+        *   `NEXT_PUBLIC_RESUME_URL` (URL to your resume/CV, e.g., `/resume.pdf` or a full web link)
     *   Netlify's build will fail if these are not set up correctly, as the Firebase Admin SDK needs them during the build process and at runtime for server actions.
 
 2.  **Check your `next.config.ts`**:
@@ -40,3 +42,5 @@ Click the button above to deploy this project to Netlify.
     *   Make sure all your latest changes, including the `.gitignore` and `netlify.toml`, are committed and pushed to your `https://github.com/KunalGupta25/portfolio-1` repository.
 
 Once these are done, your Netlify deployment should proceed smoothly!
+
+```

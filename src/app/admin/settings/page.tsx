@@ -28,7 +28,7 @@ const defaultSiteSettings: SiteSettings = {
   defaultUserSpecialization: "",
   defaultProfileImageUrl: "",
   faviconUrl: "",
-  resumeUrl: "",
+  resumeUrl: "", // Will be sourced from env var, but keep in type for consistency
   blogUrl: "",
   kofiUrl: "",
   contactDetails: {
@@ -36,7 +36,8 @@ const defaultSiteSettings: SiteSettings = {
     linkedin: "",
     github: "",
     twitter: "",
-  }
+  },
+  customHtmlWidget: "", // Keep in type
 };
 
 function SubmitButton() {
@@ -106,7 +107,8 @@ export default function AdminSettingsPage() {
         <CardHeader>
           <CardTitle>General Site Configuration</CardTitle>
           <CardDescription>
-            Update site name, title suffix, meta description, default user info, profile image, favicon, resume URL, external links, and contact details.
+            Update site name, title suffix, meta description, default user info, profile image, favicon, external links, and contact details.
+            Resume URL is now managed via environment variables.
             Changes are stored in Firebase Realtime Database.
           </CardDescription>
         </CardHeader>
@@ -229,23 +231,6 @@ export default function AdminSettingsPage() {
                 <p id="faviconurl-error" className="text-sm text-destructive mt-1">{state.errors.faviconUrl.join(', ')}</p>
               )}
             </div>
-
-            <div>
-              <Label htmlFor="resumeUrl" className="text-sm font-medium">Resume/CV URL (Full URL or relative path e.g. /resume.pdf)</Label>
-              <Input
-                type="text"
-                id="resumeUrl"
-                name="resumeUrl"
-                className="mt-1"
-                placeholder="e.g., /resume.pdf or https://example.com/resume.pdf"
-                value={currentSettings.resumeUrl || ''}
-                onChange={(e) => setCurrentSettings(prev => ({...prev, resumeUrl: e.target.value}))}
-                aria-describedby={state.errors?.resumeUrl ? "resumeurl-error" : undefined}
-              />
-              {state.errors?.resumeUrl && (
-                <p id="resumeurl-error" className="text-sm text-destructive mt-1">{state.errors.resumeUrl.join(', ')}</p>
-              )}
-            </div>
             
             <div>
               <Label htmlFor="blogUrl" className="text-sm font-medium">Blog URL (Optional)</Label>
@@ -346,7 +331,7 @@ export default function AdminSettingsPage() {
                 <p id="contacttwitter-error" className="text-sm text-destructive mt-1">{state.errors.contactTwitter.join(', ')}</p>
               )}
             </div>
-
+            {/* Resume URL input removed from here */}
             <SubmitButton />
           </form>
         </CardContent>

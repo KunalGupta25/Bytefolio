@@ -201,12 +201,12 @@ const siteSettingsSchema = z.object({
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
   faviconUrl: z.string().optional().or(z.literal('')), 
-  resumeUrl: z.string().optional().or(z.literal('')),
+  // resumeUrl removed from schema
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),
   contactTwitter: z.string().url().optional().or(z.literal('')),
-  customHtmlWidget: z.string().optional(),
+  customHtmlWidget: z.preprocess((val) => val ?? undefined, z.string().optional()), // if null (from missing form field), treat as undefined for .optional()
   blogUrl: z.string().url("Invalid Blog URL. Must be a full URL.").optional().or(z.literal('')),
   kofiUrl: z.string().url("Invalid Ko-fi URL. Must be a full URL.").optional().or(z.literal('')),
 });
@@ -233,12 +233,12 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     defaultUserSpecialization: formData.get('defaultUserSpecialization'),
     defaultProfileImageUrl: formData.get('defaultProfileImageUrl'),
     faviconUrl: formData.get('faviconUrl'),
-    resumeUrl: formData.get('resumeUrl'), 
+    // resumeUrl removed from dataToValidate
     contactEmail: formData.get('contactEmail'),
     contactLinkedin: formData.get('contactLinkedin'),
     contactGithub: formData.get('contactGithub'),
     contactTwitter: formData.get('contactTwitter'),
-    customHtmlWidget: formData.get('customHtmlWidget'),
+    customHtmlWidget: formData.get('customHtmlWidget'), // Will be null if not on form, preprocess handles this
     blogUrl: formData.get('blogUrl'),
     kofiUrl: formData.get('kofiUrl'),
   };
@@ -259,7 +259,11 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
   console.log("Site Settings Zod validation successful. Validated data:", validatedFields.data);
   
   try {
-    const settingsToUpdate: SiteSettings = {
+    // Fetch current settings to merge, especially for customHtmlWidget if not submitted from Integrations page
+    const currentSettingsSnapshot = await db.ref('/siteSettings').once('value');
+    const currentSettings = currentSettingsSnapshot.val() || {};
+
+    const settingsToUpdate: Partial<SiteSettings> & { contactDetails: ContactDetails } = { // Make it partial for merging
       siteName: validatedFields.data.siteName,
       siteTitleSuffix: validatedFields.data.siteTitleSuffix,
       siteDescription: validatedFields.data.siteDescription,
@@ -267,8 +271,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       defaultUserSpecialization: validatedFields.data.defaultUserSpecialization,
       defaultProfileImageUrl: validatedFields.data.defaultProfileImageUrl,
       faviconUrl: validatedFields.data.faviconUrl || undefined,
-      resumeUrl: validatedFields.data.resumeUrl || undefined, 
-      customHtmlWidget: validatedFields.data.customHtmlWidget || undefined,
+      // resumeUrl is not set here, it's from env
       blogUrl: validatedFields.data.blogUrl || undefined,
       kofiUrl: validatedFields.data.kofiUrl || undefined,
       contactDetails: {
@@ -278,14 +281,24 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
         twitter: validatedFields.data.contactTwitter || undefined,
       }
     };
-    await db.ref('/siteSettings').set(settingsToUpdate);
+
+    // Only update customHtmlWidget if it was actually part of the form submission
+    // (i.e., submitted from the Integrations page). Otherwise, keep the existing value.
+    if (formData.has('customHtmlWidget')) {
+      settingsToUpdate.customHtmlWidget = validatedFields.data.customHtmlWidget || undefined;
+    } else if (currentSettings.customHtmlWidget !== undefined) {
+      settingsToUpdate.customHtmlWidget = currentSettings.customHtmlWidget;
+    }
+
+
+    await db.ref('/siteSettings').update(settingsToUpdate); // Use update instead of set to avoid overwriting resumeUrl if it were stored
     
     console.log('Site Settings updated in Firebase:', settingsToUpdate);
     revalidatePath('/'); 
     revalidatePath('/layout', 'layout'); 
     revalidatePath('/admin/settings');
     revalidatePath('/admin/integrations');
-    const updatedSettings = await getSiteSettings();
+    const updatedSettings = await getSiteSettings(); // This will now include resumeUrl from env
     return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: updatedSettings };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -523,10 +536,9 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     description: projectData.description,
     imageUrl: projectData.imageUrl,
     tags: projectData.tags,
-    createdAt: isNew ? new Date().toISOString() : projectData.createdAt || new Date().toISOString(), // Set if new, else try to preserve
+    createdAt: isNew ? new Date().toISOString() : projectData.createdAt || new Date().toISOString(), 
   };
 
-  // Only include optional fields if they are not undefined and not empty strings
   if (projectData.liveLink) {
     dataForFirebase.liveLink = projectData.liveLink;
   }
@@ -537,7 +549,6 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     dataForFirebase.dataAiHint = projectData.dataAiHint;
   }
 
-  // If updating, fetch existing project to preserve createdAt if not passed
   if (!isNew && !projectData.createdAt) {
     try {
       const existingProjectSnapshot = await db.ref(`/projects/${projectId}`).once('value');
