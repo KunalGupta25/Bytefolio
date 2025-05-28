@@ -61,7 +61,7 @@ export interface SiteSettings {
   customHtmlWidget?: string;
   blogUrl?: string;
   kofiUrl?: string;
-  rssFeedUrl?: string; // New field for RSS feed
+  // rssFeedUrl removed
 }
 
 export interface AboutData {
@@ -71,19 +71,7 @@ export interface AboutData {
   dataAiHint?: string;
 }
 
-// Define BlogPost interface here or in a separate types file if it grows
-export interface BlogPost {
-  id: string; // Add an ID for key prop
-  title: string;
-  link: string;
-  pubDate?: string;
-  description?: string;
-  imageUrl?: string;
-  author?: string;
-  categories?: string[];
-  dataAiHint?: string;
-}
-
+// BlogPost interface removed as it's no longer needed
 
 const CODE_SIGN_FAVICON_CYAN = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
 
@@ -91,7 +79,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
   siteTitleSuffix: "Kunal Gupta Portfolio",
   siteDescription: "A modern portfolio for Kunal Gupta, a Computer Science student, showcasing skills, projects, and experience.",
-  defaultProfileImageUrl: "https://placehold.co/300x300.png",
+  defaultProfileImageUrl: "https://placehold.co/300x300.png?text=Profile+Pic",
   defaultUserName: "Kunal Gupta",
   defaultUserSpecialization: "Web Development, AI Agents",
   contactDetails: {
@@ -105,13 +93,15 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   customHtmlWidget: "",
   blogUrl: "",
   kofiUrl: "",
-  rssFeedUrl: "", // Default for RSS feed
+  // rssFeedUrl removed
 };
+console.log('[data.ts] DEFAULT_SITE_SETTINGS.faviconUrl:', DEFAULT_SITE_SETTINGS.faviconUrl);
+
 
 const DEFAULT_ABOUT_DATA: AboutData = {
   professionalSummary: "I am a dedicated and enthusiastic B.Tech Computer Science student with a strong foundation in software development, problem-solving, and web technologies. I am passionate about creating impactful technology solutions and continuously expanding my knowledge. Eager to contribute to innovative projects.",
   bio: "Beyond coding, I enjoy contributing to open-source projects and exploring new AI advancements. I believe in lifelong learning and am always seeking new challenges. My goal is to leverage my technical skills to make a positive impact.",
-  profileImageUrl: "https://placehold.co/300x300.png",
+  profileImageUrl: "https://placehold.co/300x300.png?text=Coding+Laptop",
   dataAiHint: "coding laptop",
 };
 
@@ -122,10 +112,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     const snapshot = await db.ref('/siteSettings').once('value');
     const data = snapshot.val();
 
-    // Start with a deep copy of defaults to ensure all fields are present
     const settings: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
     
-    // Override resumeUrl from environment variable if available, otherwise use default
     settings.resumeUrl = process.env.NEXT_PUBLIC_RESUME_URL || DEFAULT_SITE_SETTINGS.resumeUrl || "/resume.pdf";
 
     if (data && typeof data === 'object') {
@@ -156,9 +144,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       if (data.hasOwnProperty('kofiUrl')) {
         settings.kofiUrl = typeof data.kofiUrl === 'string' ? data.kofiUrl.trim() : DEFAULT_SITE_SETTINGS.kofiUrl;
       }
-      if (data.hasOwnProperty('rssFeedUrl')) { // Fetch rssFeedUrl
-        settings.rssFeedUrl = typeof data.rssFeedUrl === 'string' ? data.rssFeedUrl.trim() : DEFAULT_SITE_SETTINGS.rssFeedUrl;
-      }
+      // rssFeedUrl removed from here
 
       if (data.contactDetails && typeof data.contactDetails === 'object') {
         const contactData = data.contactDetails as Partial<ContactDetails>;

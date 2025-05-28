@@ -6,7 +6,7 @@ import SkillsSection from '@/app/components/skills-section';
 import EducationSection from '@/app/components/education-section';
 import ProjectsSection from '@/app/components/projects-section';
 import CertificationsSection from '@/app/components/certifications-section';
-import BlogSection from '@/app/components/blog-section'; // Import BlogSection
+// BlogSection import removed
 import ContactSection from '@/app/components/contact-section';
 import Footer from '@/app/components/footer';
 import { 
@@ -48,7 +48,7 @@ export default async function PortfolioPage() {
         <EducationSection educationItems={educationItems} />
         <ProjectsSection projects={projects} />
         <CertificationsSection certifications={certifications} />
-        {siteSettings.rssFeedUrl && <BlogSection rssFeedUrl={siteSettings.rssFeedUrl} />}
+        {/* BlogSection rendering removed */}
         <ContactSection 
           contactDetails={siteSettings.contactDetails} 
           kofiUrl={siteSettings.kofiUrl} 

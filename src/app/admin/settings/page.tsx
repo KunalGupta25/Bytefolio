@@ -31,7 +31,7 @@ const defaultSiteSettings: SiteSettings = {
   resumeUrl: "", 
   blogUrl: "",
   kofiUrl: "",
-  rssFeedUrl: "", // New field
+  // rssFeedUrl removed
   contactDetails: {
     email: "",
     linkedin: "",
@@ -267,23 +267,7 @@ export default function AdminSettingsPage() {
               )}
             </div>
 
-            <div>
-              <Label htmlFor="rssFeedUrl" className="text-sm font-medium">RSS Feed URL (Optional, for Blog Section)</Label>
-              <Input
-                type="url"
-                id="rssFeedUrl"
-                name="rssFeedUrl"
-                className="mt-1"
-                placeholder="https://yourblog.com/rss.xml"
-                value={currentSettings.rssFeedUrl || ''}
-                onChange={(e) => setCurrentSettings(prev => ({...prev, rssFeedUrl: e.target.value}))}
-                aria-describedby={state.errors?.rssFeedUrl ? "rssfeedurl-error" : undefined}
-              />
-              {state.errors?.rssFeedUrl && (
-                <p id="rssfeedurl-error" className="text-sm text-destructive mt-1">{state.errors.rssFeedUrl.join(', ')}</p>
-              )}
-            </div>
-
+            {/* RSS Feed URL input removed */}
 
             <h3 className="text-lg font-semibold pt-4 border-t mt-6">Contact Details</h3>
              <div>

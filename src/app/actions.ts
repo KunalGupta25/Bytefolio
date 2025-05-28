@@ -198,7 +198,7 @@ const siteSettingsSchema = z.object({
   defaultUserName: z.string().min(2, "Default user name must be at least 2 characters."),
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
-  faviconUrl: z.string().optional().or(z.literal('')), 
+  faviconUrl: z.string().optional().or(z.literal('')),
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),
@@ -206,7 +206,7 @@ const siteSettingsSchema = z.object({
   customHtmlWidget: z.preprocess((val) => val ?? undefined, z.string().optional().nullable()),
   blogUrl: z.string().url("Invalid Blog URL. Must be a full URL.").optional().or(z.literal('')),
   kofiUrl: z.string().url("Invalid Ko-fi URL. Must be a full URL.").optional().or(z.literal('')),
-  rssFeedUrl: z.string().url("Invalid RSS Feed URL. Must be a full URL.").optional().or(z.literal('')), // New field
+  // rssFeedUrl removed
 });
 
 interface SiteSettingsState {
@@ -238,7 +238,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     customHtmlWidget: formData.get('customHtmlWidget'),
     blogUrl: formData.get('blogUrl'),
     kofiUrl: formData.get('kofiUrl'),
-    rssFeedUrl: formData.get('rssFeedUrl'), // New field
+    // rssFeedUrl removed
   };
   
   console.log("Data prepared for Zod validation:", dataToValidate);
@@ -270,7 +270,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       faviconUrl: validatedFields.data.faviconUrl || undefined,
       blogUrl: validatedFields.data.blogUrl || undefined,
       kofiUrl: validatedFields.data.kofiUrl || undefined,
-      rssFeedUrl: validatedFields.data.rssFeedUrl || undefined, // New field
+      // rssFeedUrl removed
       contactDetails: {
         email: validatedFields.data.contactEmail,
         linkedin: validatedFields.data.contactLinkedin,
@@ -279,11 +279,15 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       }
     };
 
+    // Only update customHtmlWidget if it was part of the submitted form
+    // This prevents it from being wiped when saving from the main settings page
     if (formData.has('customHtmlWidget')) {
       settingsToUpdate.customHtmlWidget = validatedFields.data.customHtmlWidget || undefined;
     } else if (currentSettings.customHtmlWidget !== undefined) {
+      // Preserve existing value if not submitted
       settingsToUpdate.customHtmlWidget = currentSettings.customHtmlWidget;
     }
+
 
     await db.ref('/siteSettings').update(settingsToUpdate); 
     
