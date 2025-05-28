@@ -3,6 +3,9 @@ import type React from 'react';
 import { db } from './firebase-admin'; // Firebase Admin SDK
 
 // Types for data structures
+
+const NULL_ICON_VALUE = "--no-icon--"; // Define the constant here
+
 export interface Skill {
   id: string;
   name: string;
@@ -29,7 +32,7 @@ export interface Project {
   liveLink?: string;
   repoLink?: string;
   dataAiHint?: string;
-  createdAt?: string; 
+  createdAt?: string;
 }
 
 export interface Certification {
@@ -56,10 +59,10 @@ export interface SiteSettings {
   defaultUserSpecialization: string;
   contactDetails: ContactDetails;
   faviconUrl?: string;
-  resumeUrl?: string; // This will now be primarily sourced from environment variable
+  resumeUrl?: string;
   customHtmlWidget?: string;
-  blogUrl?: string; 
-  kofiUrl?: string;  
+  blogUrl?: string;
+  kofiUrl?: string;
 }
 
 export interface AboutData {
@@ -75,7 +78,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
   siteTitleSuffix: "Kunal Gupta's Portfolio",
   siteDescription: "Kunal Gupta specializes in Artificial Intelligence, showcasing AI projects, web development skills, and innovative technology solutions.",
-  defaultProfileImageUrl: "https://media.licdn.com/dms/image/v2/D4D03AQFpZkJ--9b3hQ/profile-displayphoto-shrink_400_400/B4DZcDFDseIAAg-/0/1748103348062?e=1753315200&v=beta&t=6TmYnYE_93tflEjgHRcjuXgreyXpdfhJ3AlSTyX0isY",
+  defaultProfileImageUrl: "https://media.licdn.com/dms/image/v2/D4D03AQFpZkJ--9b3hQ/profile-displayphoto-shrink_400_400/0/1748103348062?e=1753315200&v=beta&t=6TmYnYE_93tflEjgHRcjuXgreyXpdfhJ3AlSTyX0isY",
   defaultUserName: "Kunal Gupta",
   defaultUserSpecialization: "Web Development, AI Agents",
   contactDetails: {
@@ -85,10 +88,10 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
     twitter: 'https://x.com/Kunal_Gupta25',
   },
   faviconUrl: CODE_SIGN_FAVICON_CYAN,
-  resumeUrl: process.env.NEXT_PUBLIC_RESUME_URL || "/resume.pdf", // Default from env or fallback
+  resumeUrl: process.env.NEXT_PUBLIC_RESUME_URL || "/resume.pdf",
   customHtmlWidget: "",
-  blogUrl: "", 
-  kofiUrl: "",   
+  blogUrl: "",
+  kofiUrl: "",
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -107,10 +110,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     const snapshot = await db.ref('/siteSettings').once('value');
     const data = snapshot.val();
 
-    // Start with a deep copy of defaults to ensure all keys exist
     const settings: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
-    
-    // Set resumeUrl from environment variable or default, overriding any Firebase value
     settings.resumeUrl = process.env.NEXT_PUBLIC_RESUME_URL || DEFAULT_SITE_SETTINGS.resumeUrl || "/resume.pdf";
 
     if (data && typeof data === 'object') {
@@ -121,47 +121,46 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       if (typeof data.defaultUserName === 'string' && data.defaultUserName.trim() !== '') settings.defaultUserName = data.defaultUserName.trim();
       if (typeof data.defaultUserSpecialization === 'string' && data.defaultUserSpecialization.trim() !== '') settings.defaultUserSpecialization = data.defaultUserSpecialization.trim();
       if (typeof data.defaultProfileImageUrl === 'string' && data.defaultProfileImageUrl.trim() !== '') settings.defaultProfileImageUrl = data.defaultProfileImageUrl.trim();
-      
+
       if (data.hasOwnProperty('faviconUrl')) {
         const fbFaviconUrl = data.faviconUrl;
         if (typeof fbFaviconUrl === 'string' && fbFaviconUrl.trim() !== '') {
             settings.faviconUrl = fbFaviconUrl.trim();
-        } else if (fbFaviconUrl === null || fbFaviconUrl === "" || fbFaviconUrl === "--no-icon--") {
-             settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl; 
+        } else { // Handles null, empty string, or any other non-valid string
+             settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl;
         }
       }
       console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
 
-      // customHtmlWidget and contactDetails are handled below to ensure defaults apply if structure is missing
       if (data.hasOwnProperty('customHtmlWidget')) {
-        if (typeof data.customHtmlWidget === 'string') { // Can be empty string
+        if (typeof data.customHtmlWidget === 'string') {
           settings.customHtmlWidget = data.customHtmlWidget;
-        } else if (data.customHtmlWidget === null) {
-          settings.customHtmlWidget = DEFAULT_SITE_SETTINGS.customHtmlWidget; // Default to empty string
+        } else {
+          settings.customHtmlWidget = DEFAULT_SITE_SETTINGS.customHtmlWidget;
         }
       }
-      
+
       if (data.hasOwnProperty('blogUrl')) {
          if (typeof data.blogUrl === 'string') {
             settings.blogUrl = data.blogUrl.trim();
-         } else if (data.blogUrl === null || data.blogUrl === "") {
+         } else {
             settings.blogUrl = DEFAULT_SITE_SETTINGS.blogUrl;
          }
       }
       if (data.hasOwnProperty('kofiUrl')) {
         if (typeof data.kofiUrl === 'string') {
            settings.kofiUrl = data.kofiUrl.trim();
-        } else if (data.kofiUrl === null || data.kofiUrl === "") {
+        } else {
            settings.kofiUrl = DEFAULT_SITE_SETTINGS.kofiUrl;
         }
      }
 
       if (data.contactDetails && typeof data.contactDetails === 'object') {
         const contactData = data.contactDetails as Partial<ContactDetails>;
-        if (typeof contactData.email === 'string') settings.contactDetails.email = contactData.email; else settings.contactDetails.email = DEFAULT_SITE_SETTINGS.contactDetails.email;
-        if (typeof contactData.linkedin === 'string') settings.contactDetails.linkedin = contactData.linkedin; else settings.contactDetails.linkedin = DEFAULT_SITE_SETTINGS.contactDetails.linkedin;
-        if (typeof contactData.github === 'string') settings.contactDetails.github = contactData.github; else settings.contactDetails.github = DEFAULT_SITE_SETTINGS.contactDetails.github;
-        
+        settings.contactDetails.email = typeof contactData.email === 'string' ? contactData.email : DEFAULT_SITE_SETTINGS.contactDetails.email;
+        settings.contactDetails.linkedin = typeof contactData.linkedin === 'string' ? contactData.linkedin : DEFAULT_SITE_SETTINGS.contactDetails.linkedin;
+        settings.contactDetails.github = typeof contactData.github === 'string' ? contactData.github : DEFAULT_SITE_SETTINGS.contactDetails.github;
+
         if (contactData.hasOwnProperty('twitter')) {
             const fbTwitter = contactData.twitter;
             if (typeof fbTwitter === 'string' && fbTwitter.trim() !== '') {
@@ -173,19 +172,19 @@ export async function getSiteSettings(): Promise<SiteSettings> {
              settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
         }
       } else {
-         console.log('[getSiteSettings] contactDetails missing or not an object in Firebase, using defaults from DEFAULT_SITE_SETTINGS.');
+         console.log('[getSiteSettings] contactDetails missing or not an object in Firebase, using defaults.');
          settings.contactDetails = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS.contactDetails));
       }
     } else {
-      console.log('[getSiteSettings] No data from Firebase or data is not an object. Using all defaults (env for resume).');
+      console.log('[getSiteSettings] No data from Firebase or data is not an object. Using all defaults.');
     }
-    console.log('[getSiteSettings] Final settings returned (resumeUrl from env):', settings);
+    console.log('[getSiteSettings] Final settings returned:', settings);
     return settings;
   } catch (error) {
     console.error("[getSiteSettings] Error fetching site settings:", error);
     const errorDefaults: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
     errorDefaults.resumeUrl = process.env.NEXT_PUBLIC_RESUME_URL || DEFAULT_SITE_SETTINGS.resumeUrl || "/resume.pdf";
-    console.log('[getSiteSettings] Error condition. Using all defaults (env for resume). Default faviconUrl:', errorDefaults.faviconUrl);
+    console.log('[getSiteSettings] Error condition. Using all defaults. Default faviconUrl:', errorDefaults.faviconUrl);
     return errorDefaults;
   }
 }
@@ -194,17 +193,17 @@ export async function getAboutData(): Promise<AboutData> {
   try {
     const snapshot = await db.ref('/aboutInfo').once('value');
     const data = snapshot.val();
-    
+
     const about: AboutData = JSON.parse(JSON.stringify(DEFAULT_ABOUT_DATA));
 
     if (data && typeof data === 'object') {
         if (typeof data.professionalSummary === 'string' && data.professionalSummary.trim() !== '') about.professionalSummary = data.professionalSummary.trim();
         if (typeof data.bio === 'string' && data.bio.trim() !== '') about.bio = data.bio.trim();
-        
+
         if (data.hasOwnProperty('profileImageUrl')) {
             if (typeof data.profileImageUrl === 'string' && data.profileImageUrl.trim() !== '') {
                 about.profileImageUrl = data.profileImageUrl.trim();
-            } else if (data.profileImageUrl === null || data.profileImageUrl === "") {
+            } else { // Handles null or empty string
                 about.profileImageUrl = DEFAULT_ABOUT_DATA.profileImageUrl;
             }
         }
@@ -212,7 +211,7 @@ export async function getAboutData(): Promise<AboutData> {
         if (data.hasOwnProperty('dataAiHint')) {
           if (typeof data.dataAiHint === 'string' && data.dataAiHint.trim() !== '') {
             about.dataAiHint = data.dataAiHint.trim();
-          } else if (data.dataAiHint === null || data.dataAiHint === "") {
+          } else { // Handles null or empty string
             about.dataAiHint = DEFAULT_ABOUT_DATA.dataAiHint;
           }
         }
@@ -230,9 +229,9 @@ export async function getSkills(): Promise<Skill[]> {
     const skillsData = snapshot.val();
     if (skillsData && typeof skillsData === 'object') {
       return Object.entries(skillsData).map(([id, skill]: [string, any]) => {
-        if (!skill || typeof skill !== 'object') return null; 
+        if (!skill || typeof skill !== 'object') return null;
         return {
-          id: typeof skill.id === 'string' ? skill.id : id, 
+          id: typeof skill.id === 'string' ? skill.id : id,
           name: typeof skill.name === 'string' ? skill.name : 'Unnamed Skill',
           category: typeof skill.category === 'string' && ['Language', 'Framework/Library', 'Tool', 'Database', 'Cloud', 'Other'].includes(skill.category) ? skill.category as Skill['category'] : 'Other',
           level: skill.level !== undefined && !isNaN(Number(skill.level)) ? Number(skill.level) : undefined,
@@ -287,7 +286,7 @@ export async function getProjects(): Promise<Project[]> {
           liveLink: (typeof project.liveLink === 'string' && project.liveLink.trim() !== '') ? project.liveLink : undefined,
           repoLink: (typeof project.repoLink === 'string' && project.repoLink.trim() !== '') ? project.repoLink : undefined,
           dataAiHint: typeof project.dataAiHint === 'string' ? project.dataAiHint : undefined,
-          createdAt: typeof project.createdAt === 'string' ? project.createdAt : new Date(0).toISOString(), 
+          createdAt: typeof project.createdAt === 'string' ? project.createdAt : new Date(0).toISOString(),
         };
       }).filter(Boolean) as Project[];
 
@@ -296,7 +295,7 @@ export async function getProjects(): Promise<Project[]> {
         const dateB = new Date(b.createdAt || 0).getTime();
         return dateB - dateA;
       });
-      
+
       return projectsArray;
     }
     return [];
@@ -340,4 +339,3 @@ export async function getPageViews(): Promise<number> {
     return 0;
   }
 }
-    
