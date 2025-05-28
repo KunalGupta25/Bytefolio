@@ -2,9 +2,7 @@
 import type React from 'react';
 import { db } from './firebase-admin'; // Firebase Admin SDK
 
-// Types for data structures
-
-const NULL_ICON_VALUE = "--no-icon--"; // Define the constant here
+const NULL_ICON_VALUE = "--no-icon--";
 
 export interface Skill {
   id: string;
@@ -63,6 +61,7 @@ export interface SiteSettings {
   customHtmlWidget?: string;
   blogUrl?: string;
   kofiUrl?: string;
+  rssFeedUrl?: string; // New field for RSS feed
 }
 
 export interface AboutData {
@@ -72,13 +71,27 @@ export interface AboutData {
   dataAiHint?: string;
 }
 
+// Define BlogPost interface here or in a separate types file if it grows
+export interface BlogPost {
+  id: string; // Add an ID for key prop
+  title: string;
+  link: string;
+  pubDate?: string;
+  description?: string;
+  imageUrl?: string;
+  author?: string;
+  categories?: string[];
+  dataAiHint?: string;
+}
+
+
 const CODE_SIGN_FAVICON_CYAN = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
-  siteTitleSuffix: "Kunal Gupta's Portfolio",
-  siteDescription: "Kunal Gupta specializes in Artificial Intelligence, showcasing AI projects, web development skills, and innovative technology solutions.",
-  defaultProfileImageUrl: "https://media.licdn.com/dms/image/v2/D4D03AQFpZkJ--9b3hQ/profile-displayphoto-shrink_400_400/0/1748103348062?e=1753315200&v=beta&t=6TmYnYE_93tflEjgHRcjuXgreyXpdfhJ3AlSTyX0isY",
+  siteTitleSuffix: "Kunal Gupta Portfolio",
+  siteDescription: "A modern portfolio for Kunal Gupta, a Computer Science student, showcasing skills, projects, and experience.",
+  defaultProfileImageUrl: "https://placehold.co/300x300.png",
   defaultUserName: "Kunal Gupta",
   defaultUserSpecialization: "Web Development, AI Agents",
   contactDetails: {
@@ -92,6 +105,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   customHtmlWidget: "",
   blogUrl: "",
   kofiUrl: "",
+  rssFeedUrl: "", // Default for RSS feed
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
@@ -102,15 +116,16 @@ const DEFAULT_ABOUT_DATA: AboutData = {
 };
 
 
-// --- Data Fetching Functions from Firebase ---
-
 export async function getSiteSettings(): Promise<SiteSettings> {
   console.log('[getSiteSettings] Initialized settings with defaults. Default faviconUrl:', DEFAULT_SITE_SETTINGS.faviconUrl);
   try {
     const snapshot = await db.ref('/siteSettings').once('value');
     const data = snapshot.val();
 
+    // Start with a deep copy of defaults to ensure all fields are present
     const settings: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
+    
+    // Override resumeUrl from environment variable if available, otherwise use default
     settings.resumeUrl = process.env.NEXT_PUBLIC_RESUME_URL || DEFAULT_SITE_SETTINGS.resumeUrl || "/resume.pdf";
 
     if (data && typeof data === 'object') {
@@ -121,59 +136,42 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       if (typeof data.defaultUserName === 'string' && data.defaultUserName.trim() !== '') settings.defaultUserName = data.defaultUserName.trim();
       if (typeof data.defaultUserSpecialization === 'string' && data.defaultUserSpecialization.trim() !== '') settings.defaultUserSpecialization = data.defaultUserSpecialization.trim();
       if (typeof data.defaultProfileImageUrl === 'string' && data.defaultProfileImageUrl.trim() !== '') settings.defaultProfileImageUrl = data.defaultProfileImageUrl.trim();
-
+      
       if (data.hasOwnProperty('faviconUrl')) {
         const fbFaviconUrl = data.faviconUrl;
         if (typeof fbFaviconUrl === 'string' && fbFaviconUrl.trim() !== '') {
             settings.faviconUrl = fbFaviconUrl.trim();
-        } else { // Handles null, empty string, or any other non-valid string
+        } else { 
              settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl;
         }
       }
-      console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl);
-
+      console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl?.startsWith('data:image/svg+xml') ? 'SVG Data URI' : settings.faviconUrl);
+      
       if (data.hasOwnProperty('customHtmlWidget')) {
-        if (typeof data.customHtmlWidget === 'string') {
-          settings.customHtmlWidget = data.customHtmlWidget;
-        } else {
-          settings.customHtmlWidget = DEFAULT_SITE_SETTINGS.customHtmlWidget;
-        }
+        settings.customHtmlWidget = typeof data.customHtmlWidget === 'string' ? data.customHtmlWidget : DEFAULT_SITE_SETTINGS.customHtmlWidget;
       }
-
       if (data.hasOwnProperty('blogUrl')) {
-         if (typeof data.blogUrl === 'string') {
-            settings.blogUrl = data.blogUrl.trim();
-         } else {
-            settings.blogUrl = DEFAULT_SITE_SETTINGS.blogUrl;
-         }
+         settings.blogUrl = typeof data.blogUrl === 'string' ? data.blogUrl.trim() : DEFAULT_SITE_SETTINGS.blogUrl;
       }
       if (data.hasOwnProperty('kofiUrl')) {
-        if (typeof data.kofiUrl === 'string') {
-           settings.kofiUrl = data.kofiUrl.trim();
-        } else {
-           settings.kofiUrl = DEFAULT_SITE_SETTINGS.kofiUrl;
-        }
-     }
+        settings.kofiUrl = typeof data.kofiUrl === 'string' ? data.kofiUrl.trim() : DEFAULT_SITE_SETTINGS.kofiUrl;
+      }
+      if (data.hasOwnProperty('rssFeedUrl')) { // Fetch rssFeedUrl
+        settings.rssFeedUrl = typeof data.rssFeedUrl === 'string' ? data.rssFeedUrl.trim() : DEFAULT_SITE_SETTINGS.rssFeedUrl;
+      }
 
       if (data.contactDetails && typeof data.contactDetails === 'object') {
         const contactData = data.contactDetails as Partial<ContactDetails>;
         settings.contactDetails.email = typeof contactData.email === 'string' ? contactData.email : DEFAULT_SITE_SETTINGS.contactDetails.email;
         settings.contactDetails.linkedin = typeof contactData.linkedin === 'string' ? contactData.linkedin : DEFAULT_SITE_SETTINGS.contactDetails.linkedin;
         settings.contactDetails.github = typeof contactData.github === 'string' ? contactData.github : DEFAULT_SITE_SETTINGS.contactDetails.github;
-
+        
         if (contactData.hasOwnProperty('twitter')) {
             const fbTwitter = contactData.twitter;
-            if (typeof fbTwitter === 'string' && fbTwitter.trim() !== '') {
-                settings.contactDetails.twitter = fbTwitter.trim();
-            } else {
-                settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
-            }
-        } else {
-             settings.contactDetails.twitter = DEFAULT_SITE_SETTINGS.contactDetails.twitter;
+            settings.contactDetails.twitter = (typeof fbTwitter === 'string' && fbTwitter.trim() !== '') ? fbTwitter.trim() : DEFAULT_SITE_SETTINGS.contactDetails.twitter;
         }
       } else {
          console.log('[getSiteSettings] contactDetails missing or not an object in Firebase, using defaults.');
-         settings.contactDetails = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS.contactDetails));
       }
     } else {
       console.log('[getSiteSettings] No data from Firebase or data is not an object. Using all defaults.');
@@ -184,7 +182,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     console.error("[getSiteSettings] Error fetching site settings:", error);
     const errorDefaults: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
     errorDefaults.resumeUrl = process.env.NEXT_PUBLIC_RESUME_URL || DEFAULT_SITE_SETTINGS.resumeUrl || "/resume.pdf";
-    console.log('[getSiteSettings] Error condition. Using all defaults. Default faviconUrl:', errorDefaults.faviconUrl);
+    console.log('[getSiteSettings] Error condition. Using all defaults. Default faviconUrl:', errorDefaults.faviconUrl?.startsWith('data:image/svg+xml') ? 'SVG Data URI' : errorDefaults.faviconUrl);
     return errorDefaults;
   }
 }
@@ -193,27 +191,16 @@ export async function getAboutData(): Promise<AboutData> {
   try {
     const snapshot = await db.ref('/aboutInfo').once('value');
     const data = snapshot.val();
-
     const about: AboutData = JSON.parse(JSON.stringify(DEFAULT_ABOUT_DATA));
 
     if (data && typeof data === 'object') {
         if (typeof data.professionalSummary === 'string' && data.professionalSummary.trim() !== '') about.professionalSummary = data.professionalSummary.trim();
         if (typeof data.bio === 'string' && data.bio.trim() !== '') about.bio = data.bio.trim();
-
         if (data.hasOwnProperty('profileImageUrl')) {
-            if (typeof data.profileImageUrl === 'string' && data.profileImageUrl.trim() !== '') {
-                about.profileImageUrl = data.profileImageUrl.trim();
-            } else { // Handles null or empty string
-                about.profileImageUrl = DEFAULT_ABOUT_DATA.profileImageUrl;
-            }
+            about.profileImageUrl = (typeof data.profileImageUrl === 'string' && data.profileImageUrl.trim() !== '') ? data.profileImageUrl.trim() : DEFAULT_ABOUT_DATA.profileImageUrl;
         }
-
         if (data.hasOwnProperty('dataAiHint')) {
-          if (typeof data.dataAiHint === 'string' && data.dataAiHint.trim() !== '') {
-            about.dataAiHint = data.dataAiHint.trim();
-          } else { // Handles null or empty string
-            about.dataAiHint = DEFAULT_ABOUT_DATA.dataAiHint;
-          }
+          about.dataAiHint = (typeof data.dataAiHint === 'string' && data.dataAiHint.trim() !== '') ? data.dataAiHint.trim() : DEFAULT_ABOUT_DATA.dataAiHint;
         }
     }
     return about;

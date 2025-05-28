@@ -108,7 +108,6 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
     });
     console.log('Contact form submission received and stored in Firebase:', { name, email });
 
-    // Send email notification via Resend
     if (process.env.RESEND_API_KEY && process.env.CONTACT_FORM_RECIPIENT_EMAIL) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       try {
@@ -127,7 +126,6 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
         console.log('Contact form email sent successfully via Resend.');
       } catch (emailError) {
         console.error("Error sending contact form email via Resend:", emailError);
-        // Do not return failure for email sending, as the message is already in DB
       }
     } else {
       console.warn('Resend API key or recipient email not configured in environment variables. Skipping email notification.');
@@ -201,14 +199,14 @@ const siteSettingsSchema = z.object({
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
   faviconUrl: z.string().optional().or(z.literal('')), 
-  // resumeUrl removed from schema
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.string().url(),
   contactTwitter: z.string().url().optional().or(z.literal('')),
-  customHtmlWidget: z.preprocess((val) => val ?? undefined, z.string().optional()), // if null (from missing form field), treat as undefined for .optional()
+  customHtmlWidget: z.preprocess((val) => val ?? undefined, z.string().optional().nullable()),
   blogUrl: z.string().url("Invalid Blog URL. Must be a full URL.").optional().or(z.literal('')),
   kofiUrl: z.string().url("Invalid Ko-fi URL. Must be a full URL.").optional().or(z.literal('')),
+  rssFeedUrl: z.string().url("Invalid RSS Feed URL. Must be a full URL.").optional().or(z.literal('')), // New field
 });
 
 interface SiteSettingsState {
@@ -233,14 +231,14 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     defaultUserSpecialization: formData.get('defaultUserSpecialization'),
     defaultProfileImageUrl: formData.get('defaultProfileImageUrl'),
     faviconUrl: formData.get('faviconUrl'),
-    // resumeUrl removed from dataToValidate
     contactEmail: formData.get('contactEmail'),
     contactLinkedin: formData.get('contactLinkedin'),
     contactGithub: formData.get('contactGithub'),
     contactTwitter: formData.get('contactTwitter'),
-    customHtmlWidget: formData.get('customHtmlWidget'), // Will be null if not on form, preprocess handles this
+    customHtmlWidget: formData.get('customHtmlWidget'),
     blogUrl: formData.get('blogUrl'),
     kofiUrl: formData.get('kofiUrl'),
+    rssFeedUrl: formData.get('rssFeedUrl'), // New field
   };
   
   console.log("Data prepared for Zod validation:", dataToValidate);
@@ -259,11 +257,10 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
   console.log("Site Settings Zod validation successful. Validated data:", validatedFields.data);
   
   try {
-    // Fetch current settings to merge, especially for customHtmlWidget if not submitted from Integrations page
     const currentSettingsSnapshot = await db.ref('/siteSettings').once('value');
     const currentSettings = currentSettingsSnapshot.val() || {};
 
-    const settingsToUpdate: Partial<SiteSettings> & { contactDetails: ContactDetails } = { // Make it partial for merging
+    const settingsToUpdate: Partial<SiteSettings> & { contactDetails: ContactDetails } = { 
       siteName: validatedFields.data.siteName,
       siteTitleSuffix: validatedFields.data.siteTitleSuffix,
       siteDescription: validatedFields.data.siteDescription,
@@ -271,9 +268,9 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       defaultUserSpecialization: validatedFields.data.defaultUserSpecialization,
       defaultProfileImageUrl: validatedFields.data.defaultProfileImageUrl,
       faviconUrl: validatedFields.data.faviconUrl || undefined,
-      // resumeUrl is not set here, it's from env
       blogUrl: validatedFields.data.blogUrl || undefined,
       kofiUrl: validatedFields.data.kofiUrl || undefined,
+      rssFeedUrl: validatedFields.data.rssFeedUrl || undefined, // New field
       contactDetails: {
         email: validatedFields.data.contactEmail,
         linkedin: validatedFields.data.contactLinkedin,
@@ -282,23 +279,20 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       }
     };
 
-    // Only update customHtmlWidget if it was actually part of the form submission
-    // (i.e., submitted from the Integrations page). Otherwise, keep the existing value.
     if (formData.has('customHtmlWidget')) {
       settingsToUpdate.customHtmlWidget = validatedFields.data.customHtmlWidget || undefined;
     } else if (currentSettings.customHtmlWidget !== undefined) {
       settingsToUpdate.customHtmlWidget = currentSettings.customHtmlWidget;
     }
 
-
-    await db.ref('/siteSettings').update(settingsToUpdate); // Use update instead of set to avoid overwriting resumeUrl if it were stored
+    await db.ref('/siteSettings').update(settingsToUpdate); 
     
     console.log('Site Settings updated in Firebase:', settingsToUpdate);
     revalidatePath('/'); 
     revalidatePath('/layout', 'layout'); 
     revalidatePath('/admin/settings');
     revalidatePath('/admin/integrations');
-    const updatedSettings = await getSiteSettings(); // This will now include resumeUrl from env
+    const updatedSettings = await getSiteSettings(); 
     return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: updatedSettings };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -482,7 +476,7 @@ const projectSchema = z.object({
   liveLink: z.string().url("Invalid Live Demo URL. Must be a full URL.").optional().or(z.literal('')),
   repoLink: z.string().url("Invalid Repository URL. Must be a full URL.").optional().or(z.literal('')),
   dataAiHint: z.string().optional(),
-  createdAt: z.string().datetime().optional(), // For sorting, managed by server
+  createdAt: z.string().datetime().optional(), 
 });
 
 interface ProjectCrudState {
@@ -504,7 +498,6 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     liveLink: formData.get('liveLink') || undefined, 
     repoLink: formData.get('repoLink') || undefined,
     dataAiHint: formData.get('dataAiHint') || undefined,
-    // createdAt is not taken from form, it's set by server
   };
   console.log("Raw data for validation:", rawData);
 

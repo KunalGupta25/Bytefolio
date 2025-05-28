@@ -28,16 +28,17 @@ const defaultSiteSettings: SiteSettings = {
   defaultUserSpecialization: "",
   defaultProfileImageUrl: "",
   faviconUrl: "",
-  resumeUrl: "", // Will be sourced from env var, but keep in type for consistency
+  resumeUrl: "", 
   blogUrl: "",
   kofiUrl: "",
+  rssFeedUrl: "", // New field
   contactDetails: {
     email: "",
     linkedin: "",
     github: "",
     twitter: "",
   },
-  customHtmlWidget: "", // Keep in type
+  customHtmlWidget: "",
 };
 
 function SubmitButton() {
@@ -108,7 +109,7 @@ export default function AdminSettingsPage() {
           <CardTitle>General Site Configuration</CardTitle>
           <CardDescription>
             Update site name, title suffix, meta description, default user info, profile image, favicon, external links, and contact details.
-            Resume URL is now managed via environment variables.
+            Resume URL is managed via environment variables.
             Changes are stored in Firebase Realtime Database.
           </CardDescription>
         </CardHeader>
@@ -216,9 +217,9 @@ export default function AdminSettingsPage() {
             </div>
 
             <div>
-              <Label htmlFor="faviconUrl" className="text-sm font-medium">Favicon URL (e.g., /favicon.ico or data:image/svg+xml,...)</Label>
+              <Label htmlFor="faviconUrl" className="text-sm font-medium">Favicon URL (e.g., /favicon.ico or data URI)</Label>
               <Input
-                type="text"
+                type="text" 
                 id="faviconUrl"
                 name="faviconUrl"
                 className="mt-1"
@@ -263,6 +264,23 @@ export default function AdminSettingsPage() {
               />
               {state.errors?.kofiUrl && (
                 <p id="kofiurl-error" className="text-sm text-destructive mt-1">{state.errors.kofiUrl.join(', ')}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="rssFeedUrl" className="text-sm font-medium">RSS Feed URL (Optional, for Blog Section)</Label>
+              <Input
+                type="url"
+                id="rssFeedUrl"
+                name="rssFeedUrl"
+                className="mt-1"
+                placeholder="https://yourblog.com/rss.xml"
+                value={currentSettings.rssFeedUrl || ''}
+                onChange={(e) => setCurrentSettings(prev => ({...prev, rssFeedUrl: e.target.value}))}
+                aria-describedby={state.errors?.rssFeedUrl ? "rssfeedurl-error" : undefined}
+              />
+              {state.errors?.rssFeedUrl && (
+                <p id="rssfeedurl-error" className="text-sm text-destructive mt-1">{state.errors.rssFeedUrl.join(', ')}</p>
               )}
             </div>
 
@@ -331,7 +349,6 @@ export default function AdminSettingsPage() {
                 <p id="contacttwitter-error" className="text-sm text-destructive mt-1">{state.errors.contactTwitter.join(', ')}</p>
               )}
             </div>
-            {/* Resume URL input removed from here */}
             <SubmitButton />
           </form>
         </CardContent>

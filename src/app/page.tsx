@@ -6,6 +6,7 @@ import SkillsSection from '@/app/components/skills-section';
 import EducationSection from '@/app/components/education-section';
 import ProjectsSection from '@/app/components/projects-section';
 import CertificationsSection from '@/app/components/certifications-section';
+import BlogSection from '@/app/components/blog-section'; // Import BlogSection
 import ContactSection from '@/app/components/contact-section';
 import Footer from '@/app/components/footer';
 import { 
@@ -17,10 +18,9 @@ import {
   getCertifications 
 } from '@/lib/data';
 
-export const dynamic = 'force-dynamic'; // Ensures data is fetched on each request
+export const dynamic = 'force-dynamic';
 
 export default async function PortfolioPage() {
-  // Fetch all data needed for the page
   const siteSettings = await getSiteSettings();
   const aboutData = await getAboutData();
   const skills = await getSkills();
@@ -48,6 +48,7 @@ export default async function PortfolioPage() {
         <EducationSection educationItems={educationItems} />
         <ProjectsSection projects={projects} />
         <CertificationsSection certifications={certifications} />
+        {siteSettings.rssFeedUrl && <BlogSection rssFeedUrl={siteSettings.rssFeedUrl} />}
         <ContactSection 
           contactDetails={siteSettings.contactDetails} 
           kofiUrl={siteSettings.kofiUrl} 
