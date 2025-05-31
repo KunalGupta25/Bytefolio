@@ -47,29 +47,33 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const siteSettings = await getSiteSettings();
-  const gaMeasurementId = "G-1T491Z6RRJ"; // Your GA Measurement ID
+  const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Google Analytics - Gtag.js */}
-        <Script
-          strategy="afterInteractive"
-          src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
-        />
-        <Script
-          id="gtag-init"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${gaMeasurementId}');
-            `,
-          }}
-        />
-        {/* End Google Analytics */}
+        {gaMeasurementId && (
+          <>
+            {/* Google Analytics - Gtag.js */}
+            <Script
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+            />
+            <Script
+              id="gtag-init"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${gaMeasurementId}');
+                `,
+              }}
+            />
+            {/* End Google Analytics */}
+          </>
+        )}
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeProvider

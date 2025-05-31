@@ -33,6 +33,7 @@ Click the button above to deploy this project to Netlify.
         *   `RESEND_API_KEY` (Your API key from Resend)
         *   `CONTACT_FORM_RECIPIENT_EMAIL` (The email address to receive contact form submissions)
         *   `NEXT_PUBLIC_RESUME_URL` (URL to your resume/CV, e.g., `/resume.pdf` or a full web link)
+        *   `NEXT_PUBLIC_GA_MEASUREMENT_ID` (Your Google Analytics Measurement ID, e.g., `G-XXXXXXXXXX`)
     *   Netlify's build will fail if these are not set up correctly, as the Firebase Admin SDK needs them during the build process and at runtime for server actions.
 
 2.  **Check your `next.config.ts`**:
@@ -43,4 +44,3 @@ Click the button above to deploy this project to Netlify.
 
 Once these are done, your Netlify deployment should proceed smoothly!
 
-```
