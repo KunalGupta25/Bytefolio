@@ -1,6 +1,7 @@
 
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script'; // Import next/script
 import './globals.css';
 import { ThemeProvider } from '@/app/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
@@ -11,7 +12,6 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
-// Default favicon if none is set in Firebase (Code Sign in Cyan)
 const CODE_SIGN_FAVICON_CYAN = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,7 +20,6 @@ export async function generateMetadata(): Promise<Metadata> {
   console.log('[generateMetadata] Site settings fetched:', siteSettings);
 
   let resolvedFaviconUrl = siteSettings.faviconUrl || CODE_SIGN_FAVICON_CYAN; 
-  // Ensure it's a non-empty string; otherwise, fallback.
   if (typeof resolvedFaviconUrl !== 'string' || resolvedFaviconUrl.trim() === '') {
     resolvedFaviconUrl = CODE_SIGN_FAVICON_CYAN; 
   }
@@ -48,9 +47,30 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const siteSettings = await getSiteSettings();
+  const gaMeasurementId = "G-1T491Z6RRJ"; // Your GA Measurement ID
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Google Analytics - Gtag.js */}
+        <Script
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+        />
+        <Script
+          id="gtag-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${gaMeasurementId}');
+            `,
+          }}
+        />
+        {/* End Google Analytics */}
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
@@ -63,7 +83,7 @@ export default async function RootLayout({
         </ThemeProvider>
         {siteSettings.customHtmlWidget && (
           <div 
-            className="bg-transparent" // Explicitly set background to transparent
+            className="bg-transparent"
             dangerouslySetInnerHTML={{ __html: siteSettings.customHtmlWidget }} 
           />
         )}
