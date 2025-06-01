@@ -34,6 +34,8 @@ export async function generateMetadata(): Promise<Metadata> {
   console.log(`[generateMetadata] Page Description: ${pageDescription}`);
   console.log(`[generateMetadata] Open Graph Image URL: ${ogImageUrl}`);
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
   return {
     title: pageTitle,
     description: pageDescription,
@@ -43,13 +45,13 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: pageTitle,
       description: pageDescription,
-      url: siteSettings.kofiUrl || undefined, // Assuming kofiUrl might be a canonical URL for the site, or use your main domain
+      url: siteUrl || undefined, 
       siteName: siteSettings.siteName,
       images: [
         {
-          url: ogImageUrl, // Must be an absolute URL for some crawlers, but Next.js handles relative paths from /public
+          url: ogImageUrl, 
           width: 1200,
-          height: 675, // Adjusted to your image's aspect ratio, 630 is also common
+          height: 675, 
           alt: `${siteSettings.siteName} - ${siteSettings.siteTitleSuffix}`,
         },
       ],
@@ -60,9 +62,9 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title: pageTitle,
       description: pageDescription,
-      images: [ogImageUrl], // Must be an absolute URL for some crawlers
+      images: [ogImageUrl], 
     },
-    metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
+    metadataBase: siteUrl ? new URL(siteUrl) : undefined,
   };
 }
 
@@ -120,4 +122,3 @@ export default async function RootLayout({
     </html>
   );
 }
-    
