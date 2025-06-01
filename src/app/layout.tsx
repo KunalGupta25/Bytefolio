@@ -28,9 +28,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const pageTitle = `${siteSettings.siteName || 'ByteFolio'} | ${siteSettings.siteTitleSuffix || 'Portfolio'}`;
   const pageDescription = siteSettings.siteDescription || 'A modern portfolio showcasing skills, projects, and experience.';
+  const ogImageUrl = '/og-image.png'; // Path to your Open Graph image in the public folder
 
   console.log(`[generateMetadata] Page Title: ${pageTitle}`);
   console.log(`[generateMetadata] Page Description: ${pageDescription}`);
+  console.log(`[generateMetadata] Open Graph Image URL: ${ogImageUrl}`);
 
   return {
     title: pageTitle,
@@ -38,6 +40,29 @@ export async function generateMetadata(): Promise<Metadata> {
     icons: {
       icon: resolvedFaviconUrl,
     },
+    openGraph: {
+      title: pageTitle,
+      description: pageDescription,
+      url: siteSettings.kofiUrl || undefined, // Assuming kofiUrl might be a canonical URL for the site, or use your main domain
+      siteName: siteSettings.siteName,
+      images: [
+        {
+          url: ogImageUrl, // Must be an absolute URL for some crawlers, but Next.js handles relative paths from /public
+          width: 1200,
+          height: 675, // Adjusted to your image's aspect ratio, 630 is also common
+          alt: `${siteSettings.siteName} - ${siteSettings.siteTitleSuffix}`,
+        },
+      ],
+      locale: 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: pageTitle,
+      description: pageDescription,
+      images: [ogImageUrl], // Must be an absolute URL for some crawlers
+    },
+    metadataBase: process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : undefined,
   };
 }
 
