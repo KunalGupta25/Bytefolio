@@ -28,13 +28,28 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const pageTitle = `${siteSettings.siteName || 'ByteFolio'} | ${siteSettings.siteTitleSuffix || 'Portfolio'}`;
   const pageDescription = siteSettings.siteDescription || 'A modern portfolio showcasing skills, projects, and experience.';
-  const ogImageUrl = '/og-image.png'; // Path to your Open Graph image in the public folder
+  
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const ogImageRelativePath = '/og-image.png'; // Your target image in the public folder
+
+  let finalOgImageForOpenGraph: URL | string;
+  let finalOgImageForTwitter: string;
+
+  if (siteUrl) {
+    const baseUrl = new URL(siteUrl); // Ensure siteUrl is a valid base
+    finalOgImageForOpenGraph = new URL(ogImageRelativePath, baseUrl); // Creates a URL object e.g., https://lazyhideout.tech/og-image.png
+    finalOgImageForTwitter = finalOgImageForOpenGraph.toString();
+    console.log(`[generateMetadata] Constructed absolute OG Image URL: ${finalOgImageForTwitter}`);
+  } else {
+    // This is a fallback, but for production, siteUrl should always be set.
+    finalOgImageForOpenGraph = ogImageRelativePath; // e.g., /og-image.png
+    finalOgImageForTwitter = ogImageRelativePath;
+    console.warn(`[generateMetadata] NEXT_PUBLIC_SITE_URL is not set. OG Image URL will be relative: ${ogImageRelativePath}. This may not work for crawlers.`);
+  }
 
   console.log(`[generateMetadata] Page Title: ${pageTitle}`);
   console.log(`[generateMetadata] Page Description: ${pageDescription}`);
-  console.log(`[generateMetadata] Open Graph Image URL: ${ogImageUrl}`);
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  console.log(`[generateMetadata] Open Graph Image URL to be used: ${finalOgImageForTwitter}`);
 
   return {
     title: pageTitle,
@@ -45,13 +60,13 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: pageTitle,
       description: pageDescription,
-      url: siteUrl || undefined, 
+      url: siteUrl ? new URL(siteUrl) : undefined, 
       siteName: siteSettings.siteName,
       images: [
         {
-          url: ogImageUrl, 
+          url: finalOgImageForOpenGraph, // Use the URL object or string
           width: 1200,
-          height: 675, 
+          height: 675, // Corrected to your image's dimensions
           alt: `${siteSettings.siteName} - ${siteSettings.siteTitleSuffix}`,
         },
       ],
@@ -62,7 +77,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title: pageTitle,
       description: pageDescription,
-      images: [ogImageUrl], 
+      images: [finalOgImageForTwitter], // Twitter usually expects an array of strings
     },
     metadataBase: siteUrl ? new URL(siteUrl) : undefined,
   };
