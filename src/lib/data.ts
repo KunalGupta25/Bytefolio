@@ -97,6 +97,15 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   emailJsTemplateId: "",
   emailJsPublicKey: "",
 };
+
+const DEFAULT_ABOUT_DATA: AboutData = {
+  professionalSummary: "Passionate and driven, with a strong foundation in software development and a keen interest in leveraging technology to solve real-world problems. Eager to contribute to innovative projects and continuously expand my skill set.",
+  bio: "Currently pursuing a degree in Computer Science, I have actively engaged in various projects that span web development, AI, and data analysis. I thrive in collaborative environments and am always looking for opportunities to learn and grow. Outside of coding, I enjoy [mention a hobby or two, e.g., exploring new tech trends, contributing to open-source projects, or playing chess].",
+  profileImageUrl: DEFAULT_SITE_SETTINGS.defaultProfileImageUrl, // Use the default from site settings
+  dataAiHint: "profile picture",
+};
+
+
 console.log('[data.ts] DEFAULT_SITE_SETTINGS.faviconUrl:', DEFAULT_SITE_SETTINGS.faviconUrl);
 
 
