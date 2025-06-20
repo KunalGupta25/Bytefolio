@@ -1,18 +1,18 @@
 
-import type { ContactDetails } from '@/lib/data';
+import type { ContactDetails, SiteSettings } from '@/lib/data';
 import SectionWrapper from './section-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Github, Linkedin, Mail, Twitter, Coffee } from 'lucide-react'; // Added Coffee icon
+import { Github, Linkedin, Mail, Twitter, Coffee } from 'lucide-react'; 
 import { ContactForm } from './contact-form'; 
 
 interface ContactSectionProps {
-  contactDetails: ContactDetails;
-  kofiUrl?: string; // Added kofiUrl prop
+  siteSettings: SiteSettings;
 }
 
-export default function ContactSection({ contactDetails, kofiUrl }: ContactSectionProps) {
+export default function ContactSection({ siteSettings }: ContactSectionProps) {
+  const { contactDetails, kofiUrl, emailJsServiceId, emailJsTemplateId, emailJsPublicKey } = siteSettings;
   return (
     <SectionWrapper id="contact" title="Get In Touch" subtitle="Feel free to reach out. I'm always open to discussing new projects, creative ideas or opportunities to be part of your visions.">
       <div className="grid md:grid-cols-2 gap-12 items-start">
@@ -21,7 +21,11 @@ export default function ContactSection({ contactDetails, kofiUrl }: ContactSecti
             <CardTitle className="text-2xl text-primary">Send me a message</CardTitle>
           </CardHeader>
           <CardContent>
-            <ContactForm /> 
+            <ContactForm 
+              emailJsServiceId={emailJsServiceId}
+              emailJsTemplateId={emailJsTemplateId}
+              emailJsPublicKey={emailJsPublicKey}
+            /> 
           </CardContent>
         </Card>
         <div className="space-y-6">

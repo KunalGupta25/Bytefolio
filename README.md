@@ -30,12 +30,13 @@ Click the button above to deploy this project to Netlify.
         *   `FIREBASE_DATABASE_URL`
         *   `ADMIN_EMAIL`
         *   `ADMIN_PASSWORD`
-        *   `RESEND_API_KEY` (Your API key from Resend)
-        *   `CONTACT_FORM_RECIPIENT_EMAIL` (The email address to receive contact form submissions)
+        *   `RESEND_API_KEY` (Your API key from Resend, for server-side email fallback)
+        *   `CONTACT_FORM_RECIPIENT_EMAIL` (The email address to receive Resend notifications)
         *   `NEXT_PUBLIC_RESUME_URL` (URL to your resume/CV, e.g., `/resume.pdf` or a full web link)
         *   `NEXT_PUBLIC_GA_MEASUREMENT_ID` (Your Google Analytics Measurement ID, e.g., `G-XXXXXXXXXX`)
         *   `NEXT_PUBLIC_SITE_URL` (The full URL of your deployed site, e.g., `https://your-site-name.netlify.app`)
     *   Netlify's build will fail if these are not set up correctly, as the Firebase Admin SDK needs them during the build process and at runtime for server actions.
+    *   EmailJS credentials (Service ID, Template ID, Public Key) are managed via the **Admin Panel > Integrations** page, not environment variables.
 
 2.  **Check your `next.config.ts`**:
     *   Ensure all hostnames for `next/image` are correctly listed in `images.remotePatterns`. We've added several, including a wildcard for any HTTPS source, but it's good to be aware of.

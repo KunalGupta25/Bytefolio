@@ -61,7 +61,9 @@ export interface SiteSettings {
   customHtmlWidget?: string;
   blogUrl?: string;
   kofiUrl?: string;
-  // rssFeedUrl removed
+  emailJsServiceId?: string;
+  emailJsTemplateId?: string;
+  emailJsPublicKey?: string;
 }
 
 export interface AboutData {
@@ -70,8 +72,6 @@ export interface AboutData {
   profileImageUrl: string;
   dataAiHint?: string;
 }
-
-// BlogPost interface removed as it's no longer needed
 
 const CODE_SIGN_FAVICON_CYAN = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
 
@@ -93,17 +93,11 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   customHtmlWidget: "",
   blogUrl: "",
   kofiUrl: "",
-  // rssFeedUrl removed
+  emailJsServiceId: "",
+  emailJsTemplateId: "",
+  emailJsPublicKey: "",
 };
 console.log('[data.ts] DEFAULT_SITE_SETTINGS.faviconUrl:', DEFAULT_SITE_SETTINGS.faviconUrl);
-
-
-const DEFAULT_ABOUT_DATA: AboutData = {
-  professionalSummary: "I am a dedicated and enthusiastic B.Tech Computer Science student with a strong foundation in software development, problem-solving, and web technologies. I am passionate about creating impactful technology solutions and continuously expanding my knowledge. Eager to contribute to innovative projects.",
-  bio: "Beyond coding, I enjoy contributing to open-source projects and exploring new AI advancements. I believe in lifelong learning and am always seeking new challenges. My goal is to leverage my technical skills to make a positive impact.",
-  profileImageUrl: "https://placehold.co/300x300.png?text=Coding+Laptop",
-  dataAiHint: "coding laptop",
-};
 
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -144,7 +138,15 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       if (data.hasOwnProperty('kofiUrl')) {
         settings.kofiUrl = typeof data.kofiUrl === 'string' ? data.kofiUrl.trim() : DEFAULT_SITE_SETTINGS.kofiUrl;
       }
-      // rssFeedUrl removed from here
+      if (data.hasOwnProperty('emailJsServiceId')) {
+        settings.emailJsServiceId = typeof data.emailJsServiceId === 'string' ? data.emailJsServiceId.trim() : DEFAULT_SITE_SETTINGS.emailJsServiceId;
+      }
+      if (data.hasOwnProperty('emailJsTemplateId')) {
+        settings.emailJsTemplateId = typeof data.emailJsTemplateId === 'string' ? data.emailJsTemplateId.trim() : DEFAULT_SITE_SETTINGS.emailJsTemplateId;
+      }
+      if (data.hasOwnProperty('emailJsPublicKey')) {
+        settings.emailJsPublicKey = typeof data.emailJsPublicKey === 'string' ? data.emailJsPublicKey.trim() : DEFAULT_SITE_SETTINGS.emailJsPublicKey;
+      }
 
       if (data.contactDetails && typeof data.contactDetails === 'object') {
         const contactData = data.contactDetails as Partial<ContactDetails>;

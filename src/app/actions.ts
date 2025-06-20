@@ -108,33 +108,35 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
     });
     console.log('Contact form submission received and stored in Firebase:', { name, email });
 
+    // Server-side email notification (e.g., via Resend) - this is fallback if EmailJS is not configured or fails client-side
     if (process.env.RESEND_API_KEY && process.env.CONTACT_FORM_RECIPIENT_EMAIL) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       try {
         await resend.emails.send({
           from: 'ByteFolio Contact <onboarding@resend.dev>', 
           to: process.env.CONTACT_FORM_RECIPIENT_EMAIL,
-          subject: `New Contact Form Submission from ${name}`,
+          subject: `New Contact Form Submission from ${name} (via Server Fallback)`,
           html: `
-            <p>You received a new message from your portfolio contact form:</p>
+            <p>You received a new message from your portfolio contact form (server fallback):</p>
             <p><strong>Name:</strong> ${name}</p>
             <p><strong>Email:</strong> ${email}</p>
             <p><strong>Message:</strong></p>
             <p>${message.replace(/\n/g, '<br>')}</p>
           `,
         });
-        console.log('Contact form email sent successfully via Resend.');
+        console.log('Contact form email sent successfully via Resend (server fallback).');
       } catch (emailError) {
-        console.error("Error sending contact form email via Resend:", emailError);
+        console.error("Error sending contact form email via Resend (server fallback):", emailError);
+        // Don't mark overall submission as failed just because email notification failed
       }
     } else {
-      console.warn('Resend API key or recipient email not configured in environment variables. Skipping email notification.');
+      console.warn('Resend API key or recipient email not configured for server fallback. Skipping email notification.');
     }
 
-    return { success: true, message: 'Your message has been sent successfully!' };
+    return { success: true, message: 'Your message has been stored successfully!' };
   } catch (error) {
     console.error("Error submitting contact form to Firebase:", error);
-    return { success: false, message: 'Failed to send message. Please try again later.' };
+    return { success: false, message: 'Failed to store message. Please try again later.' };
   }
 }
 
@@ -206,7 +208,9 @@ const siteSettingsSchema = z.object({
   customHtmlWidget: z.preprocess((val) => val ?? undefined, z.string().optional().nullable()),
   blogUrl: z.string().url("Invalid Blog URL. Must be a full URL.").optional().or(z.literal('')),
   kofiUrl: z.string().url("Invalid Ko-fi URL. Must be a full URL.").optional().or(z.literal('')),
-  // rssFeedUrl removed
+  emailJsServiceId: z.string().optional().or(z.literal('')),
+  emailJsTemplateId: z.string().optional().or(z.literal('')),
+  emailJsPublicKey: z.string().optional().or(z.literal('')),
 });
 
 interface SiteSettingsState {
@@ -218,8 +222,9 @@ interface SiteSettingsState {
 
 export async function updateSiteSettings(prevState: SiteSettingsState | undefined, formData: FormData): Promise<SiteSettingsState> {
   console.log("--- updateSiteSettings Action Triggered ---");
-  console.log("Received formData entries:");
+  const formDataEntries: Record<string, any> = {};
   for (const [key, value] of formData.entries()) {
+    formDataEntries[key] = value;
     console.log(`  ${key}: "${value}"`);
   }
 
@@ -238,7 +243,9 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     customHtmlWidget: formData.get('customHtmlWidget'),
     blogUrl: formData.get('blogUrl'),
     kofiUrl: formData.get('kofiUrl'),
-    // rssFeedUrl removed
+    emailJsServiceId: formData.get('emailJsServiceId'),
+    emailJsTemplateId: formData.get('emailJsTemplateId'),
+    emailJsPublicKey: formData.get('emailJsPublicKey'),
   };
   
   console.log("Data prepared for Zod validation:", dataToValidate);
@@ -270,7 +277,6 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       faviconUrl: validatedFields.data.faviconUrl || undefined,
       blogUrl: validatedFields.data.blogUrl || undefined,
       kofiUrl: validatedFields.data.kofiUrl || undefined,
-      // rssFeedUrl removed
       contactDetails: {
         email: validatedFields.data.contactEmail,
         linkedin: validatedFields.data.contactLinkedin,
@@ -279,15 +285,18 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       }
     };
 
-    // Only update customHtmlWidget if it was part of the submitted form
-    // This prevents it from being wiped when saving from the main settings page
-    if (formData.has('customHtmlWidget')) {
-      settingsToUpdate.customHtmlWidget = validatedFields.data.customHtmlWidget || undefined;
-    } else if (currentSettings.customHtmlWidget !== undefined) {
-      // Preserve existing value if not submitted
-      settingsToUpdate.customHtmlWidget = currentSettings.customHtmlWidget;
-    }
+    // Preserve existing value if not submitted (e.g., when saving from a form that doesn't include all fields)
+    const fieldsToPreserveIfNeeded: Array<keyof Pick<SiteSettings, 'customHtmlWidget' | 'emailJsServiceId' | 'emailJsTemplateId' | 'emailJsPublicKey'>> = [
+      'customHtmlWidget', 'emailJsServiceId', 'emailJsTemplateId', 'emailJsPublicKey'
+    ];
 
+    fieldsToPreserveIfNeeded.forEach(key => {
+      if (formData.has(key)) { // Field was part of the submitted form
+        (settingsToUpdate as any)[key] = (validatedFields.data as any)[key] || undefined;
+      } else if (currentSettings[key] !== undefined) { // Field was not submitted, preserve existing DB value
+        (settingsToUpdate as any)[key] = currentSettings[key];
+      }
+    });
 
     await db.ref('/siteSettings').update(settingsToUpdate); 
     
