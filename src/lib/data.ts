@@ -81,7 +81,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteDescription: "A modern portfolio for Kunal Gupta, a Computer Science student, showcasing skills, projects, and experience.",
   defaultProfileImageUrl: "https://placehold.co/300x300.png?text=Profile+Pic",
   defaultUserName: "Kunal Gupta",
-  defaultUserSpecialization: "Web Development, AI Agents",
+  defaultUserSpecialization: "MEAN Stack and Python Developer",
   contactDetails: {
     email: 'kunalgupta250119@gmail.com',
     linkedin: 'https://linkedin.com/in/kunalgupta25',
