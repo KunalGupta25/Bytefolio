@@ -124,4 +124,18 @@
     white-space: nowrap;
     border-width: 0;
   }
+
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(rgba(0, 128, 128, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 128, 128, 0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent)) 50%, hsl(var(--primary)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }

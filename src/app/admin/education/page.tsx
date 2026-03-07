@@ -146,7 +146,7 @@ export default function AdminEducationPage() {
                 <SelectGroup>
                   <SelectLabel>Common Icons</SelectLabel>
                   {commonLucideIconNames.map(name => {
-                      const IconComponent = (LucideIcons as Record<string, React.ElementType | undefined>)[name];
+                      const IconComponent = (LucideIcons as unknown as Record<string, React.ElementType | undefined>)[name];
                       return (
                           <SelectItem key={`common-${name}`} value={name}>
                               <div className="flex items-center gap-2">

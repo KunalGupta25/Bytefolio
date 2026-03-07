@@ -3,7 +3,7 @@ import Image from 'next/image';
 import type { AboutData } from '@/lib/data'; // Import type
 import SectionWrapper from './section-wrapper';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import SplineViewerComponent from './spline-viewer-component';
+import { Briefcase, Heart } from 'lucide-react';
 
 interface AboutSectionProps {
   aboutData: AboutData;
@@ -13,52 +13,62 @@ interface AboutSectionProps {
 export default function AboutSection({ aboutData, userName }: AboutSectionProps) {
   return (
     <SectionWrapper id="about" title="About Me" subtitle="A little bit about my journey and passion for technology.">
-      {/* Main container: flex-col for mobile, grid for large screens */}
-      <div className="flex flex-col lg:grid lg:grid-cols-5 lg:gap-x-12 lg:gap-y-8 gap-8 items-start">
-        {/* 1. Profile Image (Order 1 on mobile) */}
-        <div className="w-full lg:col-span-2 flex justify-center lg:justify-start lg:items-start">
-          <div className="relative w-52 h-52 md:w-64 md:h-64 rounded-full overflow-hidden shadow-xl border-4 border-accent transform hover:scale-105 transition-transform duration-300">
-            <Image
-              src={aboutData.profileImageUrl || "https://placehold.co/300x300.png"}
-              alt={`Profile Picture of ${userName}`}
-              fill
-              style={{ objectFit: 'cover' }}
-              sizes="(max-width: 768px) 208px, 256px"
-              priority
-              data-ai-hint={aboutData.dataAiHint || "profile picture"}
-            />
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+        {/* Left: Profile Image - Centered with cards */}
+        <div className="lg:col-span-2 flex justify-center lg:justify-end items-center">
+          <div className="relative w-64 h-64 md:w-72 md:h-72 flex-shrink-0">
+            {/* Gradient Glow Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-accent/5 rounded-full blur-3xl -z-10"></div>
+            
+            {/* Profile Image Container */}
+            <div className="relative w-full h-full rounded-full overflow-hidden shadow-2xl border-4 border-accent group">
+              <Image
+                src={aboutData.profileImageUrl || "https://placehold.co/300x300.png"}
+                alt={`Profile Picture of ${userName}`}
+                fill
+                style={{ objectFit: 'cover' }}
+                sizes="(max-width: 768px) 256px, 288px"
+                priority
+                data-ai-hint={aboutData.dataAiHint || "profile picture"}
+                className="group-hover:scale-110 transition-transform duration-500"
+              />
+            </div>
           </div>
         </div>
 
-        {/* 2. Professional Summary (Order 2 on mobile) */}
-        <div className="w-full lg:col-span-3">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl text-primary">Professional Summary</CardTitle>
+        {/* Right: Two Cards Stacked */}
+        <div className="lg:col-span-3 flex flex-col gap-6">
+          {/* Professional Summary Card */}
+          <Card className="flex-1 shadow-xl hover:shadow-2xl transition-all duration-300 border border-accent/20 hover:border-accent/50 bg-background/80 backdrop-blur-sm overflow-hidden group">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-colors">
+                  <Briefcase className="h-5 w-5 text-accent" />
+                </div>
+                <CardTitle className="text-2xl">Professional Summary</CardTitle>
+              </div>
+              <div className="h-1 w-12 bg-gradient-to-r from-accent to-accent/50 rounded-full mt-2"></div>
             </CardHeader>
-            <CardContent>
-              <p className="text-lg text-foreground leading-relaxed">
+            <CardContent className="pt-0">
+              <p className="text-base text-foreground/90 leading-relaxed">
                 {aboutData.professionalSummary}
               </p>
             </CardContent>
           </Card>
-        </div>
 
-        {/* 3. Spline Viewer (Order 3 on mobile) */}
-        <div className="w-full lg:col-span-2">
-          <div className="w-full h-72 md:h-96 rounded-lg overflow-hidden shadow-lg border border-border bg-card">
-            <SplineViewerComponent />
-          </div>
-        </div>
-
-        {/* 4. Bio Card (Order 4 on mobile) */}
-        <div className="w-full lg:col-span-3">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-2xl text-primary">More About Me</CardTitle>
+          {/* Bio Card */}
+          <Card className="flex-1 shadow-xl hover:shadow-2xl transition-all duration-300 border border-accent/20 hover:border-accent/50 bg-background/80 backdrop-blur-sm overflow-hidden group">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-colors">
+                  <Heart className="h-5 w-5 text-accent" />
+                </div>
+                <CardTitle className="text-2xl">Passion & Interests</CardTitle>
+              </div>
+              <div className="h-1 w-12 bg-gradient-to-r from-accent to-accent/50 rounded-full mt-2"></div>
             </CardHeader>
-            <CardContent>
-              <p className="text-lg text-foreground leading-relaxed">
+            <CardContent className="pt-0">
+              <p className="text-base text-foreground/90 leading-relaxed">
                 {aboutData.bio}
               </p>
             </CardContent>

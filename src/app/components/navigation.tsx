@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { ThemeToggleButton } from './theme-toggle-button';
-import { Code2, BookOpen } from 'lucide-react'; // Added BookOpen for Blog
+import { Code2, BookOpen, Menu, X } from 'lucide-react'; // Added Menu and X for mobile
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ interface NavigationProps {
 
 export default function Navigation({ siteName, blogUrl }: NavigationProps) {
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -44,6 +45,8 @@ export default function Navigation({ siteName, blogUrl }: NavigationProps) {
             <Code2 className="h-8 w-8 text-accent" />
             <span>{siteName}</span>
           </Link>
+
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
             {navItems.map((item) => (
               <Link
@@ -62,11 +65,51 @@ export default function Navigation({ siteName, blogUrl }: NavigationProps) {
               </Button>
             )}
           </nav>
-          <div className="flex items-center">
+
+          <div className="flex items-center gap-2">
             <ThemeToggleButton />
-            {/* Mobile menu button can be added here */}
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle mobile menu"
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-md">
+            <nav className="flex flex-col space-y-2 px-4 py-4">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+              {blogUrl && (
+                <Link
+                  href={blogUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <BookOpen className="h-4 w-4" /> Blog
+                </Link>
+              )}
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );

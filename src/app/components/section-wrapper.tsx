@@ -33,7 +33,7 @@ export default function SectionWrapper({
     <section
       id={id}
       className={cn(
-        "py-16 md:py-24 relative", 
+        "py-20 md:py-28 relative",
         hasParallax ? "text-primary-foreground" : "",
         className
       )}
@@ -41,17 +41,18 @@ export default function SectionWrapper({
       aria-labelledby={`${id}-heading`}
     >
       {hasParallax && <div className="absolute inset-0 bg-black/50 z-0"></div>}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 max-w-7xl">
         {title && (
-          <div className="text-center mb-12">
-            <h2 id={`${id}-heading`} className={cn("text-3xl md:text-4xl font-bold tracking-tight", hasParallax ? "text-white" : "text-primary")}>
+          <div className="text-center mb-16">
+            <h2 id={`${id}-heading`} className={cn("text-3xl md:text-5xl font-bold tracking-tight mb-4", hasParallax ? "text-white" : "text-primary")}>
               {title}
             </h2>
             {subtitle && (
-              <p className={cn("mt-4 text-lg", hasParallax ? "text-gray-300" : "text-muted-foreground")}>
+              <p className={cn("mt-4 text-lg md:text-xl max-w-3xl mx-auto", hasParallax ? "text-gray-300" : "text-muted-foreground")}>
                 {subtitle}
               </p>
             )}
+            <div className={cn("mt-6 w-24 h-1 mx-auto rounded-full", hasParallax ? "bg-white/50" : "bg-accent")}></div>
           </div>
         )}
         {children}

@@ -36,3 +36,5 @@ next-env.d.ts
 .idx
 /.idx 
 firebase-debug.log
+.zencoder
+.zenflow

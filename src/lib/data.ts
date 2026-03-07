@@ -46,7 +46,7 @@ export interface Certification {
 export interface ContactDetails {
   email: string;
   linkedin: string;
-  github: string;
+  github?: string;
   twitter?: string;
 }
 

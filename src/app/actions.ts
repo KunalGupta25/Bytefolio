@@ -198,17 +198,17 @@ const siteSettingsSchema = z.object({
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   heroTagline: z.string().min(5, "Hero tagline must be at least 5 characters."),
   defaultProfileImageUrl: z.preprocess((val) => val || undefined, z.string().url("Invalid default profile image URL.").optional()),
-  faviconUrl: z.string().optional().or(z.literal('')),
+  faviconUrl: z.preprocess((val) => val || '', z.string().optional().or(z.literal(''))),
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
   contactGithub: z.preprocess((val) => val || undefined, z.string().url("Invalid GitHub URL.").optional()),
-  contactTwitter: z.string().url().optional().or(z.literal('')), 
+  contactTwitter: z.preprocess((val) => val || '', z.string().url().optional().or(z.literal(''))), 
   customHtmlWidget: z.preprocess((val) => val ?? undefined, z.string().optional().nullable()),
-  blogUrl: z.string().url("Invalid Blog URL. Must be a full URL.").optional().or(z.literal('')), 
-  kofiUrl: z.string().url("Invalid Ko-fi URL. Must be a full URL.").optional().or(z.literal('')), 
-  emailJsServiceId: z.string().optional().or(z.literal('')), 
-  emailJsTemplateId: z.string().optional().or(z.literal('')), 
-  emailJsPublicKey: z.string().optional().or(z.literal('')), 
+  blogUrl: z.preprocess((val) => val || '', z.string().url("Invalid Blog URL. Must be a full URL.").optional().or(z.literal(''))), 
+  kofiUrl: z.preprocess((val) => val || '', z.string().url("Invalid Ko-fi URL. Must be a full URL.").optional().or(z.literal(''))), 
+  emailJsServiceId: z.preprocess((val) => val || '', z.string().optional().or(z.literal(''))), 
+  emailJsTemplateId: z.preprocess((val) => val || '', z.string().optional().or(z.literal(''))), 
+  emailJsPublicKey: z.preprocess((val) => val || '', z.string().optional().or(z.literal(''))), 
 });
 
 interface SiteSettingsState {
@@ -254,17 +254,13 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     const currentSettingsSnapshot = await db.ref('/siteSettings').once('value');
     const currentSettings = currentSettingsSnapshot.val() || {};
 
-    const settingsToUpdate: Partial<SiteSettings> & { contactDetails: Partial<ContactDetails> } = { 
+    const settingsToUpdate: any = { 
       siteName: validatedFields.data.siteName,
       siteTitleSuffix: validatedFields.data.siteTitleSuffix,
       siteDescription: validatedFields.data.siteDescription,
       defaultUserName: validatedFields.data.defaultUserName,
       defaultUserSpecialization: validatedFields.data.defaultUserSpecialization,
       heroTagline: validatedFields.data.heroTagline,
-      defaultProfileImageUrl: validatedFields.data.defaultProfileImageUrl,
-      faviconUrl: validatedFields.data.faviconUrl || undefined,
-      blogUrl: validatedFields.data.blogUrl || undefined,
-      kofiUrl: validatedFields.data.kofiUrl || undefined,
       contactDetails: {
         email: validatedFields.data.contactEmail,
         linkedin: validatedFields.data.contactLinkedin,
@@ -273,15 +269,44 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       }
     };
 
+    // Only add optional fields if they have actual values
+    if (validatedFields.data.defaultProfileImageUrl) {
+      settingsToUpdate.defaultProfileImageUrl = validatedFields.data.defaultProfileImageUrl;
+    } else if (currentSettings.defaultProfileImageUrl !== undefined) {
+      settingsToUpdate.defaultProfileImageUrl = currentSettings.defaultProfileImageUrl;
+    }
+
+    if (validatedFields.data.faviconUrl) {
+      settingsToUpdate.faviconUrl = validatedFields.data.faviconUrl;
+    }
+
+    if (validatedFields.data.blogUrl) {
+      settingsToUpdate.blogUrl = validatedFields.data.blogUrl;
+    }
+
+    if (validatedFields.data.kofiUrl) {
+      settingsToUpdate.kofiUrl = validatedFields.data.kofiUrl;
+    }
+
     const fieldsToPreserveIfNeeded: Array<keyof Pick<SiteSettings, 'customHtmlWidget' | 'emailJsServiceId' | 'emailJsTemplateId' | 'emailJsPublicKey'>> = [
       'customHtmlWidget', 'emailJsServiceId', 'emailJsTemplateId', 'emailJsPublicKey'
     ];
 
     fieldsToPreserveIfNeeded.forEach(key => {
       if (formData.has(key)) {
-        (settingsToUpdate as any)[key] = (validatedFields.data as any)[key] || undefined;
+        const value = (validatedFields.data as any)[key];
+        if (value) {
+          settingsToUpdate[key] = value;
+        }
       } else if (currentSettings[key] !== undefined) {
-        (settingsToUpdate as any)[key] = currentSettings[key];
+        settingsToUpdate[key] = currentSettings[key];
+      }
+    });
+
+    // Remove undefined values from contactDetails
+    Object.keys(settingsToUpdate.contactDetails).forEach(key => {
+      if (settingsToUpdate.contactDetails[key] === undefined) {
+        delete settingsToUpdate.contactDetails[key];
       }
     });
 

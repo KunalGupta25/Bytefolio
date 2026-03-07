@@ -148,7 +148,7 @@ export default function AdminCertificationsPage() {
                 <SelectGroup>
                   <SelectLabel>Common Icons</SelectLabel>
                   {commonLucideIconNames.map(name => {
-                      const IconComponent = (LucideIcons as Record<string, React.ElementType | undefined>)[name];
+                      const IconComponent = (LucideIcons as unknown as Record<string, React.ElementType | undefined>)[name];
                       return (
                           <SelectItem key={`common-${name}`} value={name}>
                               <div className="flex items-center gap-2">
@@ -219,8 +219,8 @@ export default function AdminCertificationsPage() {
             </TableHeader>
             <TableBody>
               {certifications.map((cert) => {
-                const IconComponent = cert.iconName && cert.iconName !== NULL_ICON_VALUE && (LucideIcons as Record<string, React.ElementType | undefined>)[cert.iconName]
-                  ? (LucideIcons as Record<string, React.ElementType>)[cert.iconName]
+                const IconComponent = cert.iconName && cert.iconName !== NULL_ICON_VALUE && (LucideIcons as unknown as Record<string, React.ElementType | undefined>)[cert.iconName]
+                  ? (LucideIcons as unknown as Record<string, React.ElementType>)[cert.iconName]
                   : null;
                 return (
                   <TableRow key={cert.id}>
