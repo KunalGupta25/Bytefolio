@@ -78,8 +78,8 @@ export interface AboutData {
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
-  siteTitleSuffix: "Kunal Gupta Portfolio",
-  siteDescription: "A modern portfolio for Kunal Gupta, a Computer Science student, showcasing skills, projects, and experience.",
+  siteTitleSuffix: "Portfolio",
+  siteDescription: "A modern portfolio showcasing skills, projects, and experience.",
   defaultProfileImageUrl: "https://placehold.co/300x300.png?text=Profile+Pic",
   defaultUserName: "Kunal Gupta",
   defaultUserSpecialization: "MEAN Stack and Python Developer",
@@ -101,8 +101,8 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
 };
 
 const DEFAULT_ABOUT_DATA: AboutData = {
-  professionalSummary: "Passionate and driven, with a strong foundation in software development and a keen interest in leveraging technology to solve real-world problems. Eager to contribute to innovative projects and continuously expand my skill set.",
-  bio: "Currently pursuing a degree in Computer Science, I have actively engaged in various projects that span web development, AI, and data analysis. I thrive in collaborative environments and am always looking for opportunities to learn and grow. Outside of coding, I enjoy exploring new tech trends, contributing to open-source projects, or playing chess.",
+  professionalSummary: "Passionate and driven software developer with a strong foundation in modern web technologies.",
+  bio: "I am a dedicated developer who thrives on solving complex problems and building efficient, scalable solutions.",
   profileImageUrl: DEFAULT_SITE_SETTINGS.defaultProfileImageUrl,
   dataAiHint: "profile picture",
 };

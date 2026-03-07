@@ -127,10 +127,7 @@ export async function submitContactForm(prevState: ContactFormState | undefined,
         console.log('Contact form email sent successfully via Resend (server fallback).');
       } catch (emailError) {
         console.error("Error sending contact form email via Resend (server fallback):", emailError);
-        // Don't mark overall submission as failed just because email notification failed
       }
-    } else {
-      console.warn('Resend API key or recipient email not configured for server fallback. Skipping email notification.');
     }
 
     return { success: true, message: 'Your message has been stored successfully!' };

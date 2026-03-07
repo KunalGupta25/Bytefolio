@@ -56,7 +56,7 @@ Credentials (Service ID, Template ID, Public Key) are managed via the **Admin Pa
 1.  **Push to GitHub**:
     ```bash
     git add .
-    git commit -m "Secure database and finalize deployment settings"
+    git commit -m "Update hero section and fix OG metadata"
     git push origin main
     ```
 2.  **Verify**: Access your site and check the [LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/) or [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) to ensure your preview image is working.
