@@ -197,18 +197,18 @@ const siteSettingsSchema = z.object({
   defaultUserName: z.string().min(2, "Default user name must be at least 2 characters."),
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
   heroTagline: z.string().min(5, "Hero tagline must be at least 5 characters."),
-  defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
+  defaultProfileImageUrl: z.preprocess((val) => val || undefined, z.string().url("Invalid default profile image URL.").optional()),
   faviconUrl: z.string().optional().or(z.literal('')),
   contactEmail: z.string().email(),
   contactLinkedin: z.string().url(),
-  contactGithub: z.string().url(),
-  contactTwitter: z.string().url().optional().or(z.literal('')),
+  contactGithub: z.preprocess((val) => val || undefined, z.string().url("Invalid GitHub URL.").optional()),
+  contactTwitter: z.string().url().optional().or(z.literal('')), 
   customHtmlWidget: z.preprocess((val) => val ?? undefined, z.string().optional().nullable()),
-  blogUrl: z.string().url("Invalid Blog URL. Must be a full URL.").optional().or(z.literal('')),
-  kofiUrl: z.string().url("Invalid Ko-fi URL. Must be a full URL.").optional().or(z.literal('')),
-  emailJsServiceId: z.string().optional().or(z.literal('')),
-  emailJsTemplateId: z.string().optional().or(z.literal('')),
-  emailJsPublicKey: z.string().optional().or(z.literal('')),
+  blogUrl: z.string().url("Invalid Blog URL. Must be a full URL.").optional().or(z.literal('')), 
+  kofiUrl: z.string().url("Invalid Ko-fi URL. Must be a full URL.").optional().or(z.literal('')), 
+  emailJsServiceId: z.string().optional().or(z.literal('')), 
+  emailJsTemplateId: z.string().optional().or(z.literal('')), 
+  emailJsPublicKey: z.string().optional().or(z.literal('')), 
 });
 
 interface SiteSettingsState {
@@ -254,7 +254,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     const currentSettingsSnapshot = await db.ref('/siteSettings').once('value');
     const currentSettings = currentSettingsSnapshot.val() || {};
 
-    const settingsToUpdate: Partial<SiteSettings> & { contactDetails: ContactDetails } = { 
+    const settingsToUpdate: Partial<SiteSettings> & { contactDetails: Partial<ContactDetails> } = { 
       siteName: validatedFields.data.siteName,
       siteTitleSuffix: validatedFields.data.siteTitleSuffix,
       siteDescription: validatedFields.data.siteDescription,
@@ -268,7 +268,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       contactDetails: {
         email: validatedFields.data.contactEmail,
         linkedin: validatedFields.data.contactLinkedin,
-        github: validatedFields.data.contactGithub,
+        github: validatedFields.data.contactGithub || undefined, 
         twitter: validatedFields.data.contactTwitter || undefined,
       }
     };
@@ -467,8 +467,8 @@ const projectSchema = z.object({
   description: z.string().min(1, "Description is required."),
   imageUrl: z.string().url("Valid image URL is required. Please include http:// or https://"),
   tags: z.string().optional().transform(val => (val || "").split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)), 
-  liveLink: z.string().url("Invalid Live Demo URL. Must be a full URL.").optional().or(z.literal('')),
-  repoLink: z.string().url("Invalid Repository URL. Must be a full URL.").optional().or(z.literal('')),
+  liveLink: z.string().url("Invalid Live Demo URL. Must be a full URL.").optional().or(z.literal('')), 
+  repoLink: z.string().url("Invalid Repository URL. Must be a full URL.").optional().or(z.literal('')), 
   dataAiHint: z.string().optional(),
   createdAt: z.string().datetime().optional(), 
 });
@@ -578,7 +578,7 @@ const certificationSchema = z.object({
   name: z.string().min(1, "Certification name is required."),
   organization: z.string().min(1, "Organization is required."),
   date: z.string().min(1, "Date is required."), 
-  verifyLink: z.string().url().optional().or(z.literal('')),
+  verifyLink: z.string().url().optional().or(z.literal('')), 
   iconName: z.string().optional().nullable(),
 });
 
