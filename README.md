@@ -66,13 +66,13 @@ graph TD
 
 ### 1. Prerequisites
 - Node.js 20+ installed.
-- A Firebase project.
+- A Firebase project (https://console.firebase.google.com/).
 
 ### 2. Environment Variables
 Create a `.env.local` file in the root directory:
 
 ```env
-# Firebase Admin Credentials
+# Firebase Admin Credentials (Go to https://console.firebase.google.com/ and create a new project if you don't have one or the select the project and click on gear icon on left sidebar -> service Account -> Generate Private Key(under Admin SDK))
 FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_CLIENT_EMAIL=your-client-email
 FIREBASE_PRIVATE_KEY="your-private-key"
