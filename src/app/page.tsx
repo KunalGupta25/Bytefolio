@@ -38,6 +38,7 @@ export default async function PortfolioPage() {
         <HeroSection 
           userName={siteSettings.defaultUserName} 
           userSpecialization={siteSettings.defaultUserSpecialization} 
+          heroTagline={siteSettings.heroTagline}
           resumeUrl={siteSettings.resumeUrl || "/resume.pdf"} 
         />
         <AboutSection 
@@ -53,11 +54,13 @@ export default async function PortfolioPage() {
           siteSettings={siteSettings} 
         />
       </main>
-      <Footer 
-        siteName={siteSettings.siteName} 
-        userName={siteSettings.defaultUserName} 
-        contactDetails={siteSettings.contactDetails} 
-      />
+      <footer className="mt-auto">
+        <Footer 
+          siteName={siteSettings.siteName} 
+          userName={siteSettings.defaultUserName} 
+          contactDetails={siteSettings.contactDetails} 
+        />
+      </footer>
     </div>
   );
 }

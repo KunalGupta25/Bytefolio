@@ -57,6 +57,7 @@ export interface SiteSettings {
   defaultProfileImageUrl: string;
   defaultUserName: string;
   defaultUserSpecialization: string;
+  heroTagline: string;
   contactDetails: ContactDetails;
   faviconUrl?: string;
   resumeUrl?: string;
@@ -82,6 +83,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   defaultProfileImageUrl: "https://placehold.co/300x300.png?text=Profile+Pic",
   defaultUserName: "Kunal Gupta",
   defaultUserSpecialization: "MEAN Stack and Python Developer",
+  heroTagline: "Building web applications, APIs, and AI agents and more.",
   contactDetails: {
     email: 'kunalgupta250119@gmail.com',
     linkedin: 'https://linkedin.com/in/kunalgupta25',
@@ -120,6 +122,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       if (typeof data.siteDescription === 'string' && data.siteDescription.trim() !== '') settings.siteDescription = data.siteDescription.trim();
       if (typeof data.defaultUserName === 'string' && data.defaultUserName.trim() !== '') settings.defaultUserName = data.defaultUserName.trim();
       if (typeof data.defaultUserSpecialization === 'string' && data.defaultUserSpecialization.trim() !== '') settings.defaultUserSpecialization = data.defaultUserSpecialization.trim();
+      if (typeof data.heroTagline === 'string' && data.heroTagline.trim() !== '') settings.heroTagline = data.heroTagline.trim();
       if (typeof data.defaultProfileImageUrl === 'string' && data.defaultProfileImageUrl.trim() !== '') settings.defaultProfileImageUrl = data.defaultProfileImageUrl.trim();
       
       if (data.hasOwnProperty('faviconUrl')) {

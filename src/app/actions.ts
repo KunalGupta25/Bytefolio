@@ -199,6 +199,7 @@ const siteSettingsSchema = z.object({
   siteDescription: z.string().min(10, "Site description must be at least 10 characters.").max(160, "Site description should be max 160 characters."),
   defaultUserName: z.string().min(2, "Default user name must be at least 2 characters."),
   defaultUserSpecialization: z.string().min(5, "Specialization must be at least 5 characters."),
+  heroTagline: z.string().min(5, "Hero tagline must be at least 5 characters."),
   defaultProfileImageUrl: z.string().url("Invalid default profile image URL."),
   faviconUrl: z.string().optional().or(z.literal('')),
   contactEmail: z.string().email(),
@@ -221,19 +222,13 @@ interface SiteSettingsState {
 }
 
 export async function updateSiteSettings(prevState: SiteSettingsState | undefined, formData: FormData): Promise<SiteSettingsState> {
-  console.log("--- updateSiteSettings Action Triggered ---");
-  const formDataEntries: Record<string, any> = {};
-  for (const [key, value] of formData.entries()) {
-    formDataEntries[key] = value;
-    console.log(`  ${key}: "${value}"`);
-  }
-
   const dataToValidate = {
     siteName: formData.get('siteName'),
     siteTitleSuffix: formData.get('siteTitleSuffix'),
     siteDescription: formData.get('siteDescription'),
     defaultUserName: formData.get('defaultUserName'),
     defaultUserSpecialization: formData.get('defaultUserSpecialization'),
+    heroTagline: formData.get('heroTagline'),
     defaultProfileImageUrl: formData.get('defaultProfileImageUrl'),
     faviconUrl: formData.get('faviconUrl'),
     contactEmail: formData.get('contactEmail'),
@@ -248,20 +243,15 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     emailJsPublicKey: formData.get('emailJsPublicKey'),
   };
   
-  console.log("Data prepared for Zod validation:", dataToValidate);
-
   const validatedFields = siteSettingsSchema.safeParse(dataToValidate);
 
   if (!validatedFields.success) {
-    console.error("Site Settings Zod validation failed. Errors:", JSON.stringify(validatedFields.error.flatten().fieldErrors, null, 2));
     return { 
       success: false, 
-      message: "Validation failed. Please check the specific error messages under each field. Server logs contain more details.", 
+      message: "Validation failed. Please check the specific error messages under each field.", 
       errors: validatedFields.error.flatten().fieldErrors 
     };
   }
-  
-  console.log("Site Settings Zod validation successful. Validated data:", validatedFields.data);
   
   try {
     const currentSettingsSnapshot = await db.ref('/siteSettings').once('value');
@@ -273,6 +263,7 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       siteDescription: validatedFields.data.siteDescription,
       defaultUserName: validatedFields.data.defaultUserName,
       defaultUserSpecialization: validatedFields.data.defaultUserSpecialization,
+      heroTagline: validatedFields.data.heroTagline,
       defaultProfileImageUrl: validatedFields.data.defaultProfileImageUrl,
       faviconUrl: validatedFields.data.faviconUrl || undefined,
       blogUrl: validatedFields.data.blogUrl || undefined,
@@ -285,22 +276,20 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
       }
     };
 
-    // Preserve existing value if not submitted (e.g., when saving from a form that doesn't include all fields)
     const fieldsToPreserveIfNeeded: Array<keyof Pick<SiteSettings, 'customHtmlWidget' | 'emailJsServiceId' | 'emailJsTemplateId' | 'emailJsPublicKey'>> = [
       'customHtmlWidget', 'emailJsServiceId', 'emailJsTemplateId', 'emailJsPublicKey'
     ];
 
     fieldsToPreserveIfNeeded.forEach(key => {
-      if (formData.has(key)) { // Field was part of the submitted form
+      if (formData.has(key)) {
         (settingsToUpdate as any)[key] = (validatedFields.data as any)[key] || undefined;
-      } else if (currentSettings[key] !== undefined) { // Field was not submitted, preserve existing DB value
+      } else if (currentSettings[key] !== undefined) {
         (settingsToUpdate as any)[key] = currentSettings[key];
       }
     });
 
     await db.ref('/siteSettings').update(settingsToUpdate); 
     
-    console.log('Site Settings updated in Firebase:', settingsToUpdate);
     revalidatePath('/'); 
     revalidatePath('/layout', 'layout'); 
     revalidatePath('/admin/settings');
@@ -309,7 +298,6 @@ export async function updateSiteSettings(prevState: SiteSettingsState | undefine
     return { success: true, message: 'Site settings updated successfully!', updatedSiteSettings: updatedSettings };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`Error updating Site Settings in Firebase: ${errorMessage}`, error);
     return { success: false, message: `Failed to update site settings. Server error: ${errorMessage}` };
   }
 }
@@ -363,7 +351,6 @@ export async function saveSkillAction(prevState: SkillCrudState | undefined, for
 
   try {
     await db.ref(`/skills/${skillId}`).set(finalSkillData);
-    console.log(isNew ? 'Adding Skill to Firebase:' : 'Updating Skill in Firebase:', finalSkillData);
     revalidatePath('/');
     revalidatePath('/admin/skills');
     const allSkills = await getSkills();
@@ -384,7 +371,6 @@ export async function deleteSkillAction(id: string): Promise<{ success: boolean;
   
   try {
     await db.ref(`/skills/${id}`).remove();
-    console.log('Deleting Skill from Firebase, ID:', id);
     revalidatePath('/');
     revalidatePath('/admin/skills');
     const allSkills = await getSkills();
@@ -446,7 +432,6 @@ export async function saveEducationItemAction(prevState: EducationCrudState | un
   
   try {
     await db.ref(`/education/${eduId}`).set(finalEduData);
-    console.log(isNew ? 'Adding Education Item to Firebase:' : 'Updating Education Item in Firebase:', finalEduData);
     revalidatePath('/');
     revalidatePath('/admin/education');
     const allItems = await getEducationItems();
@@ -467,7 +452,6 @@ export async function deleteEducationItemAction(id: string): Promise<{ success: 
   
   try {
     await db.ref(`/education/${id}`).remove();
-    console.log('Deleting Education Item from Firebase, ID:', id);
     revalidatePath('/');
     revalidatePath('/admin/education');
     const allItems = await getEducationItems();
@@ -501,7 +485,6 @@ interface ProjectCrudState {
 }
 
 export async function saveProjectAction(prevState: ProjectCrudState | undefined, formData: FormData): Promise<ProjectCrudState> {
-  console.log("saveProjectAction called. FormData received:", Object.fromEntries(formData.entries()));
   const rawData = {
     id: formData.get('id') || undefined,
     title: formData.get('title'),
@@ -512,27 +495,22 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     repoLink: formData.get('repoLink') || undefined,
     dataAiHint: formData.get('dataAiHint') || undefined,
   };
-  console.log("Raw data for validation:", rawData);
 
   const validatedFields = projectSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
-    const errors = validatedFields.error.flatten().fieldErrors;
-    console.error("Project validation failed. Errors:", JSON.stringify(errors, null, 2));
     return { 
       success: false, 
-      message: "Validation failed. Please check the highlighted fields for errors. Ensure all URLs are complete (e.g., start with http:// or https://).", 
-      errors: errors 
+      message: "Validation failed. Please check the highlighted fields for errors.", 
+      errors: validatedFields.error.flatten().fieldErrors 
     };
   }
   
-  console.log("Project validation successful. Validated data:", validatedFields.data);
   const projectData = validatedFields.data;
   const isNew = !projectData.id;
   const projectId = projectData.id || db.ref('/projects').push().key;
 
   if (!projectId) {
-    console.error("Failed to generate project ID.");
     return { success: false, message: "Failed to generate project ID." };
   }
 
@@ -545,15 +523,9 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     createdAt: isNew ? new Date().toISOString() : projectData.createdAt || new Date().toISOString(), 
   };
 
-  if (projectData.liveLink) {
-    dataForFirebase.liveLink = projectData.liveLink;
-  }
-  if (projectData.repoLink) {
-    dataForFirebase.repoLink = projectData.repoLink;
-  }
-  if (projectData.dataAiHint) {
-    dataForFirebase.dataAiHint = projectData.dataAiHint;
-  }
+  if (projectData.liveLink) dataForFirebase.liveLink = projectData.liveLink;
+  if (projectData.repoLink) dataForFirebase.repoLink = projectData.repoLink;
+  if (projectData.dataAiHint) dataForFirebase.dataAiHint = projectData.dataAiHint;
 
   if (!isNew && !projectData.createdAt) {
     try {
@@ -567,11 +539,8 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     }
   }
   
-  console.log("Final project data to save to Firebase:", dataForFirebase);
-
   try {
     await db.ref(`/projects/${projectId}`).set(dataForFirebase as Project); 
-    console.log(isNew ? 'Adding Project to Firebase successful:' : 'Updating Project in Firebase successful:', dataForFirebase);
     revalidatePath('/');
     revalidatePath('/admin/projects');
     const allProjects = await getProjects();
@@ -583,7 +552,6 @@ export async function saveProjectAction(prevState: ProjectCrudState | undefined,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(`Error saving project '${dataForFirebase.title}' to Firebase:`, errorMessage);
     return { 
       success: false, 
       message: `Failed to save project '${dataForFirebase.title}'. Error: ${errorMessage}` 
@@ -596,7 +564,6 @@ export async function deleteProjectAction(id: string): Promise<{ success: boolea
 
   try {
     await db.ref(`/projects/${id}`).remove();
-    console.log('Deleting Project from Firebase, ID:', id);
     revalidatePath('/');
     revalidatePath('/admin/projects');
     const allProjects = await getProjects();
@@ -659,7 +626,6 @@ export async function saveCertificationAction(prevState: CertificationCrudState 
 
   try {
     await db.ref(`/certifications/${certId}`).set(finalCertData);
-    console.log(isNew ? 'Adding Certification to Firebase:' : 'Updating Certification in Firebase:', finalCertData);
     revalidatePath('/');
     revalidatePath('/admin/certifications');
     const allCerts = await getCertifications();
@@ -680,7 +646,6 @@ export async function deleteCertificationAction(id: string): Promise<{ success: 
   
   try {
     await db.ref(`/certifications/${id}`).remove();
-    console.log('Deleting Certification from Firebase, ID:', id);
     revalidatePath('/');
     revalidatePath('/admin/certifications');
     const allCerts = await getCertifications();
@@ -713,4 +678,3 @@ export async function fetchCertificationsForAdmin(): Promise<Certification[]> {
 export async function fetchPageViewsForAdmin(): Promise<number> {
   return getPageViews();
 }
-    

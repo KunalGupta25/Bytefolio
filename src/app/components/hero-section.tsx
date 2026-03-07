@@ -6,10 +6,11 @@ import Link from 'next/link';
 interface HeroSectionProps {
   userName: string;
   userSpecialization: string;
-  resumeUrl: string; // Added resumeUrl prop
+  heroTagline: string;
+  resumeUrl: string;
 }
 
-export default function HeroSection({ userName, userSpecialization, resumeUrl }: HeroSectionProps) {
+export default function HeroSection({ userName, userSpecialization, heroTagline, resumeUrl }: HeroSectionProps) {
   const downloadName = userName ? `${userName.replace(/\s+/g, '_')}_Resume.pdf` : 'Resume.pdf';
   return (
     <section id="hero" className="relative bg-gradient-to-br from-background via-secondary to-background text-foreground min-h-[calc(100vh-4rem)] flex items-center justify-center py-20 overflow-hidden">
@@ -19,10 +20,10 @@ export default function HeroSection({ userName, userSpecialization, resumeUrl }:
           <span className="block text-accent">{userName}</span>
         </h1>
         <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-6">
-          {userSpecialization || "MEAN Stack and Python Developer"}
+          {userSpecialization}
         </div>
         <p className="max-w-2xl mx-auto text-lg sm:text-xl md:text-2xl text-muted-foreground mb-10">
-          Building web applications, APIs, and AI agents and more.
+          {heroTagline}
         </p>
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
           <Button asChild size="lg" className="shadow-lg hover:shadow-accent/50 transition-shadow">
