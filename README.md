@@ -1,28 +1,33 @@
 
-# Firebase Studio
+# ByteFolio - Portfolio Project
 
-This is a NextJS starter in Firebase Studio.
+This is a modern portfolio website built with Next.js, Tailwind CSS, and Firebase.
 
-## Deploy to Netlify
+## Important Note on Prerendering
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/KunalGupta25/portfolio-1)
+This project uses **Next.js**, which handles Server-Side Rendering (SSR) and Static Site Generation (SSG) natively. Because of this, you should **DISABLE** the "Legacy Prerendering" feature in the Netlify UI.
 
-Click the button above to deploy this project to Netlify.
+1.  Go to your **Netlify Site Settings**.
+2.  Navigate to **Build & deploy > Post processing > Prerendering**.
+3.  Ensure the toggle is **OFF**.
+4.  **Do NOT** install any Prerender extensions. Next.js does all the heavy lifting for SEO and social media previews automatically.
 
 ## Before Pushing to GitHub & Deploying:
 
 1.  **Environment Variables on Netlify**:
     *   Add all variables from your local `.env.local` to Netlify's **Site settings > Build & deploy > Environment**.
-    *   Essential variables: `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY` (ensure preservation of newlines), `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_SITE_URL`.
+    *   Essential variables: 
+        *   `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY` (ensure preservation of newlines).
+        *   `NEXT_PUBLIC_GA_MEASUREMENT_ID` (Google Analytics ID).
+        *   `NEXT_PUBLIC_SITE_URL` (Your site's full URL, e.g., `https://lazyhideout.tech`).
+        *   `RESEND_API_KEY` (For contact form fallback).
+        *   `CONTACT_FORM_RECIPIENT_EMAIL` (Email for form notifications).
 
-2.  **Disable Legacy Prerendering**:
-    *   To avoid deprecation warnings, go to **Site settings > Build & deploy > Prerendering** and turn the toggle **OFF**. Next.js handles this automatically.
+2.  **Open Graph Image**:
+    *   Place your desired Open Graph image at `public/og-image.png` (Recommended: 1200x630px or 1200x675px).
 
-3.  **Open Graph Image**:
-    *   Place your desired Open Graph image at `public/og-image.png` (Recommended: 1200x630px).
-
-4.  **EmailJS**:
+3.  **EmailJS**:
     *   Credentials (Service ID, Template ID, Public Key) are managed via the **Admin Panel > Integrations** page inside your deployed app.
 
-5.  **Push to GitHub**:
-    *   Ensure all latest changes are committed to `https://github.com/KunalGupta25/portfolio-1`.
+4.  **Push to GitHub**:
+    *   Ensure all latest changes are committed to your repository.
