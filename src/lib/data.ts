@@ -3,6 +3,7 @@ import type React from 'react';
 import { db } from './firebase-admin'; // Firebase Admin SDK
 
 const NULL_ICON_VALUE = "--no-icon--";
+const CODE_SIGN_FAVICON_CYAN = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
 
 export interface Skill {
   id: string;
@@ -48,6 +49,7 @@ export interface ContactDetails {
   github: string;
   twitter?: string;
 }
+
 export interface SiteSettings {
   siteName: string;
   siteTitleSuffix: string;
@@ -72,8 +74,6 @@ export interface AboutData {
   profileImageUrl: string;
   dataAiHint?: string;
 }
-
-const CODE_SIGN_FAVICON_CYAN = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="90" font-family="monospace" fill="%2300FFFF">&lt;/&gt;</text></svg>';
 
 const DEFAULT_SITE_SETTINGS: SiteSettings = {
   siteName: "ByteFolio",
@@ -105,12 +105,7 @@ const DEFAULT_ABOUT_DATA: AboutData = {
   dataAiHint: "profile picture",
 };
 
-
-console.log('[data.ts] DEFAULT_SITE_SETTINGS.faviconUrl:', DEFAULT_SITE_SETTINGS.faviconUrl);
-
-
 export async function getSiteSettings(): Promise<SiteSettings> {
-  console.log('[getSiteSettings] Initialized settings with defaults. Default faviconUrl:', DEFAULT_SITE_SETTINGS.faviconUrl);
   try {
     const snapshot = await db.ref('/siteSettings').once('value');
     const data = snapshot.val();
@@ -120,7 +115,6 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     settings.resumeUrl = process.env.NEXT_PUBLIC_RESUME_URL || DEFAULT_SITE_SETTINGS.resumeUrl || "/resume.pdf";
 
     if (data && typeof data === 'object') {
-      console.log('[getSiteSettings] Fetched data from Firebase:', data);
       if (typeof data.siteName === 'string' && data.siteName.trim() !== '') settings.siteName = data.siteName.trim();
       if (typeof data.siteTitleSuffix === 'string' && data.siteTitleSuffix.trim() !== '') settings.siteTitleSuffix = data.siteTitleSuffix.trim();
       if (typeof data.siteDescription === 'string' && data.siteDescription.trim() !== '') settings.siteDescription = data.siteDescription.trim();
@@ -136,7 +130,6 @@ export async function getSiteSettings(): Promise<SiteSettings> {
              settings.faviconUrl = DEFAULT_SITE_SETTINGS.faviconUrl;
         }
       }
-      console.log('[getSiteSettings] Merged Firebase data. Resolved faviconUrl:', settings.faviconUrl?.startsWith('data:image/svg+xml') ? 'SVG Data URI' : settings.faviconUrl);
       
       if (data.hasOwnProperty('customHtmlWidget')) {
         settings.customHtmlWidget = typeof data.customHtmlWidget === 'string' ? data.customHtmlWidget : DEFAULT_SITE_SETTINGS.customHtmlWidget;
@@ -167,19 +160,13 @@ export async function getSiteSettings(): Promise<SiteSettings> {
             const fbTwitter = contactData.twitter;
             settings.contactDetails.twitter = (typeof fbTwitter === 'string' && fbTwitter.trim() !== '') ? fbTwitter.trim() : DEFAULT_SITE_SETTINGS.contactDetails.twitter;
         }
-      } else {
-         console.log('[getSiteSettings] contactDetails missing or not an object in Firebase, using defaults.');
       }
-    } else {
-      console.log('[getSiteSettings] No data from Firebase or data is not an object. Using all defaults.');
     }
-    console.log('[getSiteSettings] Final settings returned:', settings);
     return settings;
   } catch (error) {
     console.error("[getSiteSettings] Error fetching site settings:", error);
     const errorDefaults: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
     errorDefaults.resumeUrl = process.env.NEXT_PUBLIC_RESUME_URL || DEFAULT_SITE_SETTINGS.resumeUrl || "/resume.pdf";
-    console.log('[getSiteSettings] Error condition. Using all defaults. Default faviconUrl:', errorDefaults.faviconUrl?.startsWith('data:image/svg+xml') ? 'SVG Data URI' : errorDefaults.faviconUrl);
     return errorDefaults;
   }
 }
@@ -323,6 +310,3 @@ export async function getPageViews(): Promise<number> {
     return 0;
   }
 }
-
-
-    

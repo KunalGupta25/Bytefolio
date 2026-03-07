@@ -14,7 +14,7 @@ import {
   LogOut,
   Loader2,
   Palette,
-  Puzzle, // Added for Integrations
+  Puzzle,
 } from "lucide-react"
 import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -53,7 +53,7 @@ const adminNavItems = [
   { name: "Projects", href: "/admin/projects", icon: Briefcase },
   { name: "Certifications", href: "/admin/certifications", icon: Award },
   { name: "Site Settings", href: "/admin/settings", icon: Palette },
-  { name: "Integrations", href: "/admin/integrations", icon: Puzzle }, // New item
+  { name: "Integrations", href: "/admin/integrations", icon: Puzzle },
 ];
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
@@ -116,7 +116,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           <SidebarMenu>
             {adminNavItems.map((item) => (
               <SidebarMenuItem key={item.name}>
-                <SidebarMenuButton asChild tooltip={item.name} data-active={pathname === item.href}>
+                <SidebarMenuButton asChild tooltip={item.name} isActive={pathname === item.href}>
                   <Link href={item.href}>
                     <item.icon />
                     <span>{item.name}</span>
