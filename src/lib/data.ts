@@ -165,9 +165,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     return settings;
   } catch (error) {
     console.error("[getSiteSettings] Error fetching site settings:", error);
-    const errorDefaults: SiteSettings = JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
-    errorDefaults.resumeUrl = process.env.NEXT_PUBLIC_RESUME_URL || DEFAULT_SITE_SETTINGS.resumeUrl || "/resume.pdf";
-    return errorDefaults;
+    return JSON.parse(JSON.stringify(DEFAULT_SITE_SETTINGS));
   }
 }
 

@@ -3,8 +3,6 @@
 
 This is a NextJS starter in Firebase Studio.
 
-To get started, take a look at src/app/page.tsx.
-
 ## Deploy to Netlify
 
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/KunalGupta25/portfolio-1)
@@ -14,38 +12,17 @@ Click the button above to deploy this project to Netlify.
 ## Before Pushing to GitHub & Deploying:
 
 1.  **Environment Variables on Netlify**:
-    *   This is the **most critical step**. After connecting your repository to Netlify, go to your Netlify site's **Site settings > Build & deploy > Environment > Environment variables**.
-    *   Add all the variables from your local `.env.local` file. These include:
-        *   `FIREBASE_SERVICE_ACCOUNT_TYPE`
-        *   `FIREBASE_SERVICE_ACCOUNT_PROJECT_ID`
-        *   `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY_ID`
-        *   `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY` (Ensure the multi-line key is pasted correctly, preserving newlines)
-        *   `FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL`
-        *   `FIREBASE_SERVICE_ACCOUNT_CLIENT_ID`
-        *   `FIREBASE_SERVICE_ACCOUNT_AUTH_URI`
-        *   `FIREBASE_SERVICE_ACCOUNT_TOKEN_URI`
-        *   `FIREBASE_SERVICE_ACCOUNT_AUTH_PROVIDER_X509_CERT_URL`
-        *   `FIREBASE_SERVICE_ACCOUNT_CLIENT_X509_CERT_URL`
-        *   `FIREBASE_SERVICE_ACCOUNT_UNIVERSE_DOMAIN`
-        *   `FIREBASE_DATABASE_URL`
-        *   `ADMIN_EMAIL`
-        *   `ADMIN_PASSWORD`
-        *   `RESEND_API_KEY` (Your API key from Resend, for server-side email fallback)
-        *   `CONTACT_FORM_RECIPIENT_EMAIL` (The email address to receive Resend notifications)
-        *   `NEXT_PUBLIC_RESUME_URL` (URL to your resume/CV, e.g., `/resume.pdf` or a full web link)
-        *   `NEXT_PUBLIC_GA_MEASUREMENT_ID` (Your Google Analytics Measurement ID, e.g., `G-XXXXXXXXXX`)
-        *   `NEXT_PUBLIC_SITE_URL` (The full URL of your deployed site, e.g., `https://your-site-name.netlify.app`)
-    *   Netlify's build will fail if these are not set up correctly, as the Firebase Admin SDK needs them during the build process and at runtime for server actions.
-    *   EmailJS credentials (Service ID, Template ID, Public Key) are managed via the **Admin Panel > Integrations** page, not environment variables.
+    *   Add all variables from your local `.env.local` to Netlify's **Site settings > Build & deploy > Environment**.
+    *   Essential variables: `FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY` (ensure preservation of newlines), `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_SITE_URL`.
 
-2.  **Check your `next.config.ts`**:
-    *   Ensure all hostnames for `next/image` are correctly listed in `images.remotePatterns`. We've added several, including a wildcard for any HTTPS source, but it's good to be aware of.
+2.  **Disable Legacy Prerendering**:
+    *   To avoid deprecation warnings, go to **Site settings > Build & deploy > Prerendering** and turn the toggle **OFF**. Next.js handles this automatically.
 
 3.  **Open Graph Image**:
-    *   Place your desired Open Graph image (the image that appears in link previews) at `public/og-image.png`. Recommended dimensions are 1200x630 pixels.
+    *   Place your desired Open Graph image at `public/og-image.png` (Recommended: 1200x630px).
 
-4.  **Push to GitHub**:
-    *   Make sure all your latest changes, including the `.gitignore` and `netlify.toml`, are committed and pushed to your `https://github.com/KunalGupta25/portfolio-1` repository.
+4.  **EmailJS**:
+    *   Credentials (Service ID, Template ID, Public Key) are managed via the **Admin Panel > Integrations** page inside your deployed app.
 
-Once these are done, your Netlify deployment should proceed smoothly!
-
+5.  **Push to GitHub**:
+    *   Ensure all latest changes are committed to `https://github.com/KunalGupta25/portfolio-1`.
