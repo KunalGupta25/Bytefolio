@@ -20,7 +20,7 @@ export default function HeroSection({ userName, userSpecialization, heroTagline,
           <span className="block text-accent">{userName}</span>
         </h1>
         <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-6">
-          {userSpecialization}
+          Full Stack & Python Developer
         </div>
         <p className="max-w-2xl mx-auto text-lg sm:text-xl md:text-2xl text-muted-foreground mb-10">
           {heroTagline}
