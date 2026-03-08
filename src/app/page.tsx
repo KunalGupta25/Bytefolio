@@ -18,7 +18,7 @@ import {
   getCertifications 
 } from '@/lib/data';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export default async function PortfolioPage() {
   const siteSettings = await getSiteSettings();

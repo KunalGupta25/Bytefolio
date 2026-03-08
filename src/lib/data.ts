@@ -254,7 +254,7 @@ export async function getProjects(): Promise<Project[]> {
           title: typeof project.title === 'string' ? project.title : 'Untitled Project',
           description: typeof project.description === 'string' ? project.description : '',
           imageUrl: typeof project.imageUrl === 'string' && project.imageUrl.trim() !== '' ? project.imageUrl.trim() : 'https://placehold.co/600x400.png',
-          tags: Array.isArray(project.tags) ? project.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+          tags: Array.isArray(project.tags) ? project.tags.filter((tag: unknown): tag is string => typeof tag === 'string') : [],
           liveLink: (typeof project.liveLink === 'string' && project.liveLink.trim() !== '') ? project.liveLink : undefined,
           repoLink: (typeof project.repoLink === 'string' && project.repoLink.trim() !== '') ? project.repoLink : undefined,
           dataAiHint: typeof project.dataAiHint === 'string' ? project.dataAiHint : undefined,

@@ -15,8 +15,8 @@ interface EducationSectionProps {
 export default function EducationSection({ educationItems }: EducationSectionProps) {
 
   const TimelineIcon = ({ iconName }: { iconName?: EducationItem['iconName'] }) => {
-    if (iconName && typeof iconName === 'string' && (LucideIcons as Record<string, any>)[iconName]) {
-      const ResolvedIcon = (LucideIcons as Record<string, React.ElementType>)[iconName];
+    if (iconName && typeof iconName === 'string' && (LucideIcons as unknown as Record<string, React.ElementType | undefined>)[iconName]) {
+      const ResolvedIcon = (LucideIcons as unknown as Record<string, React.ElementType>)[iconName];
       return ResolvedIcon ? <ResolvedIcon /> : <GraduationCap />;
     }
     return <GraduationCap />;

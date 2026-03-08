@@ -26,9 +26,11 @@ export default function Footer({ siteName, userName, contactDetails }: FooterPro
 
           {/* Social Links */}
           <div className="flex justify-center space-x-6">
-            <Link href={contactDetails.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile">
-              <Github className="h-6 w-6 text-muted-foreground hover:text-accent transition-colors hover:scale-110 transform duration-200" />
-            </Link>
+            {contactDetails.github && (
+              <Link href={contactDetails.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub Profile">
+                <Github className="h-6 w-6 text-muted-foreground hover:text-accent transition-colors hover:scale-110 transform duration-200" />
+              </Link>
+            )}
             <Link href={contactDetails.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile">
               <Linkedin className="h-6 w-6 text-muted-foreground hover:text-accent transition-colors hover:scale-110 transform duration-200" />
             </Link>

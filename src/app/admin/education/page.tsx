@@ -217,8 +217,8 @@ export default function AdminEducationPage() {
             </TableHeader>
             <TableBody>
               {educationItems.map((item) => {
-                const IconComponent = item.iconName && item.iconName !== NULL_ICON_VALUE && (LucideIcons as Record<string, React.ElementType | undefined>)[item.iconName]
-                  ? (LucideIcons as Record<string, React.ElementType>)[item.iconName]
+                const IconComponent = item.iconName && item.iconName !== NULL_ICON_VALUE && (LucideIcons as unknown as Record<string, React.ElementType | undefined>)[item.iconName]
+                  ? (LucideIcons as unknown as Record<string, React.ElementType>)[item.iconName]
                   : null;
                 return (
                   <TableRow key={item.id}>

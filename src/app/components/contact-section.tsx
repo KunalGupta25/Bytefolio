@@ -42,11 +42,13 @@ export default function ContactSection({ siteSettings }: ContactSectionProps) {
                 Connect with me on social media:
               </p>
               <div className="flex space-x-4">
-                <Button asChild variant="outline" size="icon" aria-label="GitHub Profile">
-                  <Link href={contactDetails.github} target="_blank" rel="noopener noreferrer">
-                    <Github className="h-5 w-5" />
-                  </Link>
-                </Button>
+                {contactDetails.github && (
+                  <Button asChild variant="outline" size="icon" aria-label="GitHub Profile">
+                    <Link href={contactDetails.github} target="_blank" rel="noopener noreferrer">
+                      <Github className="h-5 w-5" />
+                    </Link>
+                  </Button>
+                )}
                 <Button asChild variant="outline" size="icon" aria-label="LinkedIn Profile">
                   <Link href={contactDetails.linkedin} target="_blank" rel="noopener noreferrer">
                     <Linkedin className="h-5 w-5" />

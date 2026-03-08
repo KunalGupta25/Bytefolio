@@ -145,7 +145,7 @@ export function ContactForm({ emailJsServiceId, emailJsTemplateId, emailJsPublic
     }
   };
   
-  const currentErrors = useEmailJS ? clientState.errors : serverState.errors;
+  const currentErrors = (useEmailJS ? clientState.errors : serverState.errors) as ClientSideFormState['errors'] | undefined;
   const isSubmitting = useEmailJS ? clientState.isSubmitting : false; // useFormStatus handles server pending
 
   return (

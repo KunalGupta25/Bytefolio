@@ -6,6 +6,7 @@ import './globals.css';
 import { ThemeProvider } from '@/app/components/theme-provider';
 import { Toaster } from "@/components/ui/toaster";
 import { getSiteSettings } from '@/lib/data'; 
+import { getNormalizedSiteUrl } from '@/lib/site-url';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -25,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const pageTitle = `${siteSettings.siteName || 'ByteFolio'} | ${siteSettings.siteTitleSuffix || 'Portfolio'}`;
   const pageDescription = siteSettings.siteDescription || 'A modern portfolio showcasing skills, projects, and experience.';
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const siteUrl = getNormalizedSiteUrl();
   const ogImageRelativePath = '/og-image.png';
 
   let finalOgImageForOpenGraph: string;
@@ -68,7 +69,18 @@ export async function generateMetadata(): Promise<Metadata> {
       description: pageDescription,
       images: [finalOgImageForTwitter],
     },
-    metadataBase: siteUrl && siteUrl.startsWith('http') ? new URL(siteUrl) : undefined,
+    alternates: siteUrl ? { canonical: '/' } : undefined,
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+    metadataBase: siteUrl ? new URL(siteUrl) : undefined,
   };
 }
 
@@ -79,10 +91,42 @@ export default async function RootLayout({
 }>) {
   const siteSettings = await getSiteSettings();
   const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  const siteUrl = getNormalizedSiteUrl();
+
+  const sameAsProfiles = [
+    siteSettings.contactDetails.linkedin,
+    siteSettings.contactDetails.github,
+    siteSettings.contactDetails.twitter,
+  ].filter((value): value is string => Boolean(value));
+
+  const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: siteSettings.siteName,
+    description: siteSettings.siteDescription,
+    ...(siteUrl ? { url: siteUrl } : {}),
+  };
+
+  const personJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: siteSettings.defaultUserName,
+    jobTitle: siteSettings.defaultUserSpecialization,
+    ...(siteUrl ? { url: siteUrl } : {}),
+    ...(sameAsProfiles.length ? { sameAs: sameAsProfiles } : {}),
+  };
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+        />
         {gaMeasurementId && (
           <>
             <Script

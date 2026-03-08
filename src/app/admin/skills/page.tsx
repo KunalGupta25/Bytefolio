@@ -152,7 +152,7 @@ export default function AdminSkillsPage() {
                 <SelectGroup>
                   <SelectLabel>Common Icons</SelectLabel>
                   {commonLucideIconNames.map(name => {
-                      const IconComponent = (LucideIcons as Record<string, React.ElementType | undefined>)[name];
+                      const IconComponent = (LucideIcons as unknown as Record<string, React.ElementType | undefined>)[name];
                       return (
                           <SelectItem key={`common-${name}`} value={name}>
                               <div className="flex items-center gap-2">
@@ -228,8 +228,8 @@ export default function AdminSkillsPage() {
             </TableHeader>
             <TableBody>
               {skills.map((skill) => {
-                const IconComponent = skill.iconName && skill.iconName !== NULL_ICON_VALUE && (LucideIcons as Record<string, React.ElementType | undefined>)[skill.iconName]
-                  ? (LucideIcons as Record<string, React.ElementType>)[skill.iconName]
+                const IconComponent = skill.iconName && skill.iconName !== NULL_ICON_VALUE && (LucideIcons as unknown as Record<string, React.ElementType | undefined>)[skill.iconName]
+                  ? (LucideIcons as unknown as Record<string, React.ElementType>)[skill.iconName]
                   : null;
                 return (
                 <TableRow key={skill.id || skill.name}>
