@@ -1,110 +1,123 @@
-# 🚀 ByteFolio
+# ByteFolio
 
-**ByteFolio** is a modern, high-performance, and highly customizable portfolio template designed for developers and creatives. It features a robust **Admin Panel** to manage your content dynamically without touching the code, integrated with **Firebase** and powered by **Next.js 15**.
-
----
-
-## ✨ Features
-
-- 🛠️ **Full Admin Dashboard**: Manage About Me, Skills, Projects, Education, and Certifications.
-- 🤖 **AI-Ready**: Integrated with Google Genkit for AI-enhanced features.
-- 🎨 **Modern UI/UX**: Built with Tailwind CSS, Shadcn UI, and smooth animations.
-- 📊 **Real-time Analytics**: Tracks page views and contact messages.
-- 📧 **Multiple Email Options**: Support for EmailJS (client-side) and Resend (server-side fallback).
-- 🌓 **Dark/Light Mode**: Seamless theme switching.
-- 📱 **Fully Responsive**: Optimized for all screen sizes.
-- 🧊 **3D Elements**: Integration with Spline (Three.js) for immersive hero sections.
-
----
-
-## 🛠️ Tech Stack
-
-- **Framework**: [Next.js 15 (App Router)](https://nextjs.org/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/)
-- **Database**: [Firebase Realtime Database](https://firebase.google.com/docs/database)
-- **Backend**: Next.js Server Actions + [Firebase Admin SDK](https://firebase.google.com/docs/admin/setup)
-- **AI**: [Google Genkit](https://firebase.google.com/docs/genkit)
-- **Charts**: [Recharts](https://recharts.org/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Deployment**: [Netlify](https://www.netlify.com/)
-
----
-
-## 🏗️ Architecture
-
-```mermaid
-graph TD
-    User((User)) -->|Visits| Frontend[Next.js Frontend]
-    Admin((Admin)) -->|Authenticates| AdminPanel[Admin Dashboard]
-    
-    subgraph Server_Side
-        Frontend -->|Server Actions| Server[Next.js Server]
-        AdminPanel -->|Server Actions| Server
-        Server -->|Firebase Admin SDK| DB[(Firebase Realtime DB)]
-    end
-    
-    subgraph Integrations
-        Server -->|Email| Resend[Resend API]
-        Frontend -->|Email| EmailJS[EmailJS]
-        Server -->|AI| Genkit[Google Genkit / Gemini]
-    end
-```
-
----
-
-## 🚀 How It Works
-
-1.  **Dynamic Content**: Instead of hardcoding your details, the app fetches data from Firebase. You can update your bio, add new projects, or change your resume link directly from the `/admin` dashboard.
-2.  **Server Actions**: Securely handles all database operations (Create, Read, Update, Delete) using Next.js Server Actions, bypassing the need for complex API routes.
-3.  **Security**: The database is secured using Firebase Admin SDK on the server, allowing you to set public rules to `read: false, write: false` while maintaining full app functionality.
-4.  **AI Integration**: Uses Genkit to potentially enhance project descriptions or generate content hints.
-
----
-
-## 📦 How to Use
-
-### 1. Prerequisites
-- Node.js 20+ installed.
-- A Firebase project (https://console.firebase.google.com/).
-
-### 2. Environment Variables
-Create a `.env.local` file in the root directory:
-
-```env
-# Firebase Admin Credentials (Go to https://console.firebase.google.com/ and create a new project if you don't have one or the select the project and click on gear icon on left sidebar -> service Account -> Generate Private Key(under Admin SDK))
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_CLIENT_EMAIL=your-client-email
-FIREBASE_PRIVATE_KEY="your-private-key"
-FIREBASE_DATABASE_URL=your-database-url
-
-# Admin Auth
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=your-secure-password
-
-# Optional Integrations
-RESEND_API_KEY=re_xxx
-CONTACT_FORM_RECIPIENT_EMAIL=your-email@example.com
-NEXT_PUBLIC_GA_MEASUREMENT_ID=G-xxxxxxx
-NEXT_PUBLIC_SITE_URL=https://your-domain.com
-```
-
-### 3. Installation
-```bash
-npm install
-npm run dev
-```
-Open [http://localhost:9002](http://localhost:9002) to see the result.
-
-### 4. Deployment
-Deploy easily on **Netlify** or **Vercel**. Ensure you add the environment variables to your deployment settings.
+A modern, full-featured portfolio application built with Next.js 15, featuring a complete admin dashboard for dynamic content management. Built for developers and creatives who want a professional online presence without touching code after initial setup.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/KunalGupta25/Bytefolio)
 
----
+## ✨ Features
 
-## 🔒 Database Security
-Set your Firebase Realtime Database rules to:
+### Public Portfolio
+- **Hero Section** - Eye-catching landing with name, specialization, and call-to-action
+- **About Me** - Professional summary and bio with profile image
+- **Skills Showcase** - Categorized skills with proficiency levels and custom icons
+- **Education Timeline** - Academic background displayed in an interactive vertical timeline
+- **Projects Gallery** - Portfolio projects with images, tags, live demos, and repository links
+- **Certifications** - Professional certifications with verification links
+- **Contact Form** - Dual email integration (EmailJS client-side + Resend server-side fallback)
+- **Dark/Light Mode** - System-aware theme switching with smooth transitions
+- **Responsive Design** - Optimized for all screen sizes and devices
+- **SEO Optimized** - Built-in sitemap, robots.txt, canonical URLs, and JSON-LD structured data
+
+### Admin Dashboard
+Complete CRUD operations for all content sections:
+- **Dashboard Overview** - Real-time stats for projects, skills, certifications, and page views
+- **About Management** - Edit professional summary, bio, and profile image
+- **Skills Manager** - Add/edit/delete skills with categories, levels, and Lucide icons
+- **Education Manager** - Manage academic history with timeline integration
+- **Projects Manager** - Full project portfolio management with image upload support
+- **Certifications Manager** - Track and display professional credentials
+- **Site Settings** - Configure site name, tagline, SEO metadata, and contact information
+- **Integrations** - Set up EmailJS, Google Analytics, Ko-fi, and custom HTML widgets
+
+## 🛠️ Tech Stack
+
+**Frontend**
+- [Next.js 15](https://nextjs.org/) - React framework with App Router
+- [TypeScript](https://www.typescriptlang.org/) - Type-safe development
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first styling
+- [shadcn/ui](https://ui.shadcn.com/) - High-quality React components
+- [Lucide Icons](https://lucide.dev/) - Beautiful icon library
+- [React Hook Form](https://react-hook-form.com/) - Form validation
+- [Zod](https://zod.dev/) - Schema validation
+
+**Backend & Database**
+- [Firebase Realtime Database](https://firebase.google.com/docs/database) - Real-time data storage
+- [Firebase Admin SDK](https://firebase.google.com/docs/admin/setup) - Secure server-side operations
+- Next.js Server Actions - Type-safe mutations
+
+**AI & Integrations**
+- [Google Genkit](https://firebase.google.com/docs/genkit) - AI capabilities
+- [EmailJS](https://www.emailjs.com/) - Client-side email
+- [Resend](https://resend.com/) - Server-side email fallback
+- [Recharts](https://recharts.org/) - Dashboard analytics
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 20 or higher
+- Firebase project ([Create one here](https://console.firebase.google.com/))
+- npm or yarn package manager
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/KunalGupta25/Bytefolio.git
+cd Bytefolio
+```
+
+2. **Install dependencies**
+```bash
+npm install
+```
+
+3. **Configure Firebase**
+
+- Go to [Firebase Console](https://console.firebase.google.com/)
+- Create a new project or select existing
+- Navigate to Project Settings → Service Accounts
+- Click "Generate New Private Key" under Admin SDK
+- Download the JSON file
+
+4. **Set up environment variables**
+
+Create `.env.local` in the root directory:
+
+```env
+# Firebase Admin SDK (from downloaded JSON file)
+FIREBASE_SERVICE_ACCOUNT_TYPE="service_account"
+FIREBASE_SERVICE_ACCOUNT_PROJECT_ID="your-project-id"
+FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY_ID="your-private-key-id"
+FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_KEY_HERE\n-----END PRIVATE KEY-----\n"
+FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL="firebase-adminsdk@your-project.iam.gserviceaccount.com"
+FIREBASE_SERVICE_ACCOUNT_CLIENT_ID="your-client-id"
+FIREBASE_SERVICE_ACCOUNT_AUTH_URI="https://accounts.google.com/o/oauth2/auth"
+FIREBASE_SERVICE_ACCOUNT_TOKEN_URI="https://oauth2.googleapis.com/token"
+FIREBASE_SERVICE_ACCOUNT_AUTH_PROVIDER_X509_CERT_URL="https://www.googleapis.com/oauth2/v1/certs"
+FIREBASE_SERVICE_ACCOUNT_CLIENT_X509_CERT_URL="https://www.googleapis.com/robot/v1/metadata/x509/YOUR_EMAIL_ENCODED"
+FIREBASE_SERVICE_ACCOUNT_UNIVERSE_DOMAIN="googleapis.com"
+
+# Firebase Realtime Database
+FIREBASE_DATABASE_URL="https://your-project-default-rtdb.firebaseio.com"
+
+# Admin Credentials
+ADMIN_EMAIL="admin@example.com"
+ADMIN_PASSWORD="your-secure-password"
+
+# Email Service (Optional)
+CONTACT_FORM_RECIPIENT_EMAIL="your-email@example.com"
+RESEND_API_KEY="re_xxxxxxxxxxxx"
+
+# Analytics (Optional)
+NEXT_PUBLIC_GA_MEASUREMENT_ID="G-XXXXXXXXXX"
+
+# Site Configuration
+NEXT_PUBLIC_SITE_URL="https://yourdomain.com"
+```
+
+5. **Configure Firebase Realtime Database Rules**
+
+In Firebase Console → Realtime Database → Rules, set:
 ```json
 {
   "rules": {
@@ -113,10 +126,151 @@ Set your Firebase Realtime Database rules to:
   }
 }
 ```
-*The Admin SDK bypasses these rules, ensuring your data is private but your app remains functional.*
+*The Admin SDK bypasses these rules, keeping your data secure.*
+
+6. **Start development server**
+```bash
+npm run dev
+```
+
+Visit [http://localhost:9002](http://localhost:9002) to see your portfolio.
+
+7. **Access admin panel**
+
+Navigate to [http://localhost:9002/admin/login](http://localhost:9002/admin/login) and use the credentials from your `.env.local` file.
+
+## 📜 Available Scripts
+
+```bash
+npm run dev          # Start development server on port 9002
+npm run build        # Build for production
+npm start            # Start production server
+npm run lint         # Run ESLint
+npm run typecheck    # Run TypeScript type checking
+npm run genkit:dev   # Start Genkit AI development server
+```
+
+## 🗂️ Project Structure
+
+```
+Bytefolio/
+├── src/
+│   ├── app/
+│   │   ├── actions.ts              # Server actions for CRUD operations
+│   │   ├── layout.tsx              # Root layout with metadata
+│   │   ├── page.tsx                # Homepage
+│   │   ├── robots.ts               # SEO robots configuration
+│   │   ├── sitemap.ts              # Dynamic sitemap generation
+│   │   ├── admin/                  # Admin dashboard
+│   │   │   ├── login/              # Admin authentication
+│   │   │   ├── about/              # About Me management
+│   │   │   ├── skills/             # Skills management
+│   │   │   ├── education/          # Education management
+│   │   │   ├── projects/           # Projects management
+│   │   │   ├── certifications/     # Certifications management
+│   │   │   ├── settings/           # Site settings
+│   │   │   └── integrations/       # Third-party integrations
+│   │   └── components/             # Page-specific components
+│   ├── components/
+│   │   └── ui/                     # Reusable UI components (shadcn)
+│   ├── lib/
+│   │   ├── data.ts                 # Data interfaces and queries
+│   │   ├── firebase-admin.ts       # Firebase Admin initialization
+│   │   ├── site-url.ts             # URL utilities
+│   │   └── utils.ts                # Helper functions
+│   ├── hooks/                      # React hooks
+│   └── ai/                         # Genkit AI configuration
+├── public/                         # Static assets
+├── docs/                           # Documentation
+└── .env.local.example              # Environment variables template
+```
+
+## 🔐 Security
+
+- **Private Database**: Firebase rules set to deny all public access
+- **Server-Side Auth**: Admin SDK handles all database operations securely
+- **Environment Variables**: Sensitive credentials stored in `.env.local`
+- **Admin Routes**: Protected with basic authentication (enhance for production)
+- **SEO Protection**: Admin routes excluded via robots.txt and noindex meta tags
+
+## 🌐 Deployment
+
+### Deploy to Vercel
+
+1. Click the "Deploy with Vercel" button above, or:
+2. Connect your GitHub repository to Vercel
+3. Add all environment variables from `.env.local`
+4. Deploy
+
+### Deploy to Netlify
+
+1. Connect your repository to Netlify
+2. Build command: `npm run build`
+3. Publish directory: `.next`
+4. Add environment variables
+5. Deploy
+
+The project includes `netlify.toml` for automatic Netlify configuration.
+
+## 🎨 Customization
+
+### Theme Colors
+Edit `tailwind.config.ts` to customize colors:
+- Primary: Navy blue `#24292F`
+- Secondary: Light gray `#E5E5E5`
+- Accent: Teal `#008080`
+
+### Site Content
+All content is managed through the admin dashboard at `/admin`:
+- Update your name, tagline, and bio
+- Add/remove skills, projects, and certifications
+- Configure social media links
+- Customize site metadata for SEO
+
+### Components
+All UI components are in `src/components/ui/` and can be customized following shadcn/ui patterns.
+
+## 📊 Features in Detail
+
+### Email Integration
+ByteFolio supports dual email configuration:
+- **EmailJS** (Client-side): Configure in Admin → Integrations
+- **Resend** (Server-side): Automatic fallback using environment variables
+
+### Analytics
+- **Google Analytics**: Add `NEXT_PUBLIC_GA_MEASUREMENT_ID` to track visitors
+- **Page Views**: Built-in counter displayed in admin dashboard
+
+### AI Integration
+Google Genkit is integrated for potential AI features:
+```bash
+npm run genkit:dev  # Start AI development server
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📝 License
+
+This project is open source and available under the MIT License.
+
+## 🙏 Acknowledgments
+
+Built with:
+- [shadcn/ui](https://ui.shadcn.com/) for beautiful components
+- [Lucide](https://lucide.dev/) for icons
+- [Vercel](https://vercel.com/) for hosting platform
+- [Firebase](https://firebase.google.com/) for backend services
+
+## 📧 Support
+
+For issues and questions:
+- Open an issue on GitHub
+- Check existing documentation in `/docs`
 
 ---
 
-made with ❤️ by **kunal gupta**
+**Made with ❤️ by Kunal Gupta**
 
-[![support](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kunalgupta25)
+[![Support](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/kunalgupta25)
