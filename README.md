@@ -51,6 +51,104 @@ Complete CRUD operations for all content sections:
 - [Resend](https://resend.com/) - Server-side email fallback
 - [Recharts](https://recharts.org/) - Dashboard analytics
 
+## 🏗️ Architecture
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        Browser["🌐 Browser"]
+        PublicPages["📄 Public Portfolio<br/>Hero | About | Skills<br/>Projects | Contact"]
+        AdminDashboard["🔐 Admin Dashboard<br/>Content Management<br/>Site Settings"]
+    end
+
+    subgraph "Next.js App Router"
+        AppRouter["⚡ App Router<br/>(Port 9002)"]
+        ServerActions["🔄 Server Actions<br/>actions.ts"]
+        Middleware["🛡️ Middleware<br/>Auth & Security"]
+        
+        subgraph "API Layer"
+            MetadataAPI["📊 Metadata API<br/>SEO + JSON-LD"]
+            RobotsAPI["🤖 robots.ts"]
+            SitemapAPI["🗺️ sitemap.ts"]
+        end
+    end
+
+    subgraph "Data Layer"
+        FirebaseAdmin["🔥 Firebase Admin SDK<br/>firebase-admin.ts"]
+        DataQueries["📚 Data Queries<br/>data.ts"]
+        Validation["✅ Zod Schemas<br/>Type Safety"]
+    end
+
+    subgraph "External Services"
+        Firebase["🔥 Firebase Realtime DB<br/>Real-time Sync"]
+        EmailJS["📧 EmailJS<br/>Client Email"]
+        Resend["📨 Resend<br/>Server Email Fallback"]
+        Analytics["📈 Google Analytics<br/>Tracking"]
+        Genkit["🤖 Google Genkit<br/>AI Features"]
+    end
+
+    subgraph "Styling & UI"
+        Tailwind["🎨 Tailwind CSS"]
+        Shadcn["🧩 shadcn/ui<br/>Components"]
+        LucideIcons["🎯 Lucide Icons"]
+        ThemeSystem["🌓 Dark/Light Mode"]
+    end
+
+    Browser -->|Renders| PublicPages
+    Browser -->|Admin Access| AdminDashboard
+    
+    PublicPages -->|Routes| AppRouter
+    AdminDashboard -->|CRUD Operations| ServerActions
+    
+    AppRouter -->|Server-side| ServerActions
+    AppRouter -->|SEO| MetadataAPI
+    AppRouter -->|Crawlers| RobotsAPI
+    AppRouter -->|Sitemap| SitemapAPI
+    
+    ServerActions -->|Validate| Validation
+    ServerActions -->|Execute| FirebaseAdmin
+    
+    PublicPages -->|Queries| DataQueries
+    AdminDashboard -->|Queries| DataQueries
+    
+    DataQueries -->|Read| FirebaseAdmin
+    Middleware -->|Protect| AdminDashboard
+    
+    FirebaseAdmin -->|Read/Write| Firebase
+    
+    PublicPages -->|Track| Analytics
+    PublicPages -->|Send Contact| EmailJS
+    ServerActions -->|Fallback Email| Resend
+    ServerActions -->|AI Features| Genkit
+    
+    PublicPages -.->|Styled by| Tailwind
+    AdminDashboard -.->|Styled by| Tailwind
+    PublicPages -.->|Uses| Shadcn
+    AdminDashboard -.->|Uses| Shadcn
+    PublicPages -.->|Icons| LucideIcons
+    PublicPages -.->|Theme| ThemeSystem
+
+    style Browser fill:#4A90E2,stroke:#2E5C8A,stroke-width:3px,color:#fff
+    style Firebase fill:#FFA000,stroke:#FF6F00,stroke-width:3px,color:#fff
+    style ServerActions fill:#10B981,stroke:#059669,stroke-width:2px,color:#fff
+    style FirebaseAdmin fill:#F59E0B,stroke:#D97706,stroke-width:2px,color:#fff
+    style Validation fill:#8B5CF6,stroke:#6D28D9,stroke-width:2px,color:#fff
+    style AdminDashboard fill:#EF4444,stroke:#DC2626,stroke-width:2px,color:#fff
+    style PublicPages fill:#3B82F6,stroke:#2563EB,stroke-width:2px,color:#fff
+    style AppRouter fill:#06B6D4,stroke:#0891B2,stroke-width:2px,color:#fff
+```
+
+### **Key Architecture Highlights**
+
+- **🎯 Server-First Design**: All mutations go through Next.js Server Actions for type safety and security
+- **⚡ Real-time Data**: Firebase Realtime Database provides instant content updates
+- **🔐 Secure by Default**: Firebase Admin SDK bypasses client rules, admin routes protected
+- **📱 Responsive Components**: shadcn/ui + Tailwind CSS for consistent, mobile-first UI
+- **🎨 Dynamic Theming**: System-aware dark/light mode with smooth transitions
+- **📊 SEO Optimized**: Automatic sitemap generation, robots.txt, canonical URLs, and structured data
+- **✉️ Resilient Email**: Dual email setup with automatic fallback (EmailJS → Resend)
+- **🤖 AI Ready**: Google Genkit integration for future AI-powered features
+
 ## 🚀 Quick Start
 
 ### Prerequisites
