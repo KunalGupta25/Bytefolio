@@ -237,6 +237,15 @@ export default function AdminSettingsPage() {
               </div>
             </div>
 
+            {/* Security notice for the customHtmlWidget field (managed in Integrations tab) */}
+            <div className="rounded-md border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/20 dark:border-yellow-800 p-4 text-sm">
+              <p className="font-semibold text-yellow-800 dark:text-yellow-400">⚠️ Custom HTML Widget (Integrations)</p>
+              <p className="mt-1 text-yellow-700 dark:text-yellow-500">
+                Any HTML saved in the Custom Widget field is automatically sanitized on the server.
+                Script tags, iframes, and inline event handlers are stripped before saving.
+                Only use HTML from trusted sources.
+              </p>
+            </div>
             <SubmitButton />
           </form>
         </CardContent>

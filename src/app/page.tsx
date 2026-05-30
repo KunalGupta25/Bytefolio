@@ -9,6 +9,7 @@ import CertificationsSection from '@/app/components/certifications-section';
 import BlogCallToActionSection from '@/app/components/blog-call-to-action-section';
 import ContactSection from '@/app/components/contact-section';
 import Footer from '@/app/components/footer';
+import { PageViewTracker } from '@/app/components/page-view-tracker';
 import { 
   getSiteSettings, 
   getAboutData, 
@@ -30,6 +31,8 @@ export default async function PortfolioPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Invisible component — increments page view counter on each visit */}
+      <PageViewTracker />
       <Navigation 
         siteName={siteSettings.siteName} 
         blogUrl={siteSettings.blogUrl} 

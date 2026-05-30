@@ -311,3 +311,18 @@ export async function getPageViews(): Promise<number> {
     return 0;
   }
 }
+
+/**
+ * Atomically increments the page view counter using a Firebase transaction.
+ * Safe for concurrent requests — no double-counting race conditions.
+ */
+export async function incrementPageViews(): Promise<void> {
+  try {
+    await db.ref('/analytics/pageViews').transaction((currentValue: number | null) => {
+      return (currentValue || 0) + 1;
+    });
+  } catch (error) {
+    console.error("Error incrementing page views:", error);
+  }
+}
+

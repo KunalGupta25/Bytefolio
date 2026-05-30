@@ -1,14 +1,6 @@
-
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     remotePatterns: [
       {
@@ -50,21 +42,16 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'github.com',
-        port: '',
-        pathname: '/**/raw/**', // Allows paths like /USER/REPO/raw/BRANCH/IMAGE.png
+        pathname: '/**/raw/**',
       },
-      // THIS WILDCARD ALLOWS ANY HTTPS SOURCE:
-      // If images still don't load, ensure:
-      // 1. The image URL is correct and uses HTTPS.
-      // 2. You've restarted your Next.js development server after any config changes.
-      // Note: Allowing all domains has security implications.
-      // Ensure you trust the sources of the image URLs you use.
+      // Wildcard for any HTTPS image source.
+      // Ensure you trust the sources of the image URLs used in the admin panel.
       {
         protocol: 'https',
-        hostname: '**', // Wildcard for any hostname
+        hostname: '**',
         port: '',
-        pathname: '/**', // Allow any path
-      }
+        pathname: '/**',
+      },
     ],
   },
 };

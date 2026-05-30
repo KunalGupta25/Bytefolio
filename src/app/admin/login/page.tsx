@@ -1,19 +1,22 @@
-
 "use client";
 
-import { useEffect, useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link'; // Import Link
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { loginAdminAction } from '@/app/actions'; 
-import { Loader2, Home } from 'lucide-react'; // Added Home icon
-
-const ADMIN_AUTH_TOKEN_KEY = 'adminAuthToken';
+import { loginAdminAction } from '@/app/actions';
+import { Loader2, Home } from 'lucide-react';
 
 const initialState = {
   success: false,
@@ -25,44 +28,41 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending} className="w-full">
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Login"}
+      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Login'}
     </Button>
   );
 }
 
 export default function AdminLoginPage() {
   const [state, formAction] = useActionState(loginAdminAction, initialState);
-  const router = useRouter();
   const { toast } = useToast();
+  // router kept for potential future use (redirect now handled server-side)
+  const router = useRouter();
 
   useEffect(() => {
-    if (state.message) {
+    // Only show error toasts — successful login redirects server-side via redirect()
+    if (state.message && !state.success) {
       toast({
-        title: state.success ? 'Success!' : 'Error',
+        title: 'Login Failed',
         description: state.message,
-        variant: state.success ? 'default' : 'destructive',
+        variant: 'destructive',
       });
     }
-    if (state.success) {
-      localStorage.setItem(ADMIN_AUTH_TOKEN_KEY, 'true'); // Simplified token
-      router.push('/admin');
-    }
-  }, [state, router, toast]);
+  }, [state, toast]);
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (localStorage.getItem(ADMIN_AUTH_TOKEN_KEY) === 'true') {
-      router.replace('/admin');
-    }
-  }, [router]);
-
+  // Silence unused variable lint warning for router (kept for future use)
+  void router;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-primary">ByteFolio Admin Login</CardTitle>
-          <CardDescription>Enter your credentials to access the admin panel.</CardDescription>
+          <CardTitle className="text-2xl font-bold text-primary">
+            ByteFolio Admin Login
+          </CardTitle>
+          <CardDescription>
+            Enter your credentials to access the admin panel.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="space-y-6">
@@ -74,10 +74,14 @@ export default function AdminLoginPage() {
                 type="email"
                 required
                 className="mt-1"
-                defaultValue="admin@example.com"
-                aria-describedby={state.errors?.email ? "email-error" : undefined}
+                placeholder="admin@example.com"
+                aria-describedby={state.errors?.email ? 'email-error' : undefined}
               />
-              {state.errors?.email && <p id="email-error" className="mt-1 text-sm text-destructive">{state.errors.email.join(', ')}</p>}
+              {state.errors?.email && (
+                <p id="email-error" className="mt-1 text-sm text-destructive">
+                  {state.errors.email.join(', ')}
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="password">Password</Label>
@@ -87,15 +91,27 @@ export default function AdminLoginPage() {
                 type="password"
                 required
                 className="mt-1"
-                defaultValue="k4912005"
-                aria-describedby={state.errors?.password ? "password-error" : undefined}
+                placeholder="••••••••"
+                aria-describedby={state.errors?.password ? 'password-error' : undefined}
               />
-              {state.errors?.password && <p id="password-error" className="mt-1 text-sm text-destructive">{state.errors.password.join(', ')}</p>}
+              {state.errors?.password && (
+                <p id="password-error" className="mt-1 text-sm text-destructive">
+                  {state.errors.password.join(', ')}
+                </p>
+              )}
             </div>
+            {state.errors?.general && (
+              <p className="text-sm text-destructive">
+                {state.errors.general.join(', ')}
+              </p>
+            )}
             <SubmitButton />
           </form>
           <div className="mt-6 text-center">
-            <Link href="/" className="inline-flex items-center text-sm text-primary hover:text-accent hover:underline">
+            <Link
+              href="/"
+              className="inline-flex items-center text-sm text-primary hover:text-accent hover:underline"
+            >
               <Home className="mr-1.5 h-4 w-4" />
               Back to Homepage
             </Link>
@@ -105,4 +121,3 @@ export default function AdminLoginPage() {
     </div>
   );
 }
-

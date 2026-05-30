@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { updateAboutInfo, fetchAboutDataForAdmin } from '@/app/actions';
+import { updateAboutInfo, fetchAboutDataForAdmin, uploadResumeAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import type { AboutData } from '@/lib/data';
 import { Loader2 } from 'lucide-react';
@@ -41,6 +41,10 @@ export default function AdminAboutPage() {
   const [currentAboutData, setCurrentAboutData] = useState<AboutData>(defaultAboutData);
   const [isLoading, setIsLoading] = useState(true);
   const [state, formAction] = useActionState(updateAboutInfo, initialFormActionState);
+  
+  const initialResumeState = { success: false, message: '' };
+  const [resumeState, resumeFormAction] = useActionState(uploadResumeAction, initialResumeState);
+
   const { toast } = useToast();
   
   useEffect(() => {
@@ -75,6 +79,16 @@ export default function AdminAboutPage() {
       }
     }
   }, [state, toast]);
+
+  useEffect(() => {
+    if (resumeState.message) {
+      toast({
+        title: resumeState.success ? 'Success!' : 'Error',
+        description: resumeState.message,
+        variant: resumeState.success ? 'default' : 'destructive',
+      });
+    }
+  }, [resumeState, toast]);
 
   if (isLoading) {
     return (
@@ -167,6 +181,31 @@ export default function AdminAboutPage() {
               )}
             </div>
             
+            <SubmitButton />
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Upload Resume / CV</CardTitle>
+          <CardDescription>
+            Upload a PDF version of your resume. This will replace the current `resume.pdf` on the site.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form action={resumeFormAction} className="space-y-6">
+            <div>
+              <Label htmlFor="resumeFile" className="text-sm font-medium">Select PDF File (Max 5MB)</Label>
+              <Input
+                type="file"
+                id="resumeFile"
+                name="resumeFile"
+                accept="application/pdf"
+                className="mt-1"
+                required
+              />
+            </div>
             <SubmitButton />
           </form>
         </CardContent>
